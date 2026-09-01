@@ -350,8 +350,8 @@ export default function CategoriesCreateView({
                   ? 'Edit Sub-Category'
                   : 'Edit Category'
                 : isSubCategory
-                ? 'Add New Sub-Category'
-                : 'Add New Category'}
+                ? 'Add Sub-Category'
+                : 'Add Category'}
             </h3>
             <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>
               Configure category details, venue assignment, hierarchy, and visual display cards.

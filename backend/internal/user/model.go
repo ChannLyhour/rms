@@ -2,6 +2,8 @@ package user
 
 import (
 	"time"
+
+	"github.com/pos-system/backend/internal/domain"
 )
 
 // Role represents a system role (admin, cashier, kitchen)
@@ -36,21 +38,22 @@ type RolePermission struct {
 
 // User represents a staff or system user account
 type User struct {
-	ID        uint64    `gorm:"primaryKey;autoIncrement" json:"id"`
-	RoleID    uint64    `gorm:"not null" json:"role_id"`
-	OutletID  *uint64   `json:"outlet_id"`
-	Name      string    `gorm:"size:255;not null" json:"name"`
-	Username  string    `gorm:"uniqueIndex;size:100;not null" json:"username"`
-	Email     *string   `gorm:"uniqueIndex;size:255" json:"email"`
-	Phone     *string   `gorm:"size:50" json:"phone"`
-	ImageURL  *string   `gorm:"type:text" json:"image_url"`
-	Password  string    `gorm:"size:255;not null" json:"-"`
-	Token     *string   `gorm:"type:text" json:"token,omitempty"`
-	IsActive  bool      `gorm:"default:true" json:"is_active"`
-	CreatedBy *uint64   `json:"created_by"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Role      *Role     `gorm:"foreignKey:RoleID" json:"role,omitempty"`
+	ID        uint64         `gorm:"primaryKey;autoIncrement" json:"id"`
+	RoleID    uint64         `gorm:"not null" json:"role_id"`
+	OutletID  *uint64        `json:"outlet_id"`
+	Name      string         `gorm:"size:255;not null" json:"name"`
+	Username  string         `gorm:"uniqueIndex;size:100;not null" json:"username"`
+	Email     *string        `gorm:"uniqueIndex;size:255" json:"email"`
+	Phone     *string        `gorm:"size:50" json:"phone"`
+	ImageURL  *string        `gorm:"type:text" json:"image_url"`
+	Password  string         `gorm:"size:255;not null" json:"-"`
+	Token     *string        `gorm:"type:text" json:"token,omitempty"`
+	IsActive  bool           `gorm:"default:true" json:"is_active"`
+	CreatedBy *uint64        `json:"created_by"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	Role      *Role          `gorm:"foreignKey:RoleID" json:"role,omitempty"`
+	Outlet    *domain.Outlet `gorm:"foreignKey:OutletID" json:"outlet,omitempty"`
 }
 
 // CreateUserRequest payload

@@ -7,7 +7,7 @@ import Login from '../pages/auth/Login'
 import Unauthorized from '../pages/auth/Unauthorized'
 
 // Cashier pages
-import CashierPOS from '../pages/cashier/CashierPOS'
+import CashierPOS from '../pages/cashier/pos/pos'
 import ActiveSessions from '../pages/cashier/ActiveSessions'
 import DashboardCashier from '../pages/cashier/DashboardCashier'
 
@@ -20,7 +20,9 @@ import AdminLayout from '../components/layout/AdminLayout'
 import TablesManagement from '../pages/admin/TablesManagement'
 import Products from '../pages/admin/Products'
 import Categories from '../pages/admin/categories/Categories'
+import Categoriesgroup from '../pages/admin/categories/Categoriesgroup'
 import OptionGroups from '../pages/admin/OptionGroups'
+import Variantsgroup from '../pages/admin/variants/Variantsgroup'
 import Inventory from '../pages/admin/Inventory'
 import Recipes from '../pages/admin/Recipes'
 import Purchases from '../pages/admin/Purchases'
@@ -178,9 +180,34 @@ export default function AppRoutes() {
           <Categories />
         </RoleBasedRoute>
       } />
+      <Route path="/groups/categories" element={
+        <RoleBasedRoute roles={['admin', 'manager']} permissions={['menu.manage']}>
+          <Categoriesgroup />
+        </RoleBasedRoute>
+      } />
+      <Route path="/categories-groups" element={
+        <RoleBasedRoute roles={['admin', 'manager']} permissions={['menu.manage']}>
+          <Categoriesgroup />
+        </RoleBasedRoute>
+      } />
       <Route path="/options" element={
         <RoleBasedRoute roles={['admin', 'manager']} permissions={['menu.manage']}>
           <OptionGroups />
+        </RoleBasedRoute>
+      } />
+      <Route path="/groups/variants" element={
+        <RoleBasedRoute roles={['admin', 'manager']} permissions={['menu.manage']}>
+          <Variantsgroup />
+        </RoleBasedRoute>
+      } />
+      <Route path="/variants/grouped" element={
+        <RoleBasedRoute roles={['admin', 'manager']} permissions={['menu.manage']}>
+          <Variantsgroup />
+        </RoleBasedRoute>
+      } />
+      <Route path="/options/grouped" element={
+        <RoleBasedRoute roles={['admin', 'manager']} permissions={['menu.manage']}>
+          <Variantsgroup />
         </RoleBasedRoute>
       } />
 

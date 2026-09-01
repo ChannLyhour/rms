@@ -1,16 +1,20 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/pos-system/backend/internal/enum"
+)
 
 // Table represents a physical restaurant table
 type Table struct {
-	ID          uint64    `gorm:"primaryKey;autoIncrement" json:"id"`
-	TableNumber string    `gorm:"uniqueIndex;size:50;not null" json:"table_number"`
-	Capacity    int       `gorm:"default:4" json:"capacity"`
-	Status      string    `gorm:"size:20;default:'available'" json:"status"` // available | occupied | reserved
-	CreatedBy   *uint64   `json:"created_by"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          uint64           `gorm:"primaryKey;autoIncrement" json:"id"`
+	TableNumber string           `gorm:"uniqueIndex;size:50;not null" json:"table_number"`
+	Capacity    int              `gorm:"default:4" json:"capacity"`
+	Status      enum.TableStatus `gorm:"size:20;default:'available'" json:"status"` // available | occupied | reserved | cleaning
+	CreatedBy   *uint64          `json:"created_by"`
+	CreatedAt   time.Time        `json:"created_at"`
+	UpdatedAt   time.Time        `json:"updated_at"`
 }
 
 // TableSession represents an active QR session for a table

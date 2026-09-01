@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/pos-system/backend/internal/domain"
+	"github.com/pos-system/backend/internal/enum"
 	"gorm.io/gorm"
 )
 
@@ -72,7 +73,7 @@ func (r *OrderRepository) ListKitchenOrders() ([]domain.Order, error) {
 }
 
 // UpdateOrderStatus changes the status of an order and logs it
-func (r *OrderRepository) UpdateOrderStatus(orderID uint64, from, to string, userID *uint64) error {
+func (r *OrderRepository) UpdateOrderStatus(orderID uint64, from enum.OrderStatus, to string, userID *uint64) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&domain.Order{}).Where("id = ?", orderID).Update("status", to).Error; err != nil {
 			return err
@@ -81,7 +82,7 @@ func (r *OrderRepository) UpdateOrderStatus(orderID uint64, from, to string, use
 			OrderID:         orderID,
 			ChangedByUserID: userID,
 			StatusFrom:      from,
-			StatusTo:        to,
+			StatusTo:        enum.OrderStatus(to),
 		}
 		return tx.Create(log).Error
 	})

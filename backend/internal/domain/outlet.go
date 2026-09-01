@@ -1,20 +1,24 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/pos-system/backend/internal/enum"
+)
 
 // Outlet represents a distinct department/business unit (Cafe, Bar, Mart, Restaurant)
 type Outlet struct {
-	ID          uint64    `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name        string    `gorm:"size:100;not null" json:"name"`
-	Code        string    `gorm:"size:50;uniqueIndex;not null" json:"code"` // CAFE, BAR, MART, REST
-	Type        string    `gorm:"size:50;not null;default:'dine_in'" json:"type"` // cafe, bar, retail, dine_in
-	Description *string   `gorm:"type:text" json:"description"`
-	HasTables   bool      `gorm:"default:true" json:"has_tables"`
-	IsActive    bool      `gorm:"default:true" json:"is_active"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-	Zones       []Zone    `gorm:"foreignKey:OutletID" json:"zones,omitempty"`
-	Stations    []Station `gorm:"foreignKey:OutletID" json:"stations,omitempty"`
+	ID          uint64          `gorm:"primaryKey;autoIncrement" json:"id"`
+	Name        string          `gorm:"size:100;not null" json:"name"`
+	Code        string          `gorm:"size:50;uniqueIndex;not null" json:"code"` // CAFE, BAR, MART, REST
+	Type        enum.OutletType `gorm:"size:50;not null;default:'dine_in'" json:"type"` // cafe, bar, retail, dine_in
+	Description *string         `gorm:"type:text" json:"description"`
+	HasTables   bool            `gorm:"default:true" json:"has_tables"`
+	IsActive    bool            `gorm:"default:true" json:"is_active"`
+	CreatedAt   time.Time       `json:"created_at"`
+	UpdatedAt   time.Time       `json:"updated_at"`
+	Zones       []Zone          `gorm:"foreignKey:OutletID" json:"zones,omitempty"`
+	Stations    []Station       `gorm:"foreignKey:OutletID" json:"stations,omitempty"`
 }
 
 // Zone represents a physical area or floor within an outlet (e.g. Ground Terrace, Rooftop 45F)

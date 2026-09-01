@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/pos-system/backend/internal/domain"
+	"github.com/pos-system/backend/internal/enum"
 )
 
 var (
@@ -77,7 +78,7 @@ func (s *service) CreateOutlet(ctx context.Context, req *domain.CreateOutletRequ
 	outlet := &domain.Outlet{
 		Name:        req.Name,
 		Code:        req.Code,
-		Type:        req.Type,
+		Type:        enum.OutletType(req.Type),
 		Description: req.Description,
 		HasTables:   req.HasTables,
 		IsActive:    req.IsActive,
@@ -112,7 +113,7 @@ func (s *service) UpdateOutlet(ctx context.Context, id uint64, req *domain.Updat
 		outlet.Code = *req.Code
 	}
 	if req.Type != nil {
-		outlet.Type = *req.Type
+		outlet.Type = enum.OutletType(*req.Type)
 	}
 	if req.Description != nil {
 		outlet.Description = req.Description

@@ -40,6 +40,7 @@ func (r *repository) FindByUsername(username string) (*User, error) {
 	err := r.db.
 		Preload("Role").
 		Preload("Role.Permissions").
+		Preload("Outlet").
 		Where("username = ? AND is_active = true", username).
 		First(&u).Error
 	if err != nil {
@@ -53,6 +54,7 @@ func (r *repository) FindByID(id uint64) (*User, error) {
 	err := r.db.
 		Preload("Role").
 		Preload("Role.Permissions").
+		Preload("Outlet").
 		First(&u, id).Error
 	if err != nil {
 		return nil, err
@@ -64,7 +66,7 @@ func (r *repository) List(search string, roleID *uint64, p pagination.Params) ([
 	var users []User
 	var total int64
 
-	q := r.db.Model(&User{}).Preload("Role")
+	q := r.db.Model(&User{}).Preload("Role").Preload("Outlet")
 	if search != "" {
 		s := "%" + search + "%"
 		q = q.Where("name ILIKE ? OR username ILIKE ? OR email ILIKE ?", s, s, s)

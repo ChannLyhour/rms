@@ -1,23 +1,27 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/pos-system/backend/internal/enum"
+)
 
 // Order represents a customer order within a table session
 type Order struct {
-	ID             uint64      `gorm:"primaryKey;autoIncrement" json:"id"`
-	TableSessionID uint64      `gorm:"not null" json:"table_session_id"`
-	OrderNumber    string      `gorm:"uniqueIndex;size:50;not null" json:"order_number"`
-	OrderType      string      `gorm:"size:20;default:'qr_scan'" json:"order_type"` // qr_scan | cashier
-	Status         string      `gorm:"size:20;default:'pending'" json:"status"`      // pending | confirmed | preparing | ready | completed | cancelled
-	PaymentStatus  string      `gorm:"column:payment_status;size:20;default:'unpaid'" json:"payment_status"` // unpaid | paid | refunded
-	PaymentMethod  *string     `gorm:"column:payment_method;size:50" json:"payment_method"`
-	Subtotal       float64     `gorm:"type:numeric(10,2);default:0.00" json:"subtotal"`
-	TaxAmount      float64     `gorm:"type:numeric(10,2);default:0.00" json:"tax_amount"`
-	TotalAmount    float64     `gorm:"type:numeric(10,2);default:0.00" json:"total_amount"`
-	CreatedBy      *uint64     `json:"created_by"`
-	CreatedAt      time.Time   `json:"created_at"`
-	UpdatedAt      time.Time   `json:"updated_at"`
-	Items          []OrderItem `gorm:"foreignKey:OrderID" json:"items,omitempty"`
+	ID             uint64              `gorm:"primaryKey;autoIncrement" json:"id"`
+	TableSessionID uint64              `gorm:"not null" json:"table_session_id"`
+	OrderNumber    string              `gorm:"uniqueIndex;size:50;not null" json:"order_number"`
+	OrderType      enum.OrderType      `gorm:"size:20;default:'qr_scan'" json:"order_type"` // qr_scan | cashier
+	Status         enum.OrderStatus    `gorm:"size:20;default:'pending'" json:"status"`      // pending | preparing | ready | completed | cancelled
+	PaymentStatus  enum.PaymentStatus  `gorm:"column:payment_status;size:20;default:'unpaid'" json:"payment_status"` // unpaid | paid | refunded
+	PaymentMethod  *enum.PaymentMethod `gorm:"column:payment_method;size:50" json:"payment_method"`
+	Subtotal       float64             `gorm:"type:numeric(10,2);default:0.00" json:"subtotal"`
+	TaxAmount      float64             `gorm:"type:numeric(10,2);default:0.00" json:"tax_amount"`
+	TotalAmount    float64             `gorm:"type:numeric(10,2);default:0.00" json:"total_amount"`
+	CreatedBy      *uint64             `json:"created_by"`
+	CreatedAt      time.Time           `json:"created_at"`
+	UpdatedAt      time.Time           `json:"updated_at"`
+	Items          []OrderItem         `gorm:"foreignKey:OrderID" json:"items,omitempty"`
 }
 
 // OrderItem represents a single product line in an order
@@ -29,7 +33,7 @@ type OrderItem struct {
 	Quantity            int               `gorm:"default:1" json:"quantity"`
 	UnitPrice           float64           `gorm:"type:numeric(10,2);default:0.00" json:"unit_price"`
 	SpecialInstructions *string           `json:"special_instructions"`
-	ItemStatus          string            `gorm:"size:20;default:'pending'" json:"item_status"`
+	ItemStatus          enum.ItemStatus   `gorm:"size:20;default:'pending'" json:"item_status"`
 	CreatedBy           *uint64           `json:"created_by"`
 	CreatedAt           time.Time         `json:"created_at"`
 	UpdatedAt           time.Time         `json:"updated_at"`
@@ -49,26 +53,26 @@ type OrderItemOption struct {
 
 // Payment represents a payment for a table session
 type Payment struct {
-	ID             uint64     `gorm:"primaryKey;autoIncrement" json:"id"`
-	TableSessionID uint64     `gorm:"not null" json:"table_session_id"`
-	CashierID      *uint64    `json:"cashier_id"`
-	PaymentMethod  string     `gorm:"size:20;default:'cash'" json:"payment_method"` // cash | card | qr_payment
-	AmountPaid     float64    `gorm:"type:numeric(10,2);default:0.00" json:"amount_paid"`
-	ChangeGiven    float64    `gorm:"type:numeric(10,2);default:0.00" json:"change_given"`
-	PaymentStatus  string     `gorm:"column:payment_status;size:20;default:'completed'" json:"payment_status"`
-	TransactionRef *string    `gorm:"size:255" json:"transaction_ref"`
-	CreatedBy      *uint64    `json:"created_by"`
-	PaidAt         time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"paid_at"`
+	ID             uint64             `gorm:"primaryKey;autoIncrement" json:"id"`
+	TableSessionID uint64             `gorm:"not null" json:"table_session_id"`
+	CashierID      *uint64            `json:"cashier_id"`
+	PaymentMethod  enum.PaymentMethod `gorm:"size:20;default:'cash'" json:"payment_method"` // cash | credit_card | aba_khqr
+	AmountPaid     float64            `gorm:"type:numeric(10,2);default:0.00" json:"amount_paid"`
+	ChangeGiven    float64            `gorm:"type:numeric(10,2);default:0.00" json:"change_given"`
+	PaymentStatus  enum.PaymentStatus `gorm:"column:payment_status;size:20;default:'paid'" json:"payment_status"`
+	TransactionRef *string            `gorm:"size:255" json:"transaction_ref"`
+	CreatedBy      *uint64            `json:"created_by"`
+	PaidAt         time.Time          `gorm:"default:CURRENT_TIMESTAMP" json:"paid_at"`
 }
 
 // OrderStatusLog records every order status change
 type OrderStatusLog struct {
-	ID              uint64    `gorm:"primaryKey;autoIncrement" json:"id"`
-	OrderID         uint64    `gorm:"not null" json:"order_id"`
-	ChangedByUserID *uint64   `json:"changed_by_user_id"`
-	StatusFrom      string    `gorm:"size:50;not null" json:"status_from"`
-	StatusTo        string    `gorm:"size:50;not null" json:"status_to"`
-	CreatedBy       *uint64   `json:"created_by"`
+	ID              uint64           `gorm:"primaryKey;autoIncrement" json:"id"`
+	OrderID         uint64           `gorm:"not null" json:"order_id"`
+	ChangedByUserID *uint64          `json:"changed_by_user_id"`
+	StatusFrom      enum.OrderStatus `gorm:"size:50;not null" json:"status_from"`
+	StatusTo        enum.OrderStatus `gorm:"size:50;not null" json:"status_to"`
+	CreatedBy       *uint64          `json:"created_by"`
 	CreatedAt       time.Time `json:"created_at"`
 }
 

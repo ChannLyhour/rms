@@ -164,8 +164,8 @@ export default function AppSidebar() {
       permissions: ['menu.manage'],
       items: [
         { label: 'All Products', to: '/products', roles: ['admin', 'manager'], permissions: ['menu.manage'] },
-        { label: 'Categories', to: '/categories', roles: ['admin', 'manager'], permissions: ['menu.manage'] },
-        { label: 'Modifiers & Addons', to: '/options', roles: ['admin', 'manager'], permissions: ['menu.manage'] },
+        { label: 'Group Categories', to: '/groups/categories', roles: ['admin', 'manager'], permissions: ['menu.manage'] },
+        { label: 'Modifiers & Addons', to: '/groups/variants', roles: ['admin', 'manager'], permissions: ['menu.manage'] },
       ],
     },
     {

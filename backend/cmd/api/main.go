@@ -214,6 +214,7 @@ func registerAPIRoutes(
 		staff.GET("/cashier/products", productHdl.ListProducts)
 		staff.GET("/cashier/products/:id", productHdl.GetProduct)
 		staff.GET("/cashier/option-groups", productHdl.ListOptionGroups)
+		staff.GET("/cashier/outlets", outletHdl.GetAllOutlets)
 	}
 
 	// ── Protected Admin / Management Routes (Bearer Auth required) ────────────

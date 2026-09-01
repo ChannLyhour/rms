@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { authApi } from '../api/authApi'
+import { useOutletStore } from '../store/useOutletStore'
 
 const AuthContext = createContext(null)
 
@@ -23,6 +24,12 @@ export function AuthProvider({ children }) {
       if (data?.user) {
         setUser(data.user)
         localStorage.setItem('pos_user', JSON.stringify(data.user))
+        // Sync venue if user has assigned outlet
+        if (data.user?.outlet) {
+          useOutletStore.getState().setCurrentOutlet(data.user.outlet)
+        } else {
+          useOutletStore.getState().fetchOutlets(data.user)
+        }
       }
     } catch {
       // Ignore background sync errors
@@ -50,7 +57,15 @@ export function AuthProvider({ children }) {
       localStorage.setItem('pos_user', JSON.stringify(data.user))
       sessionStorage.removeItem('pos_current_route')
       setUser(data.user)
-      return { success: true, role: data.user.role?.name }
+
+      // Automatically sync and initialize active venue for this user
+      if (data.user?.outlet) {
+        useOutletStore.getState().setCurrentOutlet(data.user.outlet)
+      } else {
+        useOutletStore.getState().fetchOutlets(data.user)
+      }
+
+      return { success: true, role: data.user.role?.name, user: data.user }
     } catch (err) {
       const msg = err.response?.data?.error || 'Login failed'
       return { success: false, error: msg }

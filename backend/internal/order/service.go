@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/pos-system/backend/internal/enum"
 	"github.com/pos-system/backend/internal/products"
 	"github.com/pos-system/backend/internal/system"
 	"github.com/pos-system/backend/pkg/pagination"
@@ -98,7 +99,7 @@ func (s *service) CreateOrder(req *CreateOrderRequest, orderType string, created
 			Quantity:            itemReq.Quantity,
 			UnitPrice:           unitPrice,
 			SpecialInstructions: itemReq.SpecialInstructions,
-			ItemStatus:          "pending",
+			ItemStatus:          enum.ItemStatusPending,
 			CreatedBy:           createdBy,
 			Options:             options,
 		})
@@ -113,18 +114,24 @@ func (s *service) CreateOrder(req *CreateOrderRequest, orderType string, created
 		orderNumber = fmt.Sprintf("ORD-%05d", 1)
 	}
 
-	paymentStatus := "unpaid"
+	paymentStatus := enum.PaymentStatusUnpaid
 	if req.PaymentStatus != "" {
-		paymentStatus = req.PaymentStatus
+		paymentStatus = enum.PaymentStatus(req.PaymentStatus)
+	}
+
+	var paymentMethod *enum.PaymentMethod
+	if req.PaymentMethod != nil && *req.PaymentMethod != "" {
+		pm := enum.PaymentMethod(*req.PaymentMethod)
+		paymentMethod = &pm
 	}
 
 	order := &Order{
 		TableSessionID: req.TableSessionID,
 		OrderNumber:    orderNumber,
-		OrderType:      orderType,
-		Status:         "pending",
+		OrderType:      enum.OrderType(orderType),
+		Status:         enum.OrderStatusPending,
 		PaymentStatus:  paymentStatus,
-		PaymentMethod:  req.PaymentMethod,
+		PaymentMethod:  paymentMethod,
 		Subtotal:       subtotal,
 		TaxAmount:      taxAmount,
 		TotalAmount:    totalAmount,
@@ -206,10 +213,10 @@ func (s *service) ProcessPayment(req *ProcessPaymentRequest, cashierID *uint64) 
 	p := &Payment{
 		TableSessionID: req.TableSessionID,
 		CashierID:      cashierID,
-		PaymentMethod:  req.PaymentMethod,
+		PaymentMethod:  enum.PaymentMethod(req.PaymentMethod),
 		AmountPaid:     req.AmountPaid,
 		ChangeGiven:    changeGiven,
-		PaymentStatus:  "completed",
+		PaymentStatus:  enum.PaymentStatusPaid,
 		TransactionRef: req.TransactionRef,
 		CreatedBy:      cashierID,
 		PaidAt:         time.Now(),

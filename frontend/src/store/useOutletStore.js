@@ -7,19 +7,41 @@ export const useOutletStore = create((set, get) => ({
   isLoading: false,
   error: null,
 
-  fetchOutlets: async () => {
+  fetchOutlets: async (userParam) => {
     set({ isLoading: true, error: null })
     try {
-      const res = await axiosClient.get('/outlets?active=true')
+      const res = await axiosClient.get('/outlets?active=true').catch(() => axiosClient.get('/cashier/outlets'))
       const data = res.data?.data || []
       
+      let currentUser = userParam
+      if (!currentUser) {
+        try {
+          const userStr = localStorage.getItem('pos_user')
+          if (userStr) currentUser = JSON.parse(userStr)
+        } catch {}
+      }
+
       let savedOutlet = null
       try {
         const saved = localStorage.getItem('skypark_current_outlet')
         if (saved) savedOutlet = JSON.parse(saved)
       } catch {}
 
-      const active = data.find((o) => o.id === savedOutlet?.id) || data[0] || null
+      // Priority 1: User's explicitly assigned venue
+      let active = null
+      if (currentUser?.outlet_id) {
+        active = data.find((o) => String(o.id) === String(currentUser.outlet_id)) || currentUser.outlet || null
+      }
+
+      // Priority 2: Previously saved venue in localStorage
+      if (!active && savedOutlet?.id) {
+        active = data.find((o) => String(o.id) === String(savedOutlet.id)) || savedOutlet
+      }
+
+      // Priority 3: First available venue
+      if (!active) {
+        active = data[0] || null
+      }
 
       set({
         outlets: data,
@@ -46,7 +68,11 @@ export const useOutletStore = create((set, get) => ({
   setCurrentOutlet: (outlet) => {
     set({ currentOutlet: outlet })
     try {
-      localStorage.setItem('skypark_current_outlet', JSON.stringify(outlet))
+      if (outlet) {
+        localStorage.setItem('skypark_current_outlet', JSON.stringify(outlet))
+      } else {
+        localStorage.removeItem('skypark_current_outlet')
+      }
     } catch {}
   },
 }))

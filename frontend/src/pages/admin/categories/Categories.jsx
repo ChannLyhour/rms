@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import AdminLayout from '../../../components/layout/AdminLayout'
 import CategoriesCreateView from '../../../components/admin/CategoriesCreateView'
 import { adminApi } from '../../../api/adminApi'
@@ -6,7 +7,7 @@ import axiosClient from '../../../api/axiosClient'
 import { Table, TableCard, BadgeWithIcon, Button, PaginationPageMinimalCenter } from '../../../components/TablesComponents'
 import { CreateButton } from '../../../components/common/ButtonComponent'
 import { Check, X, SearchLg, Plus, Edit01, Trash01 } from '@untitledui/icons'
-import { Folder, CornerDownRight, EyeOff, Building2, Coffee, Wine, ShoppingCart, Utensils, FolderTree, Layers } from 'lucide-react'
+import { Folder, CornerDownRight, EyeOff, Building2, Coffee, Wine, ShoppingCart, Utensils, FolderTree, Layers, LayoutGrid, Table as TableIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function Categories() {
@@ -212,10 +213,38 @@ export default function Categories() {
                 </h1>
               </div>
 
-              <CreateButton
-                label="Add New Category"
-                onClick={() => handleOpenCreate()}
-              />
+              <div className="flex flex-wrap items-center gap-2.5">
+                <div
+                  className="flex items-center p-1 rounded-xl border gap-1"
+                  style={{
+                    background: 'var(--color-surface, #ffffff)',
+                    borderColor: 'var(--color-border)'
+                  }}
+                >
+                  <div
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shadow-xs transition-all"
+                    style={{
+                      background: 'var(--color-500, #126973)',
+                      color: '#ffffff'
+                    }}
+                  >
+                    <TableIcon size={14} />
+                    <span>Table View</span>
+                  </div>
+                  <Link
+                    to="/groups/categories"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                  >
+                    <LayoutGrid size={14} />
+                    <span>Group Cards</span>
+                  </Link>
+                </div>
+
+                <CreateButton
+                  label="Add New Category"
+                  onClick={() => handleOpenCreate()}
+                />
+              </div>
             </div>
 
             {/* Multi-Venue Tabs */}

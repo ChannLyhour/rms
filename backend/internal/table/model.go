@@ -2,17 +2,19 @@ package table
 
 import (
 	"time"
+
+	"github.com/pos-system/backend/internal/enum"
 )
 
 // Table represents a physical dining table
 type Table struct {
-	ID          uint64    `gorm:"primaryKey;autoIncrement" json:"id"`
-	TableNumber string    `gorm:"uniqueIndex;size:50;not null" json:"table_number"`
-	Capacity    int       `gorm:"default:4" json:"capacity"`
-	Status      string    `gorm:"size:20;default:'available'" json:"status"` // available | occupied | reserved
-	CreatedBy   *uint64   `json:"created_by"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          uint64           `gorm:"primaryKey;autoIncrement" json:"id"`
+	TableNumber string           `gorm:"uniqueIndex;size:50;not null" json:"table_number"`
+	Capacity    int              `gorm:"default:4" json:"capacity"`
+	Status      enum.TableStatus `gorm:"size:20;default:'available'" json:"status"` // available | occupied | reserved | cleaning
+	CreatedBy   *uint64          `json:"created_by"`
+	CreatedAt   time.Time        `json:"created_at"`
+	UpdatedAt   time.Time        `json:"updated_at"`
 }
 
 // TableSession represents an active or past QR ordering session
@@ -30,11 +32,11 @@ type TableSession struct {
 
 // SessionOrder represents order financial details for session calculation
 type SessionOrder struct {
-	ID             uint64  `gorm:"primaryKey;autoIncrement" json:"id"`
-	TableSessionID uint64  `gorm:"not null" json:"table_session_id"`
-	OrderNumber    string  `json:"order_number"`
-	Status         string  `json:"status"`
-	TotalAmount    float64 `gorm:"type:numeric(10,2);default:0.00" json:"total_amount"`
+	ID             uint64           `gorm:"primaryKey;autoIncrement" json:"id"`
+	TableSessionID uint64           `gorm:"not null" json:"table_session_id"`
+	OrderNumber    string           `json:"order_number"`
+	Status         enum.OrderStatus `json:"status"`
+	TotalAmount    float64          `gorm:"type:numeric(10,2);default:0.00" json:"total_amount"`
 }
 
 func (SessionOrder) TableName() string {

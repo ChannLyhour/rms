@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/pos-system/backend/internal/domain"
+	"github.com/pos-system/backend/internal/enum"
 	"github.com/pos-system/backend/internal/repository"
 )
 
@@ -22,15 +23,18 @@ func NewOrderService(orderRepo *repository.OrderRepository, productRepo *reposit
 
 // CreateOrder validates and persists a new order
 func (s *OrderService) CreateOrder(req *domain.CreateOrderRequest, userID *uint64) (*domain.Order, error) {
+	orderType := enum.OrderTypeDineIn
+	if req.OrderType != "" {
+		orderType = enum.OrderType(req.OrderType)
+	}
+
 	order := &domain.Order{
 		TableSessionID: req.TableSessionID,
 		OrderNumber:    s.orderRepo.GetNextOrderNumber(),
-		OrderType:      req.OrderType,
-		Status:         "pending",
+		OrderType:      orderType,
+		Status:         enum.OrderStatusPending,
+		PaymentStatus:  enum.PaymentStatusUnpaid,
 		CreatedBy:      userID,
-	}
-	if order.OrderType == "" {
-		order.OrderType = "dine_in"
 	}
 
 	var subtotal float64
@@ -46,12 +50,12 @@ func (s *OrderService) CreateOrder(req *domain.CreateOrderRequest, userID *uint6
 		}
 
 		item := domain.OrderItem{
-			ProductID:           product.ID,
+			ProductID:           &product.ID,
 			ItemProductName:     itemName,
 			Quantity:            itemReq.Quantity,
 			UnitPrice:           product.Price,
 			SpecialInstructions: itemReq.SpecialInstructions,
-			ItemStatus:          "pending",
+			ItemStatus:          enum.ItemStatusPending,
 			CreatedBy:           userID,
 		}
 
@@ -119,10 +123,10 @@ func (s *OrderService) ProcessPayment(req *domain.ProcessPaymentRequest, cashier
 	payment := &domain.Payment{
 		TableSessionID: req.TableSessionID,
 		CashierID:      &cashierID,
-		PaymentMethod:  req.PaymentMethod,
+		PaymentMethod:  enum.PaymentMethod(req.PaymentMethod),
 		AmountPaid:     req.AmountPaid,
 		ChangeGiven:    change,
-		PaymentStatus:  "completed",
+		PaymentStatus:  enum.PaymentStatusPaid,
 		TransactionRef: req.TransactionRef,
 		CreatedBy:      &cashierID,
 		PaidAt:         time.Now(),

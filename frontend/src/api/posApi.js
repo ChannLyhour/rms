@@ -15,9 +15,22 @@ export const posApi = {
   createOrder: (data) => client.post('/cashier/orders', data),
   updateOrderStatus: (id, status) => client.patch(`/cashier/orders/${id}/status`, { status }),
 
+  // Multi-Outlet & Venues
+  getOutlets: (params) => client.get('/cashier/outlets', { params }),
+
   // Catalog (Categories & Products)
-  getCategories: () => client.get('/cashier/categories'),
-  getProducts: (categoryId) => client.get(`/cashier/products${categoryId ? `?category_id=${categoryId}` : ''}`),
+  getCategories: (params) => {
+    if (typeof params === 'object' && params !== null) {
+      return client.get('/cashier/categories', { params })
+    }
+    return client.get(`/cashier/categories${params ? `?outlet_id=${params}` : ''}`)
+  },
+  getProducts: (params) => {
+    if (typeof params === 'object' && params !== null) {
+      return client.get('/cashier/products', { params })
+    }
+    return client.get(`/cashier/products${params ? `?category_id=${params}` : ''}`)
+  },
   getOptionGroups: () => client.get('/cashier/option-groups'),
 
   // Payments

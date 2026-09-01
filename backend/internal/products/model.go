@@ -3,6 +3,7 @@ package products
 import (
 	"time"
 
+	"github.com/pos-system/backend/internal/enum"
 	"gorm.io/gorm"
 )
 
@@ -49,10 +50,10 @@ type Product struct {
 
 // Outlet is a minimal representation of an outlet venue
 type Outlet struct {
-	ID   uint64 `gorm:"primaryKey" json:"id"`
-	Name string `gorm:"size:100;not null" json:"name"`
-	Code string `gorm:"size:50;not null" json:"code"`
-	Type string `gorm:"size:50;not null" json:"type"`
+	ID   uint64          `gorm:"primaryKey" json:"id"`
+	Name string          `gorm:"size:100;not null" json:"name"`
+	Code string          `gorm:"size:50;not null" json:"code"`
+	Type enum.OutletType `gorm:"size:50;not null" json:"type"`
 }
 
 // OptionGroup is a group of options (e.g. Size, Sweetness)

@@ -3,6 +3,7 @@ package order
 import (
 	"time"
 
+	"github.com/pos-system/backend/internal/enum"
 	"github.com/pos-system/backend/internal/products"
 	"github.com/pos-system/backend/internal/table"
 )
@@ -12,10 +13,10 @@ type Order struct {
 	ID             uint64              `gorm:"primaryKey;autoIncrement" json:"id"`
 	TableSessionID uint64              `gorm:"not null" json:"table_session_id"`
 	OrderNumber    string              `gorm:"uniqueIndex;size:50;not null" json:"order_number"`
-	OrderType      string              `gorm:"size:20;default:'qr_scan'" json:"order_type"` // qr_scan | pos_direct | takeaway
-	Status         string              `gorm:"size:20;default:'pending'" json:"status"`                 // pending | confirmed | preparing | ready | completed | cancelled
-	PaymentStatus  string              `gorm:"column:payment_status;size:20;default:'unpaid'" json:"payment_status"` // unpaid | paid | refunded
-	PaymentMethod  *string             `gorm:"column:payment_method;size:50" json:"payment_method"`
+	OrderType      enum.OrderType      `gorm:"size:20;default:'qr_scan'" json:"order_type"` // qr_scan | pos_direct | takeaway
+	Status         enum.OrderStatus    `gorm:"size:20;default:'pending'" json:"status"`                 // pending | preparing | ready | completed | cancelled
+	PaymentStatus  enum.PaymentStatus  `gorm:"column:payment_status;size:20;default:'unpaid'" json:"payment_status"` // unpaid | paid | refunded
+	PaymentMethod  *enum.PaymentMethod `gorm:"column:payment_method;size:50" json:"payment_method"`
 	Subtotal       float64             `gorm:"type:numeric(10,2);default:0.00" json:"subtotal"`
 	TaxAmount      float64             `gorm:"type:numeric(10,2);default:0.00" json:"tax_amount"`
 	TotalAmount    float64             `gorm:"type:numeric(10,2);default:0.00" json:"total_amount"`
@@ -38,7 +39,7 @@ type OrderItem struct {
 	Quantity            int               `gorm:"default:1" json:"quantity"`
 	UnitPrice           float64           `gorm:"type:numeric(10,2);default:0.00" json:"unit_price"`
 	SpecialInstructions *string           `json:"special_instructions"`
-	ItemStatus          string            `gorm:"size:20;default:'pending'" json:"item_status"` // pending | preparing | ready | served | cancelled
+	ItemStatus          enum.ItemStatus   `gorm:"size:20;default:'pending'" json:"item_status"` // pending | preparing | ready | served | cancelled
 	CreatedBy           *uint64           `json:"created_by"`
 	CreatedAt           time.Time         `json:"created_at"`
 	UpdatedAt           time.Time         `json:"updated_at"`
@@ -58,16 +59,16 @@ type OrderItemOption struct {
 
 // Payment records a transaction
 type Payment struct {
-	ID             uint64    `gorm:"primaryKey;autoIncrement" json:"id"`
-	TableSessionID uint64    `gorm:"not null" json:"table_session_id"`
-	CashierID      *uint64   `json:"cashier_id"`
-	PaymentMethod  string    `gorm:"size:20;not null;default:'cash'" json:"payment_method"` // cash | credit_card | qr_promptpay | qr_stripe
-	AmountPaid     float64   `gorm:"type:numeric(10,2);default:0.00" json:"amount_paid"`
-	ChangeGiven    float64   `gorm:"type:numeric(10,2);default:0.00" json:"change_given"`
-	PaymentStatus  string    `gorm:"column:payment_status;size:20;default:'completed'" json:"payment_status"`
-	TransactionRef *string   `gorm:"size:255" json:"transaction_ref"`
-	CreatedBy      *uint64   `json:"created_by"`
-	PaidAt         time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"paid_at"`
+	ID             uint64             `gorm:"primaryKey;autoIncrement" json:"id"`
+	TableSessionID uint64             `gorm:"not null" json:"table_session_id"`
+	CashierID      *uint64            `json:"cashier_id"`
+	PaymentMethod  enum.PaymentMethod `gorm:"size:20;not null;default:'cash'" json:"payment_method"` // cash | credit_card | aba_khqr
+	AmountPaid     float64            `gorm:"type:numeric(10,2);default:0.00" json:"amount_paid"`
+	ChangeGiven    float64            `gorm:"type:numeric(10,2);default:0.00" json:"change_given"`
+	PaymentStatus  enum.PaymentStatus `gorm:"column:payment_status;size:20;default:'paid'" json:"payment_status"`
+	TransactionRef *string            `gorm:"size:255" json:"transaction_ref"`
+	CreatedBy      *uint64            `json:"created_by"`
+	PaidAt         time.Time          `gorm:"default:CURRENT_TIMESTAMP" json:"paid_at"`
 }
 
 // OrderItemInput payload for creating items
