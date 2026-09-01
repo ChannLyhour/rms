@@ -1,0 +1,5 @@
+-- Migration 000020 rollback
+ALTER TABLE users DROP CONSTRAINT IF EXISTS fk_users_outlet;
+ALTER TABLE users DROP COLUMN IF EXISTS outlet_id;
+ALTER TABLE users DROP COLUMN IF EXISTS phone;
+ALTER TABLE users DROP COLUMN IF EXISTS image_url;

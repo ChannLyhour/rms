@@ -24,6 +24,9 @@ import {
   CancelledStatusIcon,
   PaidStatusIcon,
   UnpaidStatusIcon,
+  OutletsIcon,
+  ZonesIcon,
+  StationsIcon,
 } from './sidebar-svg'
 
 import {
@@ -46,6 +49,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
+import OutletSwitcher from './OutletSwitcher'
 
 export default function AppSidebar() {
   const { user, hasPermission } = useAuth()
@@ -108,8 +112,8 @@ export default function AppSidebar() {
       roles: ['cashier', 'admin', 'manager', 'waiter'],
       permissions: ['tables.manage', 'pos.access'],
       badge: activeSessionsCount > 0 ? (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#126973]/10 dark:bg-[#126973]/25 px-2 py-0.5 text-[11px] font-semibold text-[#126973] dark:text-[#F1D8C2] border border-[#126973]/25 dark:border-[#F1D8C2]/30">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#126973] dark:bg-[#F1D8C2] animate-pulse" />
           {activeSessionsCount} Live
         </span>
       ) : null,
@@ -188,6 +192,17 @@ export default function AppSidebar() {
       ],
     },
     {
+      label: 'Venues & Outlets',
+      icon: OutletsIcon,
+      roles: ['admin', 'manager'],
+      permissions: ['users.manage'],
+      items: [
+        { label: 'All Venues & Outlets', to: '/outlets', icon: OutletsIcon, roles: ['admin', 'manager'], permissions: ['users.manage'] },
+        { label: 'Floor Zones', to: '/zones', icon: ZonesIcon, roles: ['admin', 'manager'], permissions: ['users.manage'] },
+        { label: 'KDS & Stations', to: '/stations', icon: StationsIcon, roles: ['admin', 'manager'], permissions: ['users.manage'] },
+      ],
+    },
+    {
       label: 'Settings',
       to: '/settings',
       icon: SettingsIcon,
@@ -251,28 +266,52 @@ export default function AppSidebar() {
     })
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="bg-[#FAF8F5] dark:bg-[#041012] text-[#072328] dark:text-[#F8F7F4] border-r border-[#126973]/15 dark:border-[#126973]/30">
       {/* ── Logo Header ── */}
-      <SidebarHeader className={`border-b transition-all ${open ? 'px-4 py-3.5' : 'py-3 px-1.5'}`} style={{ borderColor: 'var(--color-border)' }}>
-        <div className={`flex items-center ${open ? 'gap-3' : 'justify-center'}`}>
+      <SidebarHeader className={`border-b transition-all bg-[#FAF8F5] dark:bg-[#041012] ${open ? 'py-3.5 px-3 space-y-2.5' : 'py-3 px-1.5 space-y-2'}`} style={{ borderColor: 'var(--color-border)' }}>
+        <div className="flex items-center justify-center w-full min-w-0">
           <div
             onClick={() => !open && setOpen(true)}
-            className={`shrink-0 transition-transform hover:scale-105 ${!open ? 'cursor-pointer' : ''}`}
+            className={`w-full flex items-center justify-center transition-transform hover:scale-[1.02] ${!open ? 'cursor-pointer' : ''}`}
             title={!open ? "Expand sidebar" : undefined}
           >
-            <LogoIcon size={34} />
+            {open ? (
+              <div className="w-full flex items-center justify-center py-0.5 px-1">
+                <img
+                  src="/skypark/Primary.png"
+                  alt="SKYPARK"
+                  className="h-12 md:h-13 w-full max-w-[210px] object-contain dark:hidden transition-all"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+                <img
+                  src="/skypark/Secondary Gold.png"
+                  alt="SKYPARK"
+                  className="h-12 md:h-13 w-full max-w-[210px] object-contain hidden dark:block transition-all"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+              </div>
+            ) : (
+              <div className="w-9 h-9 rounded-xl bg-[#126973]/10 dark:bg-[#126973]/30 border border-[#126973]/20 dark:border-[#F1D8C2]/30 flex items-center justify-center p-1.5 shadow-xs">
+                <img
+                  src="/skypark/Primary.png"
+                  alt="SKYPARK"
+                  className="w-full h-full object-contain dark:hidden"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+                <img
+                  src="/skypark/Secondary Gold.png"
+                  alt="SKYPARK"
+                  className="w-full h-full object-contain hidden dark:block"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+              </div>
+            )}
           </div>
+        </div>
 
-          {open && (
-            <div className="flex flex-col min-w-0">
-              <h1 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white leading-tight">
-                SKYPARK
-              </h1>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight mt-0.5">
-                RMS
-              </p>
-            </div>
-          )}
+        {/* ── Multi-Outlet Venue Switcher (Cafe, Bar, Mart, Restaurant) ── */}
+        <div className="w-full">
+          <OutletSwitcher collapsed={!open} />
         </div>
       </SidebarHeader>
 
@@ -284,7 +323,7 @@ export default function AppSidebar() {
             sessionStorage.setItem('pos_sidebar_scroll_top', String(e.currentTarget.scrollTop))
           } catch {}
         }}
-        className={`py-3 overflow-y-auto overflow-x-hidden no-scrollbar ${open ? 'px-3 space-y-1' : 'px-1'}`}
+        className={`py-3 overflow-y-auto overflow-x-hidden no-scrollbar bg-[#FAF8F5] dark:bg-[#041012] ${open ? 'px-3 space-y-1' : 'px-1'}`}
       >
         <SidebarGroup className="p-0">
           {open && (
@@ -341,8 +380,8 @@ export default function AppSidebar() {
                                 : '!w-10 !h-10 !p-0 mx-auto rounded-lg flex items-center justify-center'
                             } ${
                               isGroupActive
-                                ? 'font-semibold text-slate-900 dark:text-white bg-slate-100/80 dark:bg-white/5 shadow-2xs'
-                                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                                ? 'font-semibold text-[#126973] dark:text-[#F1D8C2] bg-[#126973]/10 dark:bg-[#126973]/20 shadow-2xs'
+                                : 'text-slate-600 dark:text-slate-300 hover:bg-[#126973]/5 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
                             }`}
                           >
                             <div className={`flex items-center ${open ? 'gap-3 min-w-0' : 'justify-center w-full'}`}>
@@ -362,13 +401,13 @@ export default function AppSidebar() {
                       {open && (
                         <CollapsibleContent>
                           <SidebarMenuSub
-                            className="mt-1.5 ml-4.5 space-y-1 border-l border-slate-200 dark:border-slate-800 pl-3.5 slide-in-from-top-1 duration-200"
+                            className="mt-1.5 ml-4.5 space-y-1 border-l border-[#126973]/20 dark:border-[#126973]/35 pl-3.5 slide-in-from-top-1 duration-200"
                           >
                             {item.items.map((sub) => {
                               const isSubActive =
                                 sub.to.includes('?')
-                                  ? currentPath === sub.to
-                                  : location.pathname === sub.to && (!location.search || sub.to !== '/orders')
+                                   ? currentPath === sub.to
+                                   : location.pathname === sub.to && (!location.search || sub.to !== '/orders')
                               const SubIcon = sub.icon
                               return (
                                 <SidebarMenuSubItem key={sub.label}>
@@ -378,8 +417,8 @@ export default function AppSidebar() {
                                     render={<button type="button" />}
                                     className={`flex items-center gap-3 w-full text-left h-10 px-3 py-2 text-[13.5px] font-medium rounded-lg transition-all cursor-pointer ${
                                       isSubActive
-                                        ? 'text-red-700 dark:text-red-400 font-semibold bg-red-50 dark:bg-red-500/10 shadow-2xs'
-                                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-white/5'
+                                        ? 'text-[#126973] dark:text-[#F1D8C2] font-semibold bg-[#126973]/10 dark:bg-[#126973]/25 shadow-2xs'
+                                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-[#126973]/5 dark:hover:bg-white/5'
                                     }`}
                                   >
                                     {SubIcon && <SubIcon size={20} className="shrink-0 transition-transform group-hover:scale-105" />}
@@ -407,13 +446,13 @@ export default function AppSidebar() {
                       open
                         ? `flex items-center gap-3 h-11 px-3 rounded-lg text-sm ${
                             isActive
-                              ? 'rounded-r-lg font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-l-[3px] border-red-600'
-                              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                              ? 'rounded-r-lg font-semibold text-[#126973] dark:text-[#F1D8C2] bg-[#126973]/10 dark:bg-[#126973]/25 border-l-[3px] border-[#126973] dark:border-[#F1D8C2]'
+                              : 'text-slate-600 dark:text-slate-300 hover:bg-[#126973]/5 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
                           }`
                         : `!w-10 !h-10 !p-0 mx-auto rounded-lg flex items-center justify-center ${
                             isActive
-                              ? 'bg-red-500/15 text-red-600 border border-red-500/30'
-                              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                              ? 'bg-[#126973]/20 text-[#126973] dark:text-[#F1D8C2] border border-[#126973]/35 dark:border-[#F1D8C2]/35'
+                              : 'text-slate-600 dark:text-slate-300 hover:bg-[#126973]/5 dark:hover:bg-white/5'
                           }`
                     }`}
                   >

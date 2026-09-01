@@ -16,6 +16,7 @@ import {
   ArrowLeft
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import axiosClient from '../../api/axiosClient'
 import { adminApi } from '../../api/adminApi'
 import { Button } from '../common/ButtonComponent'
 import { SearchSelection } from '../plugin/components/Search-Selection-components'
@@ -320,9 +321,12 @@ function QuickAddOptionModal({ isOpen, group, onClose, onSave }) {
 const STATION_OPTIONS = ['Kitchen', 'Bar', 'Bakery', 'Grill', 'Salad Bar', 'Dessert Station']
 
 export default function MenuitemCreateView({ onClose, onSave, item, categories = [] }) {
+  const [outlets, setOutlets] = useState([])
   const [formData, setFormData] = useState({
     id: '',
     name: '',
+    outlet_id: '1',
+    barcode: '',
     category_id: '',
     sub_category: '',
     sku: '',
@@ -355,6 +359,10 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
   }, [categories])
 
   useEffect(() => {
+    axiosClient.get('/outlets').then((res) => setOutlets(res.data?.data || [])).catch(() => {})
+  }, [])
+
+  useEffect(() => {
     adminApi.getOptionGroups()
       .then(({ data }) => {
         setOptionGroupsList(data.data || [])
@@ -369,6 +377,8 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
       setFormData({
         id: item.id || '',
         name: item.name || item.title || '',
+        outlet_id: item.outlet_id ? String(item.outlet_id) : '1',
+        barcode: item.barcode || '',
         category_id: item.category_id || '',
         sub_category: item.sub_category || '',
         sku: item.sku || '',
@@ -392,6 +402,8 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
       setFormData({
         id: '',
         name: '',
+        outlet_id: '1',
+        barcode: '',
         category_id: '',
         sub_category: '',
         sku: randomSku,
@@ -476,6 +488,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
   const handleCreateAddonGroup = async (addonData) => {
     try {
       const payload = {
+        outlet_id: formData.outlet_id ? Number(formData.outlet_id) : null,
         name: addonData.group_name || addonData.name,
         type: addonData.type || 'multiple',
         is_required: false,
@@ -529,6 +542,8 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
     const payload = {
       ...formData,
       category_id: parseInt(formData.category_id),
+      outlet_id: formData.outlet_id ? parseInt(formData.outlet_id) : 1,
+      barcode: formData.barcode ? formData.barcode.trim() : null,
       price: parseFloat(formData.price),
       cost_price: parseFloat(formData.cost_price) || 0,
       stock_quantity: parseInt(formData.stock_quantity) || 0,
@@ -542,11 +557,32 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
   }
 
   const tabs = [
+    { id: 'venue', label: 'Venue & Outlet' },
     { id: 'basic', label: 'Basic Info' },
     { id: 'pricing', label: 'Pricing & Variants' },
     { id: 'kitchen', label: 'Kitchen Settings' },
     { id: 'addons', label: 'Add-ons' },
   ]
+
+  // Outlet / Venue options with badges and flags for SearchSelection
+  const outletOptions = useMemo(() => {
+    return outlets.map((o) => ({
+      value: String(o.id),
+      id: String(o.id),
+      label: o.name,
+      name: o.name,
+      badge: o.code,
+      
+      description:
+        o.type === 'cafe'
+          ? 'Cafe & Bakery'
+          : o.type === 'bar'
+          ? 'SkyBar & Lounge'
+          : o.type === 'retail'
+          ? 'Supermarket / Mart'
+          : 'Grand Restaurant',
+    }))
+  }, [outlets])
 
   // Main categories (categories without a parent_id), with sub-category count badge
   const mainCategories = useMemo(() => {
@@ -650,17 +686,18 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
           variant="primary"
           size="md"
           onClick={handleSubmit}
-          iconLeading={Sparkles}
+          iconLeading={Check}
+          className="shadow-sm"
         >
-          {item ? 'Save Changes' : '+ Create Product'}
+          {item ? 'Save Changes' : 'Save Product'}
         </Button>
       </div>
 
       {/* Main Form Container */}
       <div
-        className="rounded-[5px] w-full shadow-sm border overflow-hidden flex flex-col"
+        className="rounded-[5px] border overflow-hidden shadow-xs"
         style={{
-          background: 'var(--color-card)',
+          background: 'var(--color-surface)',
           borderColor: 'var(--color-border)',
         }}
       >
@@ -712,7 +749,57 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
           {/* Form Body */}
           <div ref={parentRef} className="flex-1 overflow-y-auto max-h-[75vh] scroll-smooth p-5 relative scrollbar-none">
             <form onSubmit={handleSubmit} className="space-y-8 max-w-3xl">
-              {/* ── TAB 1: Basic Info ──────────────────────────── */}
+              {/* ── TAB 1: Venue & Outlet Selection ──────────────────────────── */}
+              <div id="venue" className="space-y-2.5 scroll-mt-6">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  Venue &amp; Outlet
+                </h3>
+                <div
+                  className="rounded-[5px] p-6 sm:p-7 space-y-4"
+                  style={{
+                    background: 'var(--color-surface)',
+                  }}
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
+                        Venue / Outlet *
+                      </label>
+                      <SearchSelection
+                        name="outlet_id"
+                        options={outletOptions}
+                        valueKey="id"
+                        labelKey="name"
+                        value={String(formData.outlet_id || '1')}
+                        autoSelect={false}
+                        onChange={(val) => setField('outlet_id', String(val))}
+                        placeholder="Select Venue / Outlet..."
+                        searchPlaceholder="Search venue (Cafe, SkyBar, Mart, Restaurant)..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
+                        Barcode / SKU (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Scan or type barcode (e.g. 885...)"
+                        value={formData.barcode}
+                        onChange={(e) => setField('barcode', e.target.value)}
+                        className="w-full px-3.5 py-2.5 text-xs rounded-[5px] border outline-none font-mono font-bold transition-all"
+                        style={{
+                          background: 'var(--color-bg)',
+                          borderColor: 'var(--color-border)',
+                          color: 'var(--color-text)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── TAB 2: Basic Info ──────────────────────────── */}
               <div id="basic" className="space-y-2.5 scroll-mt-6">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                   Basic Info
@@ -1255,14 +1342,21 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                                       {isSelected && <Check size={12} strokeWidth={3} />}
                                     </div>
                                     <div className="min-w-0">
-                                      <p
-                                        className="text-xs font-bold truncate"
-                                        style={{
-                                          color: isSelected ? 'var(--color-500, #BF4040)' : 'var(--color-text)',
-                                        }}
-                                      >
-                                        {group.name}
-                                      </p>
+                                      <div className="flex items-center gap-1.5">
+                                        <p
+                                          className="text-xs font-bold truncate"
+                                          style={{
+                                            color: isSelected ? 'var(--color-500, #BF4040)' : 'var(--color-text)',
+                                          }}
+                                        >
+                                          {group.name}
+                                        </p>
+                                        {group.outlet && (
+                                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                            {group.outlet.name}
+                                          </span>
+                                        )}
+                                      </div>
                                       <span className="text-[10px]" style={{ color: 'var(--color-muted)' }}>
                                         {valuesCount} {valuesCount === 1 ? 'choice' : 'choices'} • {group.type === 'single' ? 'Single Choice' : 'Multiple'}
                                       </span>

@@ -213,49 +213,49 @@
   --chart-4: #CB6262;
   --chart-5: #E2A7A7;
   --radius: 0.5rem;
-  /* Sidebar — light */
-  --sidebar: #ffffff;
-  --sidebar-foreground: #0f172a;
-  --sidebar-primary: #BF4040;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f4f5f8;
-  --sidebar-accent-foreground: #0f172a;
-  --sidebar-border: #e2e8f0;
-  --sidebar-ring: #BF4040;
+  /* Sidebar — light (SKYPARK Warm Ivory & Teal) */
+  --sidebar: #FAF8F5;
+  --sidebar-foreground: #072328;
+  --sidebar-primary: #126973;
+  --sidebar-primary-foreground: #F8F7F4;
+  --sidebar-accent: #f1ede4;
+  --sidebar-accent-foreground: #126973;
+  --sidebar-border: rgba(18, 105, 115, 0.15);
+  --sidebar-ring: #126973;
 }
 
-/* ── Dark Theme — matches project's existing dark crimson palette ── */
+/* ── Dark Theme — SKYPARK Deep Noir Teal & Champagne Gold palette ── */
 .dark {
-  --background: #0b0d13;
-  --foreground: #f8fafc;
-  --card: #181c2b;
-  --card-foreground: #f8fafc;
-  --popover: #181c2b;
-  --popover-foreground: #f8fafc;
-  --primary: #BF4040;
-  --primary-foreground: #ffffff;
-  --secondary: #23283b;
-  --secondary-foreground: #f8fafc;
-  --muted: #23283b;
-  --muted-foreground: #64748b;
-  --accent: #BF4040;
-  --accent-foreground: #ffffff;
+  --background: #041012;
+  --foreground: #F8F7F4;
+  --card: #082126;
+  --card-foreground: #F8F7F4;
+  --popover: #082126;
+  --popover-foreground: #F8F7F4;
+  --primary: #126973;
+  --primary-foreground: #F1D8C2;
+  --secondary: #0c2b31;
+  --secondary-foreground: #F8F7F4;
+  --muted: #0c2b31;
+  --muted-foreground: #7ecbd4;
+  --accent: #126973;
+  --accent-foreground: #F1D8C2;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: #23283b;
-  --input: #23283b;
-  --ring: #BF4040;
-  --chart-1: #BF4040;
-  --chart-2: #9D3434;
-  --chart-3: #8A2E2E;
-  --chart-4: #CB6262;
-  --chart-5: #E2A7A7;
-  /* Sidebar — dark */
-  --sidebar: #12151f;
-  --sidebar-foreground: #f8fafc;
-  --sidebar-primary: #BF4040;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #181c2b;
-  --sidebar-accent-foreground: #f8fafc;
-  --sidebar-border: #23283b;
-  --sidebar-ring: #BF4040;
+  --border: rgba(18, 105, 115, 0.35);
+  --input: rgba(18, 105, 115, 0.35);
+  --ring: #126973;
+  --chart-1: #126973;
+  --chart-2: #258a97;
+  --chart-3: #F1D8C2;
+  --chart-4: #d69f70;
+  --chart-5: #7ecbd4;
+  /* Sidebar — dark (SKYPARK Deep Noir Teal & Gold) */
+  --sidebar: #041012;
+  --sidebar-foreground: #F8F7F4;
+  --sidebar-primary: #126973;
+  --sidebar-primary-foreground: #F1D8C2;
+  --sidebar-accent: #072328;
+  --sidebar-accent-foreground: #F1D8C2;
+  --sidebar-border: rgba(18, 105, 115, 0.35);
+  --sidebar-ring: #126973;
 }

@@ -295,14 +295,14 @@ func (h *Handler) GetCustomerMenu(c *gin.Context) {
 		return
 	}
 
-	cats, _, err := h.productRepo.ListCategories("", pagination.Params{Limit: 200, Offset: 0})
+	cats, _, err := h.productRepo.ListCategories("", nil, pagination.Params{Limit: 200, Offset: 0})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	isAvail := true
-	prods, _, err := h.productRepo.ListProducts("", nil, &isAvail, pagination.Params{Limit: 200, Offset: 0})
+	prods, _, err := h.productRepo.ListProducts("", nil, nil, &isAvail, pagination.Params{Limit: 200, Offset: 0})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

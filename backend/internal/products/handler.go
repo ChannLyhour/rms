@@ -21,8 +21,14 @@ func NewHandler(svc Service) *Handler {
 func (h *Handler) ListCategories(c *gin.Context) {
 	p := pagination.GetPagination(c)
 	search := c.Query("search")
+	var outletID *uint64
+	if outStr := c.Query("outlet_id"); outStr != "" && outStr != "all" {
+		if outID, err := strconv.ParseUint(outStr, 10, 64); err == nil {
+			outletID = &outID
+		}
+	}
 
-	cats, total, err := h.svc.ListCategories(search, p)
+	cats, total, err := h.svc.ListCategories(search, outletID, p)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -109,13 +115,20 @@ func (h *Handler) ListProducts(c *gin.Context) {
 		}
 	}
 
+	var outletID *uint64
+	if outStr := c.Query("outlet_id"); outStr != "" && outStr != "all" {
+		if outID, err := strconv.ParseUint(outStr, 10, 64); err == nil {
+			outletID = &outID
+		}
+	}
+
 	var isAvailable *bool
 	if availStr := c.Query("is_available"); availStr != "" {
 		avail := availStr == "true"
 		isAvailable = &avail
 	}
 
-	prods, total, err := h.svc.ListProducts(search, categoryID, isAvailable, p)
+	prods, total, err := h.svc.ListProducts(search, categoryID, outletID, isAvailable, p)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -198,8 +211,14 @@ func (h *Handler) DeleteProduct(c *gin.Context) {
 func (h *Handler) ListOptionGroups(c *gin.Context) {
 	p := pagination.GetPagination(c)
 	search := c.Query("search")
+	var outletID *uint64
+	if outStr := c.Query("outlet_id"); outStr != "" && outStr != "all" {
+		if outID, err := strconv.ParseUint(outStr, 10, 64); err == nil {
+			outletID = &outID
+		}
+	}
 
-	groups, total, err := h.svc.ListOptionGroups(search, p)
+	groups, total, err := h.svc.ListOptionGroups(search, outletID, p)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

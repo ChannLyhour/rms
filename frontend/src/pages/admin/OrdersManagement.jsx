@@ -34,7 +34,8 @@ import {
   RotateCcw,
   UserCheck,
   LayoutGrid,
-  BellRing
+  BellRing,
+  Building2
 } from 'lucide-react'
 import {
   AllOrdersStatusIcon,
@@ -55,6 +56,8 @@ export default function OrdersManagement() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [orders, setOrders] = useState([])
+  const [outlets, setOutlets] = useState([])
+  const [outletFilter, setOutletFilter] = useState('all')
   const [loading, setLoading] = useState(false)
   const [updatingId, setUpdatingId] = useState(null)
   const [search, setSearch] = useState('')
@@ -63,6 +66,10 @@ export default function OrdersManagement() {
   const [typeFilter, setTypeFilter] = useState('all')
   const [page, setPage] = useState(1)
   const pageSize = 10
+
+  useEffect(() => {
+    client.get('/outlets').then((res) => setOutlets(res.data?.data || [])).catch(() => {})
+  }, [])
 
   useEffect(() => {
     const q = searchParams.get('status') || 'all'
@@ -219,9 +226,10 @@ export default function OrdersManagement() {
         : ps === paymentFilter
 
       const matchType = typeFilter === 'all' ? true : o.order_type === typeFilter
-      return matchSearch && matchStatus && matchPayment && matchType
+      const matchOutlet = outletFilter === 'all' ? true : String(o.outlet_id) === String(outletFilter)
+      return matchSearch && matchStatus && matchPayment && matchType && matchOutlet
     })
-  }, [orders, search, statusFilter, paymentFilter, typeFilter])
+  }, [orders, search, statusFilter, paymentFilter, typeFilter, outletFilter])
 
   // Sorted list
   const sortedOrders = useMemo(() => {
@@ -341,6 +349,100 @@ export default function OrdersManagement() {
           </div>
         </div>
 
+        {/* ── Multi-Venue Filter Tabs ── */}
+        <div className="relative">
+          {/* Fade effect on mobile */}
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[var(--color-bg)] to-transparent pointer-events-none z-10 sm:hidden" />
+
+          <div
+            className="flex items-center gap-1 overflow-x-auto no-scrollbar rounded-xl p-1 border"
+            style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              borderColor: 'var(--color-border)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setOutletFilter('all')}
+              className={`inline-flex items-center gap-2.5 h-10 px-3.5 rounded-xl text-sm transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                outletFilter === 'all'
+                  ? 'shadow-xs font-semibold'
+                  : 'hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
+              style={
+                outletFilter === 'all'
+                  ? {
+                      background: 'var(--color-surface, #1e2230)',
+                      color: 'var(--color-text, #ffffff)',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                      border: '1px solid var(--color-border)',
+                    }
+                  : {
+                      color: 'var(--color-muted, #94a3b8)',
+                    }
+              }
+            >
+              <Building2 size={18} className="shrink-0 text-[#126973] dark:text-[#F1D8C2]" />
+              <span>All Venues</span>
+              <span
+                className="inline-flex items-center justify-center rounded-lg px-2 h-5 text-[11px] font-semibold"
+                style={{
+                  background: outletFilter === 'all'
+                    ? 'rgba(18, 105, 115, 0.18)'
+                    : 'rgba(255, 255, 255, 0.06)',
+                  color: outletFilter === 'all' ? 'var(--color-500, #126973)' : 'var(--color-muted, #94a3b8)',
+                }}
+              >
+                {orders.length}
+              </span>
+            </button>
+
+            {outlets.map((o) => {
+              const count = orders.filter((ord) => String(ord.outlet_id) === String(o.id)).length
+              const isSelected = String(outletFilter) === String(o.id)
+              const icon = o.type === 'cafe' ? '☕' : o.type === 'bar' ? '🍸' : o.type === 'retail' ? '🛒' : '🍽️'
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => setOutletFilter(String(o.id))}
+                  className={`inline-flex items-center gap-2.5 h-10 px-3.5 rounded-xl text-sm transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                    isSelected
+                      ? 'shadow-xs font-semibold'
+                      : 'hover:bg-black/5 dark:hover:bg-white/5'
+                  }`}
+                  style={
+                    isSelected
+                      ? {
+                          background: 'var(--color-surface, #1e2230)',
+                          color: 'var(--color-text, #ffffff)',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                          border: '1px solid var(--color-border)',
+                        }
+                      : {
+                          color: 'var(--color-muted, #94a3b8)',
+                        }
+                  }
+                >
+                  <span className="text-base shrink-0">{icon}</span>
+                  <span>{o.name}</span>
+                  <span
+                    className="inline-flex items-center justify-center rounded-lg px-2 h-5 text-[11px] font-semibold"
+                    style={{
+                      background: isSelected
+                        ? 'rgba(18, 105, 115, 0.18)'
+                        : 'rgba(255, 255, 255, 0.06)',
+                      color: isSelected ? 'var(--color-500, #126973)' : 'var(--color-muted, #94a3b8)',
+                    }}
+                  >
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         {/* ── Status Tabs ── */}
         <div className="relative">
           {/* Fade effect on mobile */}
@@ -412,7 +514,7 @@ export default function OrdersManagement() {
                       background: isActive
                         ? 'rgba(239, 68, 68, 0.15)'
                         : 'rgba(255, 255, 255, 0.06)',
-                      color: isActive ? '#ef4444' : 'var(--color-muted, #94a3b8)',
+                      color: isActive ? 'var(--color-500, #BF4040)' : 'var(--color-muted, #94a3b8)',
                     }}
                   >
                     {tab.count}
@@ -425,7 +527,7 @@ export default function OrdersManagement() {
 
         {/* ── TableCard Component Integration ── */}
         <TableCard.Root>
-          <Table aria-label="Orders and Transactions" sortDescriptor={sortDescriptor}>
+          <Table aria-label="Orders Management Table" sortDescriptor={sortDescriptor}>
             <Table.Header>
               <Table.Head
                 id="order_number"
@@ -472,6 +574,7 @@ export default function OrdersManagement() {
                 const totalItems = (ord.items || []).reduce((acc, i) => acc + (i.quantity || 1), 0)
                 const badge = getStatusBadge(ord.status)
                 const tableNum = ord.table_session?.table?.table_number || ord.table_session?.table_id
+                const outlet = outlets.find((o) => String(o.id) === String(ord.outlet_id))
 
                 return (
                   <Table.Row key={ord.id} id={ord.id}>
@@ -480,16 +583,18 @@ export default function OrdersManagement() {
                       <div className="flex items-center gap-2.5">
                         <Avatar initials={`#${ord.id}`} size="sm" />
                         <div>
-                          <span className="font-mono font-black text-xs block leading-tight text-[var(--color-500,#BF4040)]">
-                            {ord.order_number || `ORD-${String(ord.id).padStart(5, '0')}`}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-black text-xs block leading-tight text-[var(--color-500,#BF4040)]">
+                              {ord.order_number || `ORD-${String(ord.id).padStart(5, '0')}`}
+                            </span>
+                            
+                          </div>
                           <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                             {ord.accepted_role ? (
                               <span
                                 className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-[5px] capitalize"
                                 style={{
                                   color: '#16a34a',
-                                  
                                 }}
                               >
                                 <UserCheck size={10} className="shrink-0" strokeWidth={3} />

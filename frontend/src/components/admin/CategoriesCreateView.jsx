@@ -14,9 +14,11 @@ import {
   FolderTree,
   UploadCloud,
   CornerDownRight,
-  Folder
+  Folder,
+  Building2
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import axiosClient from '../../api/axiosClient'
 import { adminApi } from '../../api/adminApi'
 import { Button } from '../common/ButtonComponent'
 import { CatalogCard } from '../plugin/components/cards-components'
@@ -53,7 +55,7 @@ function CreateSubCatModal({ isOpen, parentCategory, onClose, onSave }) {
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 transition-colors"
+            className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -86,7 +88,7 @@ function CreateSubCatModal({ isOpen, parentCategory, onClose, onSave }) {
           </div>
           <button
             type="submit"
-            className="w-full py-2.5 rounded-[5px] text-xs font-bold text-white shadow-sm transition-all hover:opacity-90 active:scale-95"
+            className="w-full py-2.5 rounded-[5px] text-xs font-bold text-white shadow-sm transition-all hover:opacity-90 active:scale-95 cursor-pointer"
             style={{
               background: 'linear-gradient(135deg, var(--color-500, #BF4040), var(--color-600, #9D3434))',
             }}
@@ -106,7 +108,9 @@ export default function CategoriesCreateView({
   onSave,
   onQuickCreateSubCategory,
 }) {
+  const [outlets, setOutlets] = useState([])
   const [formData, setFormData] = useState({
+    outlet_id: '',
     parent_id: null,
     name: '',
     description: '',
@@ -120,8 +124,13 @@ export default function CategoriesCreateView({
   const [isSubModalOpen, setIsSubModalOpen] = useState(false)
 
   useEffect(() => {
+    axiosClient.get('/outlets').then((res) => setOutlets(res.data?.data || [])).catch(() => {})
+  }, [])
+
+  useEffect(() => {
     if (item) {
       setFormData({
+        outlet_id: item.outlet_id ? String(item.outlet_id) : '',
         parent_id: item.parent_id ? Number(item.parent_id) : null,
         name: item.name || '',
         description: item.description || '',
@@ -131,6 +140,7 @@ export default function CategoriesCreateView({
       })
     } else {
       setFormData({
+        outlet_id: '',
         parent_id: null,
         name: '',
         description: '',
@@ -144,6 +154,38 @@ export default function CategoriesCreateView({
   const setField = (field, val) => {
     setFormData((prev) => ({ ...prev, [field]: val }))
   }
+
+  // Outlet / Venue options with badges and flags for SearchSelection
+  const outletOptions = useMemo(() => {
+    const list = [
+      {
+        value: '',
+        id: '',
+        label: '🏢 All Venues (Global / Shared)',
+        name: '🏢 All Venues (Global / Shared)',
+        badge: 'ALL',
+        description: 'Appears across all SKYPARK venues and menus',
+      },
+    ]
+    outlets.forEach((o) => {
+      list.push({
+        value: String(o.id),
+        id: String(o.id),
+        label: o.name,
+        name: o.name,
+        badge: o.code,
+        description:
+          o.type === 'cafe'
+            ? 'Cafe & Bakery'
+            : o.type === 'bar'
+            ? 'SkyBar & Lounge'
+            : o.type === 'retail'
+            ? 'Supermarket / Mart'
+            : 'Grand Restaurant',
+      })
+    })
+    return list
+  }, [outlets])
 
   // Filter available parent categories (cannot select itself)
   const parentCategoryOptions = useMemo(() => {
@@ -213,6 +255,7 @@ export default function CategoriesCreateView({
     }
 
     const payload = {
+      outlet_id: formData.outlet_id ? Number(formData.outlet_id) : null,
       parent_id: formData.parent_id ? Number(formData.parent_id) : null,
       name: formData.name.trim(),
       description: formData.description.trim(),
@@ -232,6 +275,7 @@ export default function CategoriesCreateView({
 
     try {
       await adminApi.createCategory({
+        outlet_id: item.outlet_id ? Number(item.outlet_id) : null,
         parent_id: item.id,
         name: subCatName,
         description: '',
@@ -252,6 +296,7 @@ export default function CategoriesCreateView({
   const parentName = categories.find((c) => c.id === formData.parent_id)?.name
 
   const tabs = [
+    { id: 'venue', label: 'Venue & Outlet' },
     { id: 'basic', label: 'Basic Info' },
     ...(isEdit && !item?.parent_id
       ? [{ id: 'subcategories', label: `Sub-Categories (${existingSubCategories.length})` }]
@@ -269,7 +314,7 @@ export default function CategoriesCreateView({
           onClick={onClose}
           iconLeading={ArrowLeft}
         >
-          Cancel & Return
+          Cancel &amp; Return
         </Button>
 
         <Button
@@ -308,7 +353,9 @@ export default function CategoriesCreateView({
                 ? 'Add New Sub-Category'
                 : 'Add New Category'}
             </h3>
-            
+            <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>
+              Configure category details, venue assignment, hierarchy, and visual display cards.
+            </p>
           </div>
         </div>
 
@@ -331,7 +378,7 @@ export default function CategoriesCreateView({
                   key={t.id}
                   type="button"
                   data-scrollspy-anchor={t.id}
-                  className="inline-flex items-center justify-start whitespace-nowrap rounded-[5px] text-xs sm:text-sm font-semibold transition-all focus-visible:outline-none border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-800 dark:hover:text-slate-50 h-10 px-4 py-2 text-slate-700 dark:text-slate-300 data-[active=true]:bg-slate-900 data-[active=true]:text-white data-[active=true]:border-slate-900 dark:data-[active=true]:bg-slate-50 dark:data-[active=true]:text-slate-900 dark:data-[active=true]:border-slate-50 shadow-2xs"
+                  className="inline-flex items-center justify-start whitespace-nowrap rounded-[5px] text-xs sm:text-sm font-semibold transition-all focus-visible:outline-none border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-800 dark:hover:text-slate-50 h-10 px-4 py-2 text-slate-700 dark:text-slate-300 data-[active=true]:bg-slate-900 data-[active=true]:text-white data-[active=true]:border-slate-900 dark:data-[active=true]:bg-slate-50 dark:data-[active=true]:text-slate-900 dark:data-[active=true]:border-slate-50 shadow-2xs cursor-pointer"
                 >
                   {t.label}
                 </button>
@@ -345,6 +392,42 @@ export default function CategoriesCreateView({
             className="flex-1 overflow-y-auto max-h-[75vh] scroll-smooth p-5 relative scrollbar-none"
           >
             <form onSubmit={handleSubmit} className="space-y-8 max-w-3xl">
+              {/* ── TAB: Venue & Outlet ──────────────────────────── */}
+              <div id="venue" className="space-y-2.5 scroll-mt-6">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  Venue &amp; Outlet
+                </h3>
+                <div
+                  className="rounded-[5px] p-6 sm:p-7 space-y-4"
+                  style={{
+                    background: 'var(--color-surface)',
+                  }}
+                >
+                  <div>
+                    <label
+                      className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                      style={{ color: 'var(--color-muted)' }}
+                    >
+                      Assigned Venue / Location Scope
+                    </label>
+                    <SearchSelection
+                      name="outlet_id"
+                      options={outletOptions}
+                      valueKey="id"
+                      labelKey="name"
+                      value={String(formData.outlet_id || '')}
+                      autoSelect={false}
+                      onChange={(val) => setField('outlet_id', String(val))}
+                      placeholder="Select Venue Assignment..."
+                      searchPlaceholder="Search venue (Cafe, SkyBar, Mart, Restaurant)..."
+                    />
+                    <p className="text-[11px] mt-1.5" style={{ color: 'var(--color-muted)' }}>
+                      Assigning a venue limits this category and its menu items to POS terminals and QR menus for that specific venue.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* ── TAB 1: Basic Info ──────────────────────────── */}
               <div id="basic" className="space-y-2.5 scroll-mt-6">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
@@ -356,133 +439,21 @@ export default function CategoriesCreateView({
                     background: 'var(--color-surface)',
                   }}
                 >
-                  {/* Image Upload & Title */}
-                  <div className="flex flex-col sm:flex-row items-start gap-6">
-                    {/* Image Box */}
-                    <div
-                      className="w-32 h-32 rounded-[5px] border-2 border-dashed flex flex-col items-center justify-center shrink-0 overflow-hidden relative group transition-colors"
-                      style={{
-                        background: 'var(--color-bg)',
-                        borderColor: 'var(--color-border)',
-                      }}
-                    >
-                      {isUploadingImage && (
-                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white z-10">
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mb-1" />
-                          <span className="text-[10px] font-bold">Uploading...</span>
-                        </div>
-                      )}
-
-                      {formData.image_url ? (
-                        <>
-                          <img
-                            src={formData.image_url}
-                            alt="Category preview"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.style.display = 'none'
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setField('image_url', '')}
-                              className="w-8 h-8 rounded-[5px] bg-white text-rose-600 flex items-center justify-center hover:bg-rose-50 shadow-sm transition-transform active:scale-90"
-                              title="Remove Photo"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div
-                            className="w-9 h-9 rounded-[5px] flex items-center justify-center mb-1.5"
-                            style={{
-                              background: 'rgba(191, 64, 64, 0.08)',
-                              color: 'var(--color-500, #BF4040)',
-                            }}
-                          >
-                            <UploadCloud size={18} />
-                          </div>
-                          <span className="text-[11px] font-bold" style={{ color: 'var(--color-text)' }}>
-                            Upload Photo
-                          </span>
-                          <span className="text-[9px]" style={{ color: 'var(--color-muted)' }}>
-                            PNG, JPG up to 5MB
-                          </span>
-                        </>
-                      )}
-
-                      {!formData.image_url && (
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageFile}
-                          className="absolute inset-0 opacity-0 cursor-pointer"
-                          title="Upload Image File"
-                        />
-                      )}
-                    </div>
-
-                    {/* Title & Hierarchy Parent */}
-                    <div className="flex-1 space-y-4 w-full">
-                      {/* Category Name */}
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                          Category Name *
-                        </label>
-                        <input
-                          required
-                          type="text"
-                          value={formData.name}
-                          onChange={(e) => setField('name', e.target.value)}
-                          placeholder="e.g "
-                          className="w-full px-3.5 py-2.5 text-xs rounded-[5px] border outline-none font-bold transition-colors"
-                          style={{
-                            background: 'var(--color-bg)',
-                            borderColor: 'var(--color-border)',
-                            color: 'var(--color-text)',
-                          }}
-                        />
-                      </div>
-
-                      {/* Parent Category (Sub-Category Selector) */}
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                          Parent Category (Hierarchy)
-                        </label>
-                        <SearchSelection
-                          name="parent_id"
-                          options={parentCategoryOptions}
-                          valueKey="id"
-                          labelKey="name"
-                          value={formData.parent_id}
-                          autoSelect={false}
-                          isClearable={true}
-                          onChange={(val) => {
-                            setField('parent_id', val ? Number(val) : null)
-                          }}
-                          placeholder="None (Main Top-Level Category)"
-                          searchPlaceholder="Search parent category..."
-                          emptyMessage="No parent categories found"
-                        />
-                       
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Description */}
+                  {/* Category Name */}
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                      Description
+                    <label
+                      className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                      style={{ color: 'var(--color-muted)' }}
+                    >
+                      Category Name *
                     </label>
-                    <textarea
-                      rows={3}
-                      value={formData.description}
-                      onChange={(e) => setField('description', e.target.value)}
-                      placeholder="e.g"
-                      className="w-full px-3.5 py-2.5 text-xs rounded-[5px] border outline-none resize-none transition-colors"
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setField('name', e.target.value)}
+                      placeholder="e.g. Hot Drinks, Cold Beverages, Pizza & Pasta"
+                      className="w-full px-4 py-2.5 text-xs rounded-[5px] border outline-none font-bold transition-all"
                       style={{
                         background: 'var(--color-bg)',
                         borderColor: 'var(--color-border)',
@@ -491,192 +462,237 @@ export default function CategoriesCreateView({
                     />
                   </div>
 
+                  {/* Parent Category Selector */}
+                  <div>
+                    <label
+                      className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                      style={{ color: 'var(--color-muted)' }}
+                    >
+                      Parent Category (Optional)
+                    </label>
+                    <select
+                      value={formData.parent_id || ''}
+                      onChange={(e) =>
+                        setField('parent_id', e.target.value ? Number(e.target.value) : null)
+                      }
+                      className="w-full px-3.5 py-2.5 text-xs rounded-[5px] border outline-none font-medium transition-colors"
+                      style={{
+                        background: 'var(--color-bg)',
+                        borderColor: 'var(--color-border)',
+                        color: 'var(--color-text)',
+                      }}
+                    >
+                      <option value="">None (Top-Level Main Category)</option>
+                      {parentCategoryOptions.map((pc) => (
+                        <option key={pc.id} value={pc.id}>
+                          📁 {pc.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label
+                      className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                      style={{ color: 'var(--color-muted)' }}
+                    >
+                      Description
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={formData.description}
+                      onChange={(e) => setField('description', e.target.value)}
+                      placeholder="Brief description of this menu category..."
+                      className="w-full px-4 py-2.5 text-xs rounded-[5px] border outline-none resize-none transition-all"
+                      style={{
+                        background: 'var(--color-bg)',
+                        borderColor: 'var(--color-border)',
+                        color: 'var(--color-text)',
+                      }}
+                    />
+                  </div>
+
+                  {/* Image Upload Area */}
+                  <div>
+                    <label
+                      className="block text-xs font-bold uppercase tracking-wider mb-2"
+                      style={{ color: 'var(--color-muted)' }}
+                    >
+                      Cover Image
+                    </label>
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      {/* Thumbnail Preview */}
+                      <div
+                        className="w-24 h-24 rounded-[6px] border-2 border-dashed flex items-center justify-center relative overflow-hidden shrink-0 group transition-all"
+                        style={{
+                          background: 'var(--color-bg)',
+                          borderColor: 'var(--color-border)',
+                        }}
+                      >
+                        {formData.image_url ? (
+                          <>
+                            <img
+                              src={formData.image_url}
+                              alt="preview"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none'
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <button
+                                type="button"
+                                onClick={() => setField('image_url', '')}
+                                className="p-1.5 rounded-[5px] bg-red-600 text-white hover:bg-red-700 cursor-pointer shadow-sm"
+                                title="Remove photo"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <ImageIcon size={22} className="text-slate-400" />
+                        )}
+                      </div>
+
+                      {/* Upload Controls */}
+                      <div className="flex-1 space-y-2">
+                        <label className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-[5px] border cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-xs">
+                          <UploadCloud size={14} />
+                          <span>{isUploadingImage ? 'Uploading...' : 'Choose Image File'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageFile}
+                            className="hidden"
+                          />
+                        </label>
+                        <p className="text-[11px]" style={{ color: 'var(--color-muted)' }}>
+                          Recommended: 800x600 PNG or JPG under 5MB.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Sort Order & Status */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                    {/* Sort Order */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                        Display Sort Order
+                      <label
+                        className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                        style={{ color: 'var(--color-muted)' }}
+                      >
+                        Sort Display Order
                       </label>
                       <input
                         type="number"
                         min="0"
                         value={formData.sort_order}
                         onChange={(e) => setField('sort_order', e.target.value)}
-                        placeholder="0"
-                        className="w-full px-3.5 py-2.5 text-xs rounded-[5px] border outline-none font-mono font-bold transition-colors"
+                        className="w-full px-3.5 py-2 text-xs rounded-[5px] border outline-none font-mono"
                         style={{
                           background: 'var(--color-bg)',
                           borderColor: 'var(--color-border)',
                           color: 'var(--color-text)',
                         }}
                       />
-                      
                     </div>
 
-                    {/* Active / Hidden Status Toggle */}
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                        Menu Visibility
+                    <div className="flex items-center pt-5">
+                      <label className="flex items-center gap-2.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.is_active}
+                          onChange={(e) => setField('is_active', e.target.checked)}
+                          className="w-4 h-4 rounded-[4px] accent-[var(--color-500,#BF4040)]"
+                        />
+                        <span className="text-xs font-bold" style={{ color: 'var(--color-text)' }}>
+                          Active &amp; Visible on POS / Menus
+                        </span>
                       </label>
-                      <button
-                        type="button"
-                        onClick={() => setField('is_active', !formData.is_active)}
-                        className={`w-full px-3.5 py-2.5 rounded-[5px] border flex items-center justify-between transition-all ${
-                          formData.is_active
-                            ? 'border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20'
-                            : 'border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          {formData.is_active ? (
-                            <Eye size={15} className="text-emerald-600 dark:text-emerald-400" />
-                          ) : (
-                            <EyeOff size={15} className="text-slate-400" />
-                          )}
-                          <span
-                            className={`text-xs font-bold ${
-                              formData.is_active
-                                ? 'text-emerald-700 dark:text-emerald-400'
-                                : 'text-slate-600 dark:text-slate-400'
-                            }`}
-                          >
-                            {formData.is_active ? 'Active & Visible' : 'Hidden from Menu'}
-                          </span>
-                        </div>
-
-                        {/* Switch pill */}
-                        <div
-                          className={`w-8 h-4.5 rounded-full transition-colors relative ${
-                            formData.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
-                          }`}
-                        >
-                          <div
-                            className={`w-3.5 h-3.5 rounded-full bg-white transition-transform absolute top-0.5 ${
-                              formData.is_active ? 'left-4' : 'left-0.5'
-                            }`}
-                          />
-                        </div>
-                      </button>
-                    
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* ── TAB 2: Sub-Categories (When editing a main category) ── */}
+              {/* ── TAB 2: Sub-Categories List (Edit mode only) ── */}
               {isEdit && !item?.parent_id && (
                 <div id="subcategories" className="space-y-2.5 scroll-mt-6">
                   <div className="flex items-center justify-between">
                     <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                      Sub-Categories
+                      Sub-Categories ({existingSubCategories.length})
                     </h3>
                     <button
                       type="button"
                       onClick={() => setIsSubModalOpen(true)}
-                      className="text-xs font-bold text-[var(--color-500,#BF4040)] hover:underline flex items-center gap-1"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-white px-3 py-1.5 rounded-[5px] shadow-sm hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+                      style={{
+                        background: 'linear-gradient(135deg, var(--color-500, #BF4040), var(--color-600, #9D3434))',
+                      }}
                     >
-                      <Plus size={14} /> Add Sub-Category
+                      <Plus size={13} />
+                      <span>Add Sub-Category</span>
                     </button>
                   </div>
 
                   <div
-                    className="rounded-[5px] p-6 sm:p-7 space-y-4"
+                    className="rounded-[5px] p-6 sm:p-7 space-y-3"
                     style={{
                       background: 'var(--color-surface)',
                     }}
                   >
                     {existingSubCategories.length > 0 ? (
-                      <div className="divide-y border rounded-[5px] overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
-                        {existingSubCategories.map((sub, idx) => (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {existingSubCategories.map((sub) => (
                           <div
                             key={sub.id}
-                            className="p-3.5 flex items-center justify-between transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-                            style={{ background: 'var(--color-card)' }}
+                            className="flex items-center justify-between p-3 rounded-[5px] border shadow-2xs"
+                            style={{
+                              background: 'var(--color-bg)',
+                              borderColor: 'var(--color-border)',
+                            }}
                           >
-                            <div className="flex items-center gap-3">
-                              <div
-                                className="w-8 h-8 rounded-[5px] flex items-center justify-center font-bold text-white shadow-2xs shrink-0"
-                                style={{
-                                  background: 'linear-gradient(135deg, #64748b, #475569)',
-                                }}
-                              >
-                                {sub.image_url ? (
-                                  <img src={sub.image_url} alt={sub.name} className="w-full h-full object-cover rounded-[5px]" />
-                                ) : (
-                                  <CornerDownRight size={14} />
-                                )}
-                              </div>
-                              <div>
-                                <p className="font-bold text-xs" style={{ color: 'var(--color-text)' }}>
-                                  {sub.name}
-                                </p>
-                                <p className="text-[10px]" style={{ color: 'var(--color-muted)' }}>
-                                  Sort #{sub.sort_order || idx + 1} • {sub.is_active ? 'Active' : 'Hidden'}
-                                </p>
-                              </div>
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <CornerDownRight size={14} className="text-slate-400 shrink-0" />
+                              <span className="text-xs font-bold truncate" style={{ color: 'var(--color-text)' }}>
+                                {sub.name}
+                              </span>
                             </div>
-
-                            <span
-                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                                sub.is_active
-                                  ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                                  : 'bg-slate-500/10 text-slate-500 border-slate-500/20'
-                              }`}
-                            >
-                              {sub.is_active ? 'Active' : 'Hidden'}
+                            <span className="text-[10px] font-mono text-slate-400">
+                              Order #{sub.sort_order}
                             </span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-8 rounded-[5px] border border-dashed" style={{ borderColor: 'var(--color-border)' }}>
-                        <Folder size={32} className="mx-auto mb-2 opacity-30 text-[var(--color-muted)]" />
-                        <p className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
-                          No sub-categories yet
-                        </p>
-                        <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-muted)' }}>
-                          Break down &ldquo;{formData.name || 'this category'}&rdquo; into specific sub-groups.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setIsSubModalOpen(true)}
-                          className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-xs font-bold text-white shadow-2xs"
-                          style={{
-                            background: 'linear-gradient(135deg, var(--color-500, #BF4040), var(--color-600, #9D3434))',
-                          }}
-                        >
-                          <Plus size={13} /> Add First Sub-Category
-                        </button>
+                      <div className="text-center py-6 text-xs text-[var(--color-muted)]">
+                        No sub-categories linked yet. Click &ldquo;+ Add Sub-Category&rdquo; above.
                       </div>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* ── TAB 3: Preview & Display ──────────────────── */}
+              {/* ── TAB 3: Preview & Display ──────────────────────────── */}
               <div id="preview" className="space-y-2.5 scroll-mt-6">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                  Preview & Display
+                  Catalog Card Preview
                 </h3>
                 <div
-                  className="rounded-[5px] p-6 sm:p-7 space-y-6"
+                  className="rounded-[5px] p-6 sm:p-7 flex items-center justify-center"
                   style={{
                     background: 'var(--color-surface)',
                   }}
                 >
-
-                  <div className="max-w-xs mx-auto">
+                  <div className="w-full max-w-sm">
                     <CatalogCard
-                      title={formData.name || 'Category Name'}
-                      subtitle={isSubCategory ? `↳ Sub of: ${parentName || 'Parent'}` : `Main Category • #${formData.sort_order || 0}`}
-                      description={formData.description || 'No description provided for this category.'}
-                      imageUrl={formData.image_url}
-                      isActive={formData.is_active}
-                      isSub={isSubCategory}
-                      parentName={parentName}
-                      sortOrder={formData.sort_order}
-                      subCount={existingSubCategories.length}
+                      item={{
+                        id: formData.parent_id || 'preview',
+                        title: formData.name || 'Category Name',
+                        image: formData.image_url || 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400&auto=format&fit=crop&q=80',
+                        description: formData.description || 'Category description will appear here on POS and menus.',
+                        itemCount: existingSubCategories.length || 0,
+                      }}
                     />
                   </div>
                 </div>
@@ -686,7 +702,6 @@ export default function CategoriesCreateView({
         </div>
       </div>
 
-      {/* Sub Category Quick Modal */}
       <CreateSubCatModal
         isOpen={isSubModalOpen}
         parentCategory={item}

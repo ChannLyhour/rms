@@ -7,21 +7,21 @@ import (
 
 type Repository interface {
 	// Categories
-	ListCategories(search string, p pagination.Params) ([]Category, int64, error)
+	ListCategories(search string, outletID *uint64, p pagination.Params) ([]Category, int64, error)
 	GetCategoryByID(id uint64) (*Category, error)
 	CreateCategory(c *Category) error
 	UpdateCategory(id uint64, c *Category) error
 	DeleteCategory(id uint64) error
 
 	// Products
-	ListProducts(search string, categoryID *uint64, isAvailable *bool, p pagination.Params) ([]Product, int64, error)
+	ListProducts(search string, categoryID *uint64, outletID *uint64, isAvailable *bool, p pagination.Params) ([]Product, int64, error)
 	GetProductByID(id uint64) (*Product, error)
 	CreateProduct(p *Product, optionGroupIDs []uint64) error
 	UpdateProduct(p *Product, optionGroupIDs []uint64) error
 	DeleteProduct(id uint64) error
 
 	// Option Groups & Values
-	ListOptionGroups(search string, p pagination.Params) ([]OptionGroup, int64, error)
+	ListOptionGroups(search string, outletID *uint64, p pagination.Params) ([]OptionGroup, int64, error)
 	GetOptionGroupByID(id uint64) (*OptionGroup, error)
 	CreateOptionGroup(g *OptionGroup) error
 	UpdateOptionGroup(id uint64, g *OptionGroup) error
@@ -40,13 +40,20 @@ func NewRepository(db *gorm.DB) Repository {
 
 // ── Categories ───────────────────────────────────────────────────
 
-func (r *repository) ListCategories(search string, p pagination.Params) ([]Category, int64, error) {
+func (r *repository) ListCategories(search string, outletID *uint64, p pagination.Params) ([]Category, int64, error) {
 	var cats []Category
 	var total int64
 
-	q := r.db.Model(&Category{}).Preload("Children")
+	q := r.db.Model(&Category{}).
+		Preload("Outlet").
+		Preload("Children").
+		Preload("Children.Outlet")
+
 	if search != "" {
 		q = q.Where("name ILIKE ?", "%"+search+"%")
+	}
+	if outletID != nil && *outletID > 0 {
+		q = q.Where("outlet_id = ?", *outletID)
 	}
 
 	if err := q.Count(&total).Error; err != nil {
@@ -59,7 +66,7 @@ func (r *repository) ListCategories(search string, p pagination.Params) ([]Categ
 
 func (r *repository) GetCategoryByID(id uint64) (*Category, error) {
 	var c Category
-	if err := r.db.First(&c, id).Error; err != nil {
+	if err := r.db.Preload("Outlet").Preload("Children").First(&c, id).Error; err != nil {
 		return nil, err
 	}
 	return &c, nil
@@ -71,6 +78,7 @@ func (r *repository) CreateCategory(c *Category) error {
 
 func (r *repository) UpdateCategory(id uint64, c *Category) error {
 	updates := map[string]interface{}{
+		"outlet_id":   c.OutletID,
 		"name":        c.Name,
 		"description": c.Description,
 		"image_url":   c.ImageURL,
@@ -87,12 +95,13 @@ func (r *repository) DeleteCategory(id uint64) error {
 
 // ── Products ─────────────────────────────────────────────────────
 
-func (r *repository) ListProducts(search string, categoryID *uint64, isAvailable *bool, p pagination.Params) ([]Product, int64, error) {
+func (r *repository) ListProducts(search string, categoryID *uint64, outletID *uint64, isAvailable *bool, p pagination.Params) ([]Product, int64, error) {
 	var prods []Product
 	var total int64
 
 	q := r.db.Model(&Product{}).
 		Preload("Category").
+		Preload("Outlet").
 		Preload("OptionGroups").
 		Preload("OptionGroups.Values")
 
@@ -101,6 +110,9 @@ func (r *repository) ListProducts(search string, categoryID *uint64, isAvailable
 	}
 	if categoryID != nil && *categoryID > 0 {
 		q = q.Where("category_id = ?", *categoryID)
+	}
+	if outletID != nil && *outletID > 0 {
+		q = q.Where("outlet_id = ?", *outletID)
 	}
 	if isAvailable != nil {
 		q = q.Where("is_available = ?", *isAvailable)
@@ -118,6 +130,7 @@ func (r *repository) GetProductByID(id uint64) (*Product, error) {
 	var p Product
 	err := r.db.
 		Preload("Category").
+		Preload("Outlet").
 		Preload("OptionGroups").
 		Preload("OptionGroups.Values").
 		First(&p, id).Error
@@ -163,18 +176,29 @@ func (r *repository) UpdateProduct(p *Product, optionGroupIDs []uint64) error {
 }
 
 func (r *repository) DeleteProduct(id uint64) error {
-	return r.db.Delete(&Product{}, id).Error
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("product_id = ?", id).Delete(&ProductOptionGroup{}).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&Product{}, id).Error
+	})
 }
 
 // ── Option Groups ────────────────────────────────────────────────
 
-func (r *repository) ListOptionGroups(search string, p pagination.Params) ([]OptionGroup, int64, error) {
+func (r *repository) ListOptionGroups(search string, outletID *uint64, p pagination.Params) ([]OptionGroup, int64, error) {
 	var groups []OptionGroup
 	var total int64
 
-	q := r.db.Model(&OptionGroup{}).Preload("Values")
+	q := r.db.Model(&OptionGroup{}).
+		Preload("Outlet").
+		Preload("Values")
+
 	if search != "" {
 		q = q.Where("name ILIKE ?", "%"+search+"%")
+	}
+	if outletID != nil && *outletID > 0 {
+		q = q.Where("outlet_id = ?", *outletID)
 	}
 
 	if err := q.Count(&total).Error; err != nil {
@@ -187,7 +211,7 @@ func (r *repository) ListOptionGroups(search string, p pagination.Params) ([]Opt
 
 func (r *repository) GetOptionGroupByID(id uint64) (*OptionGroup, error) {
 	var g OptionGroup
-	if err := r.db.Preload("Values").First(&g, id).Error; err != nil {
+	if err := r.db.Preload("Outlet").Preload("Values").First(&g, id).Error; err != nil {
 		return nil, err
 	}
 	return &g, nil
@@ -200,6 +224,7 @@ func (r *repository) CreateOptionGroup(g *OptionGroup) error {
 func (r *repository) UpdateOptionGroup(id uint64, g *OptionGroup) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		updates := map[string]interface{}{
+			"outlet_id":   g.OutletID,
 			"name":        g.Name,
 			"type":        g.Type,
 			"is_required": g.IsRequired,

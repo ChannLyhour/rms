@@ -2,18 +2,19 @@ import { useState, useEffect, useMemo } from 'react'
 import AdminLayout from '../../components/layout/AdminLayout'
 import OptionGroupCreateView from '../../components/admin/OptionGroupCreateView'
 import { CreateButton, Button } from '../../components/common/ButtonComponent'
-import { TableActionButtons } from '../../components/plugin/components/button-Action-Components'
 import { Table, TableCard, BadgeWithIcon, PaginationPageMinimalCenter } from '../../components/TablesComponents'
 import { adminApi } from '../../api/adminApi'
-import { SlidersHorizontal, Plus, Tag, Check, LayoutGrid, List, Trash2, Pencil, Search } from 'lucide-react'
+import axiosClient from '../../api/axiosClient'
+import { SlidersHorizontal, Plus, Tag, Check, CircleDot, CheckSquare, Building2, Coffee, Wine, ShoppingCart, Utensils, AlertCircle, Layers } from 'lucide-react'
 import { SearchLg, Edit01, Trash01 } from '@untitledui/icons'
 import toast from 'react-hot-toast'
 
 export default function OptionGroups() {
   const [groups, setGroups] = useState([])
-  const [search, setSearch] = useState('')
+  const [outlets, setOutlets] = useState([])
+  const [outletFilter, setOutletFilter] = useState('all')
   const [filterTab, setFilterTab] = useState('all') // 'all' | 'single' | 'multiple' | 'required'
-  const [viewMode, setViewMode] = useState('grid') // 'grid' | 'table'
+  const [search, setSearch] = useState('')
   const [activeView, setActiveView] = useState('list') // 'list' | 'create' | 'edit'
   const [selectedGroup, setSelectedGroup] = useState(null)
 
@@ -22,21 +23,49 @@ export default function OptionGroups() {
     direction: 'ascending',
   })
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 8
+  const itemsPerPage = 10
 
-  const fetchGroups = async () => {
+  const getOutletIcon = (type, size = 16, className = '') => {
+    switch (type) {
+      case 'cafe':
+        return <Coffee size={size} className={className || "text-amber-600 dark:text-amber-400 shrink-0"} />
+      case 'bar':
+        return <Wine size={size} className={className || "text-purple-600 dark:text-purple-400 shrink-0"} />
+      case 'retail':
+        return <ShoppingCart size={size} className={className || "text-emerald-600 dark:text-emerald-400 shrink-0"} />
+      case 'dine_in':
+      default:
+        return <Utensils size={size} className={className || "text-[#126973] dark:text-[#F1D8C2] shrink-0"} />
+    }
+  }
+
+  const loadData = async () => {
     try {
-      const { data } = await adminApi.getOptionGroups()
-      setGroups(data.data || [])
+      const [grpRes, outRes] = await Promise.all([
+        adminApi.getOptionGroups(),
+        axiosClient.get('/outlets').catch(() => ({ data: { data: [] } })),
+      ])
+      setGroups(grpRes.data?.data || [])
+      setOutlets(outRes.data?.data || [])
     } catch {
       // silent
     }
   }
 
   useEffect(() => {
-    fetchGroups()
+    loadData()
   }, [])
 
+  // Counts for tabs (scoped to active venue filter)
+  const outletFilteredList = useMemo(() => {
+    return groups.filter((g) => outletFilter === 'all' || String(g.outlet_id) === String(outletFilter))
+  }, [groups, outletFilter])
+
+  const singleCount = outletFilteredList.filter((g) => g.type === 'single').length
+  const multiCount = outletFilteredList.filter((g) => g.type === 'multiple').length
+  const requiredCount = outletFilteredList.filter((g) => Boolean(g.is_required)).length
+
+  // Filter & Sort
   const sortedAndFiltered = useMemo(() => {
     let list = groups.filter((g) => {
       const matchSearch =
@@ -54,7 +83,10 @@ export default function OptionGroups() {
           ? Boolean(g.is_required)
           : true
 
-      return matchSearch && matchFilter
+      const matchOutlet =
+        outletFilter === 'all' || String(g.outlet_id) === String(outletFilter)
+
+      return matchSearch && matchFilter && matchOutlet
     })
 
     return list.sort((a, b) => {
@@ -78,11 +110,11 @@ export default function OptionGroups() {
 
       return 0
     })
-  }, [groups, search, filterTab, sortDescriptor])
+  }, [groups, search, filterTab, outletFilter, sortDescriptor])
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [search, filterTab])
+  }, [search, filterTab, outletFilter])
 
   const totalPages = Math.ceil(sortedAndFiltered.length / itemsPerPage) || 1
   const paginatedItems = sortedAndFiltered.slice(
@@ -100,12 +132,12 @@ export default function OptionGroups() {
     }))
   }
 
-  const openCreate = () => {
+  const handleOpenCreate = () => {
     setSelectedGroup(null)
     setActiveView('create')
   }
 
-  const openEdit = (g) => {
+  const handleOpenEdit = (g) => {
     setSelectedGroup(g)
     setActiveView('edit')
   }
@@ -115,16 +147,17 @@ export default function OptionGroups() {
     setActiveView('list')
   }
 
-  const handleSave = async (payload) => {
+  const handleSaveGroup = async (payload) => {
     try {
       if (activeView === 'create') {
         await adminApi.createOptionGroup(payload)
         toast.success('Option group created successfully')
+        setCurrentPage(1)
       } else if (selectedGroup?.id) {
         await adminApi.updateOptionGroup(selectedGroup.id, payload)
         toast.success('Option group updated successfully')
       }
-      fetchGroups()
+      loadData()
       handleCloseView()
     } catch (err) {
       toast.error(err.response?.data?.error || 'Save failed')
@@ -132,28 +165,24 @@ export default function OptionGroups() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this option group? Products linked to it will no longer show these modifiers.')) return
+    if (!confirm('Are you sure you want to delete this modifier option group?')) return
     try {
       await adminApi.deleteOptionGroup(id)
       setGroups((prev) => prev.filter((g) => g.id !== id))
-      toast.success('Option group deleted')
+      toast.success('Option group removed')
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to delete option group')
     }
   }
 
-  const countSingle = groups.filter((g) => g.type === 'single').length
-  const countMultiple = groups.filter((g) => g.type === 'multiple').length
-  const countRequired = groups.filter((g) => g.is_required).length
-
   return (
     <AdminLayout>
-      <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="space-y-6 max-w-7xl mx-auto pb-10 select-none animate-in fade-in duration-200">
         {activeView !== 'list' ? (
           <OptionGroupCreateView
             item={selectedGroup}
             onClose={handleCloseView}
-            onSave={handleSave}
+            onSave={handleSaveGroup}
           />
         ) : (
           <>
@@ -163,118 +192,188 @@ export default function OptionGroups() {
               style={{ borderColor: 'var(--color-border)' }}
             >
               <div>
-                <div className="flex items-center gap-2">
-                  <h1
-                    className="text-xl font-extrabold tracking-tight"
-                    style={{ color: 'var(--color-text)' }}
-                  >
-                    Product Modifiers & Add-ons
-                  </h1>
-                </div>
-                
-              </div>
-
-              <div className="flex items-center gap-2.5">
-                {/* View Toggle */}
-                <div
-                  className="p-0.5 rounded-xl border flex items-center shadow-xs"
-                  style={{
-                    background: 'var(--color-card)',
-                    borderColor: 'var(--color-border)',
-                  }}
+                <h1
+                  className="text-xl font-extrabold tracking-tight"
+                  style={{ color: 'var(--color-text)' }}
                 >
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('grid')}
-                    className={`p-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      viewMode === 'grid'
-                        ? 'bg-black/5 dark:bg-white/10 text-[var(--color-text)] shadow-2xs'
-                        : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'
-                    }`}
-                    title="Grid View"
-                  >
-                    <LayoutGrid size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('table')}
-                    className={`p-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      viewMode === 'table'
-                        ? 'bg-black/5 dark:bg-white/10 text-[var(--color-text)] shadow-2xs'
-                        : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'
-                    }`}
-                    title="Table View"
-                  >
-                    <List size={15} />
-                  </button>
-                </div>
-
-                <CreateButton
-                  label="Add Option Group"
-                  onClick={openCreate}
-                />
+                  Product Modifiers &amp; Add-ons
+                </h1>
+                <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>
+                  Manage item variants, drink customizations, extra toppings, and venue assignment scopes.
+                </p>
               </div>
+
+              <CreateButton
+                label="Add Option Group"
+                onClick={handleOpenCreate}
+              />
             </div>
 
-            {/* Filter Tabs & Search Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              {/* Filter Tabs */}
+            {/* Multi-Venue Tabs */}
+            <div className="relative">
+              {/* Fade effect on mobile */}
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[var(--color-bg)] to-transparent pointer-events-none z-10 sm:hidden" />
+
               <div
-                className="flex items-center gap-1.5 p-1 rounded-xl border text-xs shadow-2xs overflow-x-auto scrollbar-none"
+                className="flex items-center gap-1 overflow-x-auto no-scrollbar rounded-xl p-1 border"
                 style={{
-                  background: 'var(--color-card)',
+                  background: 'rgba(255, 255, 255, 0.03)',
                   borderColor: 'var(--color-border)',
                 }}
               >
                 <button
                   type="button"
-                  onClick={() => setFilterTab('all')}
-                  className={`px-3.5 py-1.5 rounded-lg font-bold transition-all ${
-                    filterTab === 'all'
-                      ? 'bg-[var(--color-500,#BF4040)] text-white shadow-2xs'
-                      : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'
+                  onClick={() => {
+                    setOutletFilter('all')
+                    setCurrentPage(1)
+                  }}
+                  className={`inline-flex items-center gap-2.5 h-10 px-3.5 rounded-xl text-sm transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                    outletFilter === 'all'
+                      ? 'shadow-xs font-semibold'
+                      : 'hover:bg-black/5 dark:hover:bg-white/5'
                   }`}
+                  style={
+                    outletFilter === 'all'
+                      ? {
+                          background: 'var(--color-surface, #1e2230)',
+                          color: 'var(--color-text, #ffffff)',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                          border: '1px solid var(--color-border)',
+                        }
+                      : {
+                          color: 'var(--color-muted, #94a3b8)',
+                        }
+                  }
                 >
-                  All ({groups.length})
+                  <Building2 size={18} className="shrink-0 text-[#126973] dark:text-[#F1D8C2]" />
+                  <span>All Venues</span>
+                  <span
+                    className="inline-flex items-center justify-center rounded-lg px-2 h-5 text-[11px] font-semibold"
+                    style={{
+                      background: outletFilter === 'all'
+                        ? 'rgba(18, 105, 115, 0.18)'
+                        : 'rgba(255, 255, 255, 0.06)',
+                      color: outletFilter === 'all' ? 'var(--color-500, #126973)' : 'var(--color-muted, #94a3b8)',
+                    }}
+                  >
+                    {groups.length}
+                  </span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setFilterTab('single')}
-                  className={`px-3.5 py-1.5 rounded-lg font-bold transition-all ${
-                    filterTab === 'single'
-                      ? 'bg-[var(--color-500,#BF4040)] text-white shadow-2xs'
-                      : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'
-                  }`}
+
+                {outlets.map((o) => {
+                  const count = groups.filter((g) => String(g.outlet_id) === String(o.id)).length
+                  const isSelected = String(outletFilter) === String(o.id)
+                  return (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => {
+                        setOutletFilter(String(o.id))
+                        setCurrentPage(1)
+                      }}
+                      className={`inline-flex items-center gap-2.5 h-10 px-3.5 rounded-xl text-sm transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                        isSelected
+                          ? 'shadow-xs font-semibold'
+                          : 'hover:bg-black/5 dark:hover:bg-white/5'
+                      }`}
+                      style={
+                        isSelected
+                          ? {
+                              background: 'var(--color-surface, #1e2230)',
+                              color: 'var(--color-text, #ffffff)',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                              border: '1px solid var(--color-border)',
+                            }
+                          : {
+                              color: 'var(--color-muted, #94a3b8)',
+                            }
+                      }
+                    >
+                      {getOutletIcon(o.type, 16)}
+                      <span>{o.name}</span>
+                      <span
+                        className="inline-flex items-center justify-center rounded-lg px-2 h-5 text-[11px] font-semibold"
+                        style={{
+                          background: isSelected
+                            ? 'rgba(18, 105, 115, 0.18)'
+                            : 'rgba(255, 255, 255, 0.06)',
+                          color: isSelected ? 'var(--color-500, #126973)' : 'var(--color-muted, #94a3b8)',
+                        }}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Type Filter & Search Bar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              {/* Type Tabs */}
+              <div className="relative overflow-x-auto no-scrollbar">
+                <div
+                  className="flex items-center gap-1 rounded-xl p-1 border"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    borderColor: 'var(--color-border)',
+                  }}
                 >
-                  Single Choice ({countSingle})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFilterTab('multiple')}
-                  className={`px-3.5 py-1.5 rounded-lg font-bold transition-all ${
-                    filterTab === 'multiple'
-                      ? 'bg-[var(--color-500,#BF4040)] text-white shadow-2xs'
-                      : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'
-                  }`}
-                >
-                  Multiple Choices ({countMultiple})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFilterTab('required')}
-                  className={`px-3.5 py-1.5 rounded-lg font-bold transition-all ${
-                    filterTab === 'required'
-                      ? 'bg-[var(--color-500,#BF4040)] text-white shadow-2xs'
-                      : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'
-                  }`}
-                >
-                  Required ({countRequired})
-                </button>
+                  {[
+                    { id: 'all', label: 'All Modifiers', icon: Layers, count: outletFilteredList.length },
+                    { id: 'single', label: 'Single Choice', icon: CircleDot, count: singleCount },
+                    { id: 'multiple', label: 'Multiple Choice', icon: CheckSquare, count: multiCount },
+                    { id: 'required', label: 'Required Only', icon: AlertCircle, count: requiredCount },
+                  ].map((tab) => {
+                    const Icon = tab.icon
+                    const isActive = filterTab === tab.id
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => {
+                          setFilterTab(tab.id)
+                          setCurrentPage(1)
+                        }}
+                        className={`inline-flex items-center gap-2 h-9 px-3 rounded-lg text-xs transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                          isActive
+                            ? 'shadow-xs font-semibold'
+                            : 'hover:bg-black/5 dark:hover:bg-white/5'
+                        }`}
+                        style={
+                          isActive
+                            ? {
+                                background: 'var(--color-surface, #1e2230)',
+                                color: 'var(--color-text, #ffffff)',
+                                border: '1px solid var(--color-border)',
+                              }
+                            : {
+                                color: 'var(--color-muted, #94a3b8)',
+                              }
+                        }
+                      >
+                        <Icon size={14} className="shrink-0 text-[#126973] dark:text-[#F1D8C2]" />
+                        <span>{tab.label}</span>
+                        <span
+                          className="inline-flex items-center justify-center rounded px-1.5 h-4.5 text-[10px] font-semibold"
+                          style={{
+                            background: isActive
+                              ? 'rgba(18, 105, 115, 0.18)'
+                              : 'rgba(255, 255, 255, 0.06)',
+                            color: isActive ? 'var(--color-500, #126973)' : 'var(--color-muted, #94a3b8)',
+                          }}
+                        >
+                          {tab.count}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
               {/* Search Bar */}
               <div
-                className="flex items-center gap-3 px-3.5 py-2 rounded-[5px] border text-xs w-full sm:max-w-xs shadow-xs"
+                className="flex items-center gap-3 px-3.5 py-2 rounded-[5px] border text-xs min-w-[240px] max-w-sm shadow-xs w-full sm:w-auto"
                 style={{
                   background: 'var(--color-card)',
                   borderColor: 'var(--color-border)',
@@ -283,7 +382,10 @@ export default function OptionGroups() {
                 <SearchLg size={16} className="text-[var(--color-muted)] shrink-0 stroke-[2px]" />
                 <input
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSearch(e.target.value)
+                    setCurrentPage(1)
+                  }}
                   placeholder="Search modifiers or choices..."
                   className="bg-transparent border-none outline-none w-full text-xs placeholder:text-[var(--color-muted)] text-[var(--color-text)]"
                 />
@@ -291,7 +393,7 @@ export default function OptionGroups() {
                   <button
                     type="button"
                     onClick={() => setSearch('')}
-                    className="text-[11px] font-medium transition-colors hover:text-red-500 text-[var(--color-muted)]"
+                    className="text-[11px] font-medium transition-colors hover:text-red-500 text-[var(--color-muted)] cursor-pointer"
                   >
                     Clear
                   </button>
@@ -299,215 +401,110 @@ export default function OptionGroups() {
               </div>
             </div>
 
-            {/* 1. GRID VIEW */}
-            {viewMode === 'grid' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {paginatedItems.map((g) => {
-                  const valuesCount = (g.values || []).length
+            {/* TableCard */}
+            <TableCard.Root>
+              <Table aria-label="Modifiers Catalog" sortDescriptor={sortDescriptor}>
+                <Table.Header>
+                  <Table.Head
+                    id="name"
+                    label="Modifier Group"
+                    isRowHeader
+                    allowsSorting
+                    sortDescriptor={sortDescriptor}
+                    onSort={handleSort}
+                  />
+                  <Table.Head id="type" label="Selection Rule" />
+                  <Table.Head id="outlet" label="Assigned Venue" />
+                  <Table.Head id="choices" label="Choices & Options" />
+                  <Table.Head
+                    id="is_required"
+                    label="Rule Requirement"
+                    allowsSorting
+                    sortDescriptor={sortDescriptor}
+                    onSort={handleSort}
+                  />
+                  <Table.Head id="actions" className="text-right">
+                    Actions
+                  </Table.Head>
+                </Table.Header>
 
-                  return (
-                    <div
-                      key={g.id}
-                      className="rounded-2xl p-5 border flex flex-col justify-between shadow-xs hover:shadow-md transition-all group"
-                      style={{
-                        background: 'var(--color-card)',
-                        borderColor: 'var(--color-border)',
-                      }}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between gap-2 mb-3">
-                          <div className="flex items-center gap-2.5 min-w-0">
+                <Table.Body items={paginatedItems}>
+                  {(g) => {
+                    const values = g.values || []
+                    const outlet = outlets.find((o) => String(o.id) === String(g.outlet_id))
+
+                    return (
+                      <Table.Row key={g.id} id={g.id}>
+                        {/* Option Group Name */}
+                        <Table.Cell>
+                          <div className="flex items-center gap-3">
                             <div
-                              className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-sm shrink-0"
+                              className="w-9 h-9 rounded-[6px] border flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs"
                               style={{
-                                background:
-                                  'linear-gradient(135deg, var(--color-500, #BF4040), var(--color-700, #8A2E2E))',
+                                background: 'var(--color-bg)',
+                                borderColor: 'var(--color-border)',
+                                color: 'var(--color-500, #126973)',
                               }}
                             >
-                              <SlidersHorizontal size={18} />
+                              <Tag size={15} />
                             </div>
                             <div className="min-w-0">
-                              <p
-                                className="font-bold text-sm truncate"
-                                style={{ color: 'var(--color-text)' }}
-                              >
+                              <p className="font-bold text-xs truncate leading-snug" style={{ color: 'var(--color-text)' }}>
                                 {g.name}
                               </p>
-                              <p
-                                className="text-[11px] capitalize"
-                                style={{ color: 'var(--color-muted)' }}
-                              >
-                                {g.type === 'single'
-                                  ? 'Single Choice (Radio)'
-                                  : 'Multiple Choices (Checkbox)'}
-                              </p>
+                              <span className="text-[11px] opacity-75 font-mono" style={{ color: 'var(--color-muted)' }}>
+                                #{g.id} • {values.length} choices
+                              </span>
                             </div>
                           </div>
+                        </Table.Cell>
 
-                          <span
-                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border shrink-0 ${
-                              g.is_required
-                                ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                                : 'bg-slate-500/10 text-slate-500 border-slate-500/20'
-                            }`}
-                          >
-                            {g.is_required ? 'Required' : 'Optional'}
-                          </span>
-                        </div>
-
-                        {/* Option Values List */}
-                        <div className="space-y-1.5 mt-4 mb-3">
-                          <p
-                            className="text-[10px] font-bold uppercase tracking-wider"
-                            style={{ color: 'var(--color-muted)' }}
-                          >
-                            Available Choices ({valuesCount})
-                          </p>
-                          <div className="flex flex-wrap gap-1.5 pt-1">
-                            {valuesCount > 0 ? (
-                              g.values.map((v, idx) => (
-                                <span
-                                  key={idx}
-                                  className="text-xs px-2.5 py-1 rounded-lg border flex items-center gap-1.5 font-medium"
-                                  style={{
-                                    background: 'var(--color-bg)',
-                                    borderColor: 'var(--color-border)',
-                                    color: 'var(--color-text)',
-                                  }}
-                                >
-                                  <span>{v.name}</span>
-                                  {v.price > 0 && (
-                                    <span
-                                      className="font-mono font-bold text-[11px]"
-                                      style={{ color: 'var(--color-500, #BF4040)' }}
-                                    >
-                                      +${Number(v.price).toFixed(2)}
-                                    </span>
-                                  )}
-                                </span>
-                              ))
-                            ) : (
-                              <span
-                                className="text-xs italic"
-                                style={{ color: 'var(--color-muted)' }}
-                              >
-                                No choice values configured yet.
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div
-                        className="pt-3 border-t flex items-center justify-between mt-3"
-                        style={{ borderColor: 'var(--color-border-subtle)' }}
-                      >
-                        <Button
-                          size="sm"
-                          variant="link-gray"
-                          onClick={() => handleDelete(g.id)}
-                          iconLeading={Trash01}
-                          className="hover:text-red-500 text-[11px]"
-                        >
-                          Delete
-                        </Button>
-
-                        <Button
-                          size="sm"
-                          variant="link-color"
-                          onClick={() => openEdit(g)}
-                          iconLeading={Edit01}
-                          className="text-[11px]"
-                        >
-                          Edit Group
-                        </Button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            {/* 2. TABLE VIEW */}
-            {viewMode === 'table' && (
-              <TableCard.Root>
-                <Table aria-label="Option Groups Catalog" sortDescriptor={sortDescriptor}>
-                  <Table.Header>
-                    <Table.Head
-                      id="name"
-                      label="Modifier Group"
-                      isRowHeader
-                      allowsSorting
-                      sortDescriptor={sortDescriptor}
-                      onSort={handleSort}
-                    />
-                    <Table.Head
-                      id="type"
-                      label="Selection Mode"
-                      allowsSorting
-                      sortDescriptor={sortDescriptor}
-                      onSort={handleSort}
-                    />
-                    <Table.Head
-                      id="is_required"
-                      label="Requirement"
-                      allowsSorting
-                      sortDescriptor={sortDescriptor}
-                      onSort={handleSort}
-                    />
-                    <Table.Head id="values" label="Choices & Add-on Prices" />
-                    <Table.Head id="actions" className="text-right">
-                      Actions
-                    </Table.Head>
-                  </Table.Header>
-
-                  <Table.Body items={paginatedItems}>
-                    {(g) => (
-                      <Table.Row key={g.id} id={g.id}>
-                        {/* Group Name */}
+                        {/* Selection Rule Type */}
                         <Table.Cell>
-                          <div className="flex items-center gap-2.5">
-                            <div
-                              className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white shadow-2xs shrink-0"
+                          {g.type === 'single' ? (
+                            <span
+                              className="px-2.5 py-0.5 rounded-[5px] border font-semibold inline-flex items-center gap-1.5 text-[11px]"
                               style={{
-                                background:
-                                  'linear-gradient(135deg, var(--color-500, #BF4040), var(--color-700, #8A2E2E))',
+                                background: 'rgba(18, 105, 115, 0.08)',
+                                borderColor: 'rgba(18, 105, 115, 0.25)',
+                                color: 'var(--color-500, #126973)',
                               }}
                             >
-                              <SlidersHorizontal size={15} />
-                            </div>
-                            <span
-                              className="font-bold text-xs"
-                              style={{ color: 'var(--color-text)' }}
-                            >
-                              {g.name}
-                            </span>
-                          </div>
-                        </Table.Cell>
-
-                        {/* Mode */}
-                        <Table.Cell>
-                          <span
-                            className="px-2 py-0.5 rounded-[5px] border text-[11px] font-semibold capitalize"
-                            style={{
-                              background: 'var(--color-bg)',
-                              borderColor: 'var(--color-border)',
-                              color: 'var(--color-text)',
-                            }}
-                          >
-                            {g.type === 'single' ? 'Single Choice' : 'Multiple Choices'}
-                          </span>
-                        </Table.Cell>
-
-                        {/* Requirement */}
-                        <Table.Cell>
-                          {g.is_required ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-600 border border-amber-500/20">
-                              Required
+                              <CircleDot size={12} />
+                              <span>Single Choice</span>
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/10 text-slate-500 border border-slate-500/20">
-                              Optional
+                            <span
+                              className="px-2.5 py-0.5 rounded-[5px] border font-semibold inline-flex items-center gap-1.5 text-[11px]"
+                              style={{
+                                background: 'rgba(168, 85, 247, 0.08)',
+                                borderColor: 'rgba(168, 85, 247, 0.25)',
+                                color: '#9333ea',
+                              }}
+                            >
+                              <CheckSquare size={12} />
+                              <span>Multiple Choice</span>
+                            </span>
+                          )}
+                        </Table.Cell>
+
+                        {/* Assigned Venue */}
+                        <Table.Cell>
+                          {outlet ? (
+                            <span
+                              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[5px] border text-xs font-semibold"
+                              style={{
+                                background: 'var(--color-bg)',
+                                borderColor: 'var(--color-border)',
+                                color: 'var(--color-text)',
+                              }}
+                            >
+                              {getOutletIcon(outlet.type, 13)}
+                              <span>{outlet.name}</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                              🏢 All Venues
                             </span>
                           )}
                         </Table.Cell>
@@ -515,74 +512,82 @@ export default function OptionGroups() {
                         {/* Choices Pills */}
                         <Table.Cell>
                           <div className="flex flex-wrap gap-1 max-w-sm">
-                            {(g.values || []).map((v, i) => (
+                            {values.slice(0, 4).map((v) => (
                               <span
-                                key={i}
-                                className="text-[11px] px-2 py-0.5 rounded-md border font-medium inline-flex items-center gap-1"
+                                key={v.id || v.name}
+                                className="px-2 py-0.5 rounded-[4px] border text-[10px] font-medium"
                                 style={{
                                   background: 'var(--color-bg)',
                                   borderColor: 'var(--color-border)',
                                   color: 'var(--color-text)',
                                 }}
                               >
-                                <span>{v.name}</span>
+                                {v.name}
                                 {v.price > 0 && (
-                                  <span className="font-mono font-bold text-[10px] text-[var(--color-500,#BF4040)]">
+                                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold ml-1">
                                     +${Number(v.price).toFixed(2)}
                                   </span>
                                 )}
                               </span>
                             ))}
+                            {values.length > 4 && (
+                              <span className="px-1.5 py-0.5 text-[10px] text-slate-400 font-bold">
+                                +{values.length - 4} more
+                              </span>
+                            )}
                           </div>
                         </Table.Cell>
 
-                        {/* Actions */}
+                        {/* Required Rule */}
                         <Table.Cell>
-                          <TableActionButtons
-                            item={g}
-                            onEdit={() => openEdit(g)}
-                            onDelete={() => handleDelete(g.id)}
-                            confirmDelete={`Are you sure you want to delete option group "${g.name}"? Products linked to it will no longer show these modifiers.`}
-                          />
+                          {g.is_required ? (
+                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 inline-flex items-center gap-1">
+                              <AlertCircle size={11} />
+                              Required
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-[var(--color-muted)] font-medium">
+                              Optional
+                            </span>
+                          )}
+                        </Table.Cell>
+
+                        {/* Actions */}
+                        <Table.Cell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(g)}
+                              className="p-1.5 rounded-[5px] text-slate-400 hover:text-[#126973] hover:bg-[#126973]/10 dark:hover:text-[#F1D8C2] transition-all cursor-pointer"
+                              title="Edit Modifier Group"
+                            >
+                              <Edit01 size={15} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(g.id)}
+                              className="p-1.5 rounded-[5px] text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all cursor-pointer"
+                              title="Delete Modifier Group"
+                            >
+                              <Trash01 size={15} />
+                            </button>
+                          </div>
                         </Table.Cell>
                       </Table.Row>
-                    )}
-                  </Table.Body>
-                </Table>
-              </TableCard.Root>
-            )}
+                    )
+                  }}
+                </Table.Body>
+              </Table>
 
-            {sortedAndFiltered.length === 0 && (
-              <div
-                className="py-16 text-center rounded-2xl border"
-                style={{
-                  background: 'var(--color-card)',
-                  borderColor: 'var(--color-border)',
-                }}
-              >
-                <SlidersHorizontal
-                  size={40}
-                  className="mx-auto mb-2 opacity-40"
-                  style={{ color: 'var(--color-muted)' }}
+              {/* Pagination */}
+              <div className="p-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                <PaginationPageMinimalCenter
+                  page={currentPage}
+                  total={totalPages}
+                  onPageChange={setCurrentPage}
                 />
-                <p className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>
-                  No option groups found
-                </p>
-                <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>
-                  Click Add Option Group to create modifiers and choice add-ons.
-                </p>
               </div>
-            )}
-
-            {/* Pagination */}
-            {sortedAndFiltered.length > 0 && (
-              <PaginationPageMinimalCenter
-                page={currentPage}
-                total={totalPages}
-                onPageChange={setCurrentPage}
-                className="px-4 py-3"
-              />
-            )}
+            </TableCard.Root>
           </>
         )}
       </div>

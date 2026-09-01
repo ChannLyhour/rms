@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Scrollspy } from '../reui/scrollspy'
 import {
   SlidersHorizontal,
@@ -12,13 +12,18 @@ import {
   CheckSquare,
   DollarSign,
   AlertCircle,
-  Layers
+  Layers,
+  Building2
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import axiosClient from '../../api/axiosClient'
 import { Button } from '../common/ButtonComponent'
+import { SearchSelection } from '../plugin/components/Search-Selection-components'
 
 export default function OptionGroupCreateView({ item, onClose, onSave }) {
+  const [outlets, setOutlets] = useState([])
   const [formData, setFormData] = useState({
+    outlet_id: '',
     name: '',
     type: 'single', // 'single' | 'multiple'
     is_required: false,
@@ -34,8 +39,13 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
   const isEdit = Boolean(item && item.id)
 
   useEffect(() => {
+    axiosClient.get('/outlets').then((res) => setOutlets(res.data?.data || [])).catch(() => {})
+  }, [])
+
+  useEffect(() => {
     if (item) {
       setFormData({
+        outlet_id: item.outlet_id ? String(item.outlet_id) : '',
         name: item.name || '',
         type: item.type || 'single',
         is_required: Boolean(item.is_required),
@@ -46,6 +56,7 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
       })
     } else {
       setFormData({
+        outlet_id: '',
         name: '',
         type: 'single',
         is_required: false,
@@ -60,6 +71,38 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
   const setField = (field, val) => {
     setFormData((prev) => ({ ...prev, [field]: val }))
   }
+
+  // Outlet / Venue options with badges for SearchSelection
+  const outletOptions = useMemo(() => {
+    const list = [
+      {
+        value: '',
+        id: '',
+        label: '🏢 All Venues (Global / Shared)',
+        name: '🏢 All Venues (Global / Shared)',
+        badge: 'ALL',
+        description: 'Available across all SKYPARK venues and products',
+      },
+    ]
+    outlets.forEach((o) => {
+      list.push({
+        value: String(o.id),
+        id: String(o.id),
+        label: o.name,
+        name: o.name,
+        badge: o.code,
+        description:
+          o.type === 'cafe'
+            ? 'Cafe & Bakery'
+            : o.type === 'bar'
+            ? 'SkyBar & Lounge'
+            : o.type === 'retail'
+            ? 'Supermarket / Mart'
+            : 'Grand Restaurant',
+      })
+    })
+    return list
+  }, [outlets])
 
   // Value list management
   const addValueRow = () => {
@@ -120,6 +163,7 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
     }
 
     const payload = {
+      outlet_id: formData.outlet_id ? Number(formData.outlet_id) : null,
       name: formData.name.trim(),
       type: formData.type,
       is_required: Boolean(formData.is_required),
@@ -135,6 +179,7 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
   const validChoicesCount = formData.values.filter((v) => v.name.trim()).length
 
   const tabs = [
+    { id: 'venue', label: 'Venue & Outlet' },
     { id: 'basic', label: 'Basic Info' },
     { id: 'choices', label: `Choices (${validChoicesCount})` },
     { id: 'preview', label: 'Preview & Display' },
@@ -162,7 +207,7 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
           onClick={onClose}
           iconLeading={ArrowLeft}
         >
-          Cancel & Return
+          Cancel &amp; Return
         </Button>
 
         <Button
@@ -220,7 +265,7 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
                   key={t.id}
                   type="button"
                   data-scrollspy-anchor={t.id}
-                  className="inline-flex items-center justify-start whitespace-nowrap rounded-[5px] text-xs sm:text-sm font-semibold transition-all focus-visible:outline-none border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-800 dark:hover:text-slate-50 h-10 px-4 py-2 text-slate-700 dark:text-slate-300 data-[active=true]:bg-slate-900 data-[active=true]:text-white data-[active=true]:border-slate-900 dark:data-[active=true]:bg-slate-50 dark:data-[active=true]:text-slate-900 dark:data-[active=true]:border-slate-50 shadow-2xs"
+                  className="inline-flex items-center justify-start whitespace-nowrap rounded-[5px] text-xs sm:text-sm font-semibold transition-all focus-visible:outline-none border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-800 dark:hover:text-slate-50 h-10 px-4 py-2 text-slate-700 dark:text-slate-300 data-[active=true]:bg-slate-900 data-[active=true]:text-white data-[active=true]:border-slate-900 dark:data-[active=true]:bg-slate-50 dark:data-[active=true]:text-slate-900 dark:data-[active=true]:border-slate-50 shadow-2xs cursor-pointer"
                 >
                   {t.label}
                 </button>
@@ -234,6 +279,42 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
             className="flex-1 overflow-y-auto max-h-[75vh] scroll-smooth p-5 relative scrollbar-none"
           >
             <form onSubmit={handleSubmit} className="space-y-8 max-w-3xl">
+              {/* ── TAB: Venue & Outlet ──────────────────────────── */}
+              <div id="venue" className="space-y-2.5 scroll-mt-6">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  Venue &amp; Outlet
+                </h3>
+                <div
+                  className="rounded-[5px] p-6 sm:p-7 space-y-4"
+                  style={{
+                    background: 'var(--color-surface)',
+                  }}
+                >
+                  <div>
+                    <label
+                      className="block text-xs font-bold uppercase tracking-wider mb-1.5"
+                      style={{ color: 'var(--color-muted)' }}
+                    >
+                      Assigned Venue / Modifier Scope
+                    </label>
+                    <SearchSelection
+                      name="outlet_id"
+                      options={outletOptions}
+                      valueKey="id"
+                      labelKey="name"
+                      value={String(formData.outlet_id || '')}
+                      autoSelect={false}
+                      onChange={(val) => setField('outlet_id', String(val))}
+                      placeholder="Select Venue Assignment..."
+                      searchPlaceholder="Search venue (Cafe, SkyBar, Mart, Restaurant)..."
+                    />
+                    <p className="text-[11px] mt-1.5" style={{ color: 'var(--color-muted)' }}>
+                      Assigning a venue limits this option group to menu items and POS stations of that specific venue.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* ── TAB 1: Basic Info ──────────────────────────── */}
               <div id="basic" className="space-y-2.5 scroll-mt-6">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
@@ -245,262 +326,217 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
                     background: 'var(--color-surface)',
                   }}
                 >
-                  {/* Name */}
+                  {/* Preset Quick Loader */}
+                  <div>
+                    <span className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--color-muted)' }}>
+                      Quick Load Common Presets
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        {
+                          name: 'Drink Size',
+                          type: 'single',
+                          values: [
+                            { name: 'Small (Regular)', price: 0 },
+                            { name: 'Medium (+12oz)', price: 0.5 },
+                            { name: 'Large (+20oz)', price: 1.0 },
+                          ],
+                        },
+                        {
+                          name: 'Sugar / Sweetness Level',
+                          type: 'single',
+                          values: [
+                            { name: '100% Normal Sweet', price: 0 },
+                            { name: '70% Less Sweet', price: 0 },
+                            { name: '50% Half Sweet', price: 0 },
+                            { name: '0% No Sugar', price: 0 },
+                          ],
+                        },
+                        {
+                          name: 'Ice Level',
+                          type: 'single',
+                          values: [
+                            { name: 'Normal Ice (100%)', price: 0 },
+                            { name: 'Less Ice (50%)', price: 0 },
+                            { name: 'No Ice', price: 0 },
+                          ],
+                        },
+                        {
+                          name: 'Coffee Add-ons & Toppings',
+                          type: 'multiple',
+                          values: [
+                            { name: 'Extra Espresso Shot', price: 0.75 },
+                            { name: 'Boba Pearls', price: 0.5 },
+                            { name: 'Caramel Drizzle', price: 0.4 },
+                            { name: 'Oat Milk Sub', price: 0.8 },
+                          ],
+                        },
+                      ].map((preset) => (
+                        <button
+                          key={preset.name}
+                          type="button"
+                          onClick={() => applyPreset(preset.name, preset.values, preset.type)}
+                          className="px-2.5 py-1 rounded-[5px] border text-xs font-semibold hover:border-[var(--color-500,#BF4040)] hover:text-[var(--color-500,#BF4040)] transition-all cursor-pointer shadow-2xs"
+                          style={{
+                            background: 'var(--color-bg)',
+                            borderColor: 'var(--color-border)',
+                            color: 'var(--color-text)',
+                          }}
+                        >
+                          ⚡ {preset.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Option Group Name */}
                   <div>
                     <label
                       className="block text-xs font-bold uppercase tracking-wider mb-1.5"
                       style={{ color: 'var(--color-muted)' }}
                     >
-                      Option Group Name *
+                      Option Group Title *
                     </label>
                     <input
-                      required
                       type="text"
+                      required
                       value={formData.name}
                       onChange={(e) => setField('name', e.target.value)}
-                      placeholder="e.g. Size, Temperature, Extra Toppings, Sugar Level"
-                      className="w-full px-3.5 py-2.5 text-xs rounded-[5px] border outline-none font-bold transition-colors"
+                      placeholder="e.g. Drink Size, Extra Toppings, Cooking Temperature"
+                      className="w-full px-4 py-2.5 text-xs rounded-[5px] border outline-none font-bold transition-all"
                       style={{
                         background: 'var(--color-bg)',
                         borderColor: 'var(--color-border)',
                         color: 'var(--color-text)',
                       }}
                     />
-                    <span className="text-[10px] mt-1 block" style={{ color: 'var(--color-muted)' }}>
-                      This name is shown as the header when customizing items in the POS and online store.
-                    </span>
                   </div>
 
-                  {/* Selection Mode (Radio Cards) */}
-                  <div>
-                    <label
-                      className="block text-xs font-bold uppercase tracking-wider mb-2"
-                      style={{ color: 'var(--color-muted)' }}
-                    >
-                      Selection Mode
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {/* Single Choice */}
-                      <div
-                        onClick={() => setField('type', 'single')}
-                        className={`p-4 rounded-[5px] border cursor-pointer transition-all flex items-start gap-3 select-none ${
-                          formData.type === 'single'
-                            ? 'border-[var(--color-500,#BF4040)] shadow-xs ring-1 ring-[var(--color-500,#BF4040)]/20'
-                            : 'hover:bg-black/5 dark:hover:bg-white/5'
-                        }`}
-                        style={{
-                          background:
-                            formData.type === 'single'
-                              ? 'rgba(191, 64, 64, 0.04)'
-                              : 'var(--color-bg)',
-                          borderColor:
-                            formData.type === 'single'
-                              ? 'var(--color-500, #BF4040)'
-                              : 'var(--color-border)',
-                        }}
+                  {/* Selection Type & Required Rule */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                    <div>
+                      <label
+                        className="block text-xs font-bold uppercase tracking-wider mb-2"
+                        style={{ color: 'var(--color-muted)' }}
                       >
-                        <div
-                          className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5"
-                          style={{
-                            borderColor:
-                              formData.type === 'single'
-                                ? 'var(--color-500, #BF4040)'
-                                : 'var(--color-muted)',
-                          }}
+                        Selection Rule Type
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setField('type', 'single')}
+                          className={`p-3 rounded-[5px] border flex flex-col items-center gap-1.5 text-xs font-bold transition-all cursor-pointer ${
+                            formData.type === 'single'
+                              ? 'border-[var(--color-500,#BF4040)] bg-[var(--color-500,#BF4040)]/10 text-[var(--color-500,#BF4040)]'
+                              : 'hover:bg-slate-50 dark:hover:bg-slate-900 border-slate-200 dark:border-slate-800'
+                          }`}
                         >
-                          {formData.type === 'single' && (
-                            <div
-                              className="w-2.5 h-2.5 rounded-full"
-                              style={{ background: 'var(--color-500, #BF4040)' }}
-                            />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-bold text-xs" style={{ color: 'var(--color-text)' }}>
-                            Single Choice (Radio)
-                          </p>
-                          <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-muted)' }}>
-                            Customer selects exactly one option (e.g. Small, Medium, Large).
-                          </p>
-                        </div>
-                      </div>
+                          <CircleDot size={18} />
+                          <span>Single Choice</span>
+                          <span className="text-[10px] font-normal opacity-70">(Radio Button)</span>
+                        </button>
 
-                      {/* Multiple Choices */}
-                      <div
-                        onClick={() => setField('type', 'multiple')}
-                        className={`p-4 rounded-[5px] border cursor-pointer transition-all flex items-start gap-3 select-none ${
-                          formData.type === 'multiple'
-                            ? 'border-[var(--color-500,#BF4040)] shadow-xs ring-1 ring-[var(--color-500,#BF4040)]/20'
-                            : 'hover:bg-black/5 dark:hover:bg-white/5'
-                        }`}
-                        style={{
-                          background:
+                        <button
+                          type="button"
+                          onClick={() => setField('type', 'multiple')}
+                          className={`p-3 rounded-[5px] border flex flex-col items-center gap-1.5 text-xs font-bold transition-all cursor-pointer ${
                             formData.type === 'multiple'
-                              ? 'rgba(191, 64, 64, 0.04)'
-                              : 'var(--color-bg)',
-                          borderColor:
-                            formData.type === 'multiple'
-                              ? 'var(--color-500, #BF4040)'
-                              : 'var(--color-border)',
-                        }}
-                      >
-                        <div
-                          className="w-5 h-5 rounded-[4px] border-2 flex items-center justify-center shrink-0 mt-0.5"
-                          style={{
-                            borderColor:
-                              formData.type === 'multiple'
-                                ? 'var(--color-500, #BF4040)'
-                                : 'var(--color-muted)',
-                            background:
-                              formData.type === 'multiple'
-                                ? 'var(--color-500, #BF4040)'
-                                : 'transparent',
-                          }}
+                              ? 'border-[var(--color-500,#BF4040)] bg-[var(--color-500,#BF4040)]/10 text-[var(--color-500,#BF4040)]'
+                              : 'hover:bg-slate-50 dark:hover:bg-slate-900 border-slate-200 dark:border-slate-800'
+                          }`}
                         >
-                          {formData.type === 'multiple' && (
-                            <Check size={12} className="text-white stroke-[3px]" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-bold text-xs" style={{ color: 'var(--color-text)' }}>
-                            Multiple Choices (Add-ons)
-                          </p>
-                          <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-muted)' }}>
-                            Customer can pick several add-ons (e.g. Extra Cheese, Bacon, Egg).
-                          </p>
-                        </div>
+                          <CheckSquare size={18} />
+                          <span>Multiple Choice</span>
+                          <span className="text-[10px] font-normal opacity-70">(Checkboxes)</span>
+                        </button>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Requirement Checkbox */}
-                  <div className="pt-2">
-                    <label
-                      onClick={() => setField('is_required', !formData.is_required)}
-                      className="flex items-start gap-3 cursor-pointer select-none group"
-                    >
-                      <div
-                        className={`w-5 h-5 rounded-[5px] border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
-                          formData.is_required
-                            ? 'bg-[var(--color-500,#BF4040)] border-[var(--color-500,#BF4040)] text-white shadow-2xs'
-                            : 'border-slate-300 dark:border-slate-600 bg-transparent group-hover:border-[var(--color-500,#BF4040)]'
-                        }`}
-                      >
-                        {formData.is_required && <Check size={12} strokeWidth={3} />}
-                      </div>
-                      <div>
-                        <p className="font-bold text-xs" style={{ color: 'var(--color-text)' }}>
-                          Mandatory / Required Selection
-                        </p>
-                        <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-muted)' }}>
-                          When checked, an option must be chosen before adding the product to the order.
-                        </p>
-                      </div>
-                    </label>
+                    <div className="flex flex-col justify-center pt-2 sm:pt-0">
+                      <label className="flex items-center gap-2.5 cursor-pointer p-3 rounded-[5px] border" style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg)' }}>
+                        <input
+                          type="checkbox"
+                          checked={formData.is_required}
+                          onChange={(e) => setField('is_required', e.target.checked)}
+                          className="w-4 h-4 rounded-[4px] accent-[var(--color-500,#BF4040)]"
+                        />
+                        <div>
+                          <span className="text-xs font-bold block" style={{ color: 'var(--color-text)' }}>
+                            Mandatory / Required
+                          </span>
+                          <span className="text-[11px] block" style={{ color: 'var(--color-muted)' }}>
+                            Customer/Cashier must select at least 1 option before adding to cart.
+                          </span>
+                        </div>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* ── TAB 2: Choices & Pricing ────────────────────── */}
+              {/* ── TAB 2: Modifier Choices ──────────────────────────── */}
               <div id="choices" className="space-y-2.5 scroll-mt-6">
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                    Choices & Prices
+                    Modifier Choices &amp; Add-on Values ({validChoicesCount})
                   </h3>
                   <button
                     type="button"
                     onClick={addValueRow}
-                    className="text-xs font-bold text-[var(--color-500,#BF4040)] hover:underline flex items-center gap-1"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-white px-3 py-1.5 rounded-[5px] shadow-sm hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+                    style={{
+                      background: 'linear-gradient(135deg, var(--color-500, #BF4040), var(--color-600, #9D3434))',
+                    }}
                   >
-                    <Plus size={14} /> Add Choice
+                    <Plus size={13} />
+                    <span>Add Choice Option</span>
                   </button>
                 </div>
 
                 <div
-                  className="rounded-[5px] p-6 sm:p-7 space-y-6"
+                  className="rounded-[5px] p-6 sm:p-7 space-y-3"
                   style={{
                     background: 'var(--color-surface)',
                   }}
                 >
-                  {/* Quick Presets */}
-                  <div>
-                    <span className="block text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--color-muted)' }}>
-                      Quick Fill Presets
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          applyPreset('Cup Size', [
-                            { name: 'Regular (12oz)', price: 0 },
-                            { name: 'Large (16oz)', price: 0.75 },
-                            { name: 'Jumbo (24oz)', price: 1.5 },
-                          ], 'single')
-                        }
-                        className="px-2.5 py-1 rounded-[5px] border text-[11px] font-semibold transition-colors hover:border-[var(--color-500,#BF4040)]"
-                        style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
-                      >
-                        🥤 Cup Sizes (Reg / Lrg / Jumbo)
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          applyPreset('Sweetness Level', [
-                            { name: '100% Regular Sugar', price: 0 },
-                            { name: '70% Less Sugar', price: 0 },
-                            { name: '50% Half Sugar', price: 0 },
-                            { name: '0% No Sugar', price: 0 },
-                          ], 'single')
-                        }
-                        className="px-2.5 py-1 rounded-[5px] border text-[11px] font-semibold transition-colors hover:border-[var(--color-500,#BF4040)]"
-                        style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
-                      >
-                        🍬 Sugar Level (0% to 100%)
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          applyPreset('Burger Add-ons', [
-                            { name: 'Extra Cheddar Cheese', price: 1.0 },
-                            { name: 'Crispy Bacon Strips', price: 1.5 },
-                            { name: 'Fried Egg', price: 1.25 },
-                            { name: 'Jalapeño Slices', price: 0.5 },
-                          ], 'multiple')
-                        }
-                        className="px-2.5 py-1 rounded-[5px] border text-[11px] font-semibold transition-colors hover:border-[var(--color-500,#BF4040)]"
-                        style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
-                      >
-                        🍔 Food Toppings & Add-ons
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Values List */}
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     {formData.values.map((val, idx) => (
                       <div
                         key={idx}
-                        className="p-3.5 rounded-[5px] border flex items-center gap-3 shadow-2xs transition-all"
+                        className="flex items-center gap-2 sm:gap-3 p-2 rounded-[5px] border shadow-2xs"
                         style={{
                           background: 'var(--color-bg)',
                           borderColor: 'var(--color-border)',
                         }}
                       >
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] text-[var(--color-muted)] shrink-0 select-none">
-                          #{idx + 1}
-                        </div>
+                        <span className="w-5 text-center font-mono text-[11px] text-slate-400 font-bold shrink-0">
+                          {idx + 1}.
+                        </span>
 
-                        {/* Name */}
-                        <div className="flex-1">
+                        <input
+                          type="text"
+                          required
+                          value={val.name}
+                          onChange={(e) => updateValueRow(idx, 'name', e.target.value)}
+                          placeholder="e.g. Regular, Medium, Large, Extra Cheese"
+                          className="flex-1 px-3 py-2 text-xs rounded-[4px] border outline-none font-medium"
+                          style={{
+                            background: 'var(--color-card)',
+                            borderColor: 'var(--color-border)',
+                            color: 'var(--color-text)',
+                          }}
+                        />
+
+                        <div className="flex items-center gap-1 shrink-0 w-28 sm:w-32">
+                          <span className="text-xs font-bold text-slate-400">$</span>
                           <input
-                            type="text"
-                            required
-                            value={val.name}
-                            onChange={(e) => updateValueRow(idx, 'name', e.target.value)}
-                            placeholder="e.g. Large Size, Extra Shot, Almond Milk"
-                            className="w-full px-3.5 py-2 text-xs rounded-[5px] border outline-none font-semibold transition-colors"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={val.price}
+                            onChange={(e) => updateValueRow(idx, 'price', e.target.value)}
+                            placeholder="0.00"
+                            className="w-full px-2.5 py-2 text-xs rounded-[4px] border outline-none font-mono text-right"
                             style={{
                               background: 'var(--color-card)',
                               borderColor: 'var(--color-border)',
@@ -509,31 +545,13 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
                           />
                         </div>
 
-                        {/* Extra Price */}
-                        <div
-                          className="w-36 flex items-center gap-1.5 px-3 py-2 rounded-[5px] border"
-                          style={{ background: 'var(--color-card)', borderColor: 'var(--color-border)' }}
-                        >
-                          <span className="text-xs font-mono font-bold text-[var(--color-muted)]">+$</span>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={val.price === 0 ? '' : val.price}
-                            onChange={(e) => updateValueRow(idx, 'price', e.target.value)}
-                            placeholder="0.00"
-                            className="w-full bg-transparent border-none outline-none text-xs font-mono font-bold text-[var(--color-text)]"
-                          />
-                        </div>
-
-                        {/* Delete Row */}
                         <button
                           type="button"
                           onClick={() => removeValueRow(idx)}
-                          className="w-8 h-8 rounded-[5px] flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                          title="Remove Choice"
+                          className="p-2 rounded-[4px] text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer shrink-0"
+                          title="Remove option"
                         >
-                          <Trash2 size={15} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     ))}
@@ -542,124 +560,96 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
                   <button
                     type="button"
                     onClick={addValueRow}
-                    className="w-full py-2.5 rounded-[5px] border-2 border-dashed flex items-center justify-center gap-2 text-xs font-bold transition-colors hover:border-[var(--color-500,#BF4040)] hover:text-[var(--color-500,#BF4040)]"
-                    style={{
-                      borderColor: 'var(--color-border)',
-                      color: 'var(--color-muted)',
-                      background: 'var(--color-bg)',
-                    }}
+                    className="w-full py-2.5 mt-2 border-2 border-dashed rounded-[5px] text-xs font-bold text-slate-500 dark:text-slate-400 hover:border-[var(--color-500,#BF4040)] hover:text-[var(--color-500,#BF4040)] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    style={{ borderColor: 'var(--color-border)' }}
                   >
-                    <Plus size={14} /> Add Another Choice
+                    <Plus size={13} />
+                    <span>+ Add Another Option Choice</span>
                   </button>
                 </div>
               </div>
 
-              {/* ── TAB 3: Preview & Display ──────────────────── */}
+              {/* ── TAB 3: Interactive POS Preview ──────────────────── */}
               <div id="preview" className="space-y-2.5 scroll-mt-6">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                  Preview & Display
+                  POS &amp; Customer Menu Preview
                 </h3>
                 <div
-                  className="rounded-[5px] p-6 sm:p-7 space-y-6"
+                  className="rounded-[5px] p-6 sm:p-7 flex items-center justify-center"
                   style={{
                     background: 'var(--color-surface)',
                   }}
                 >
-                  <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
-                    Test and interact with this modifier group as it will behave during order customization.
-                  </p>
-
                   <div
-                    className="max-w-md mx-auto p-5 rounded-[5px] border shadow-xs space-y-4"
+                    className="w-full max-w-md rounded-[6px] border p-5 shadow-sm space-y-4"
                     style={{
                       background: 'var(--color-card)',
                       borderColor: 'var(--color-border)',
                     }}
                   >
-                    {/* Header */}
-                    <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--color-border-subtle)' }}>
+                    <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--color-border)' }}>
                       <div>
-                        <h4 className="font-bold text-sm" style={{ color: 'var(--color-text)' }}>
-                          {formData.name || 'Option Group Name'}
+                        <h4 className="font-extrabold text-sm" style={{ color: 'var(--color-text)' }}>
+                          {formData.name || 'Modifier Group Name'}
                         </h4>
-                        <p className="text-[11px]" style={{ color: 'var(--color-muted)' }}>
-                          {formData.type === 'single' ? 'Select 1 option' : 'Select any add-ons'}
-                        </p>
+                        <span className="text-[11px]" style={{ color: 'var(--color-muted)' }}>
+                          {formData.type === 'single' ? 'Select 1 option' : 'Select any options'}
+                        </span>
                       </div>
-
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-[5px] border ${
-                          formData.is_required
-                            ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                            : 'bg-slate-500/10 text-slate-500 border-slate-500/20'
-                        }`}
-                      >
-                        {formData.is_required ? 'Required' : 'Optional'}
-                      </span>
+                      {formData.is_required && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-red-500 text-white uppercase">
+                          Required
+                        </span>
+                      )}
                     </div>
 
-                    {/* Choices simulation */}
                     <div className="space-y-2">
-                      {formData.values.filter((v) => v.name.trim()).length > 0 ? (
-                        formData.values
-                          .filter((v) => v.name.trim())
-                          .map((val, idx) => {
-                            const isSelected = previewSelected.includes(val.name)
-                            return (
-                              <div
-                                key={idx}
-                                onClick={() => handlePreviewChoiceToggle(val.name)}
-                                className={`p-3 rounded-[5px] border flex items-center justify-between cursor-pointer transition-all select-none ${
-                                  isSelected
-                                    ? 'border-[var(--color-500,#BF4040)] bg-[var(--color-500,#BF4040)]/5 shadow-2xs'
-                                    : 'hover:bg-black/5 dark:hover:bg-white/5'
-                                }`}
-                                style={{
-                                  borderColor: isSelected ? 'var(--color-500, #BF4040)' : 'var(--color-border)',
-                                }}
-                              >
-                                <div className="flex items-center gap-2.5">
-                                  {formData.type === 'single' ? (
-                                    <div
-                                      className="w-4 h-4 rounded-full border flex items-center justify-center"
-                                      style={{
-                                        borderColor: isSelected ? 'var(--color-500, #BF4040)' : 'var(--color-muted)',
-                                      }}
-                                    >
-                                      {isSelected && (
-                                        <div
-                                          className="w-2 h-2 rounded-full"
-                                          style={{ background: 'var(--color-500, #BF4040)' }}
-                                        />
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <div
-                                      className="w-4 h-4 rounded-[3px] border flex items-center justify-center"
-                                      style={{
-                                        borderColor: isSelected ? 'var(--color-500, #BF4040)' : 'var(--color-muted)',
-                                        background: isSelected ? 'var(--color-500, #BF4040)' : 'transparent',
-                                      }}
-                                    >
-                                      {isSelected && <Check size={11} className="text-white stroke-[3px]" />}
-                                    </div>
-                                  )}
-                                  <span className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
-                                    {val.name}
-                                  </span>
+                      {formData.values.filter((v) => v.name.trim()).map((val, idx) => {
+                        const isChecked = previewSelected.includes(val.name)
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => handlePreviewChoiceToggle(val.name)}
+                            className={`flex items-center justify-between p-3 rounded-[5px] border text-xs cursor-pointer transition-all ${
+                              isChecked
+                                ? 'border-[var(--color-500,#BF4040)] bg-[var(--color-500,#BF4040)]/5 font-bold'
+                                : 'hover:bg-slate-50 dark:hover:bg-slate-900 border-slate-200 dark:border-slate-800'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              {formData.type === 'single' ? (
+                                <div
+                                  className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                                    isChecked
+                                      ? 'border-[var(--color-500,#BF4040)] bg-[var(--color-500,#BF4040)]'
+                                      : 'border-slate-300 dark:border-slate-700'
+                                  }`}
+                                >
+                                  {isChecked && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                                 </div>
+                              ) : (
+                                <div
+                                  className={`w-4 h-4 rounded border flex items-center justify-center ${
+                                    isChecked
+                                      ? 'border-[var(--color-500,#BF4040)] bg-[var(--color-500,#BF4040)]'
+                                      : 'border-slate-300 dark:border-slate-700'
+                                  }`}
+                                >
+                                  {isChecked && <Check size={11} className="text-white stroke-[3px]" />}
+                                </div>
+                              )}
+                              <span style={{ color: 'var(--color-text)' }}>{val.name}</span>
+                            </div>
 
-                                <span className="text-xs font-mono font-bold" style={{ color: val.price > 0 ? 'var(--color-500, #BF4040)' : 'var(--color-muted)' }}>
-                                  {val.price > 0 ? `+$${val.price.toFixed(2)}` : 'Free'}
-                                </span>
-                              </div>
-                            )
-                          })
-                      ) : (
-                        <p className="text-xs text-center py-4" style={{ color: 'var(--color-muted)' }}>
-                          No choices defined yet. Add choices in the section above.
-                        </p>
-                      )}
+                            <span
+                              className="font-mono text-[11px] font-bold"
+                              style={{ color: 'var(--color-500, #BF4040)' }}
+                            >
+                              {val.price > 0 ? `+$${val.price.toFixed(2)}` : 'Free'}
+                            </span>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 </div>

@@ -20,9 +20,11 @@ import {
   AlertTriangle,
   ChevronRight,
   CheckCircle2,
-  Receipt
+  Receipt,
+  Building2
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import axiosClient from '../../api/axiosClient'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -301,6 +303,8 @@ export default function Analytics() {
   const navigate = useNavigate()
   const [summary, setSummary]       = useState(null)
   const [orders, setOrders]         = useState([])
+  const [outlets, setOutlets]       = useState([])
+  const [venueFilter, setVenueFilter] = useState('all')
   const [tables, setTables]         = useState([])
   const [products, setProducts]     = useState([])
   const [categories, setCategories] = useState([])
@@ -315,6 +319,10 @@ export default function Analytics() {
   })
   const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10))
   const [chartPeriod, setChartPeriod] = useState('12 Months')
+
+  useEffect(() => {
+    axiosClient.get('/outlets').then((res) => setOutlets(res.data?.data || [])).catch(() => {})
+  }, [])
 
   /* ── Load all data from real backend APIs ── */
   const loadDashboardData = useCallback(async () => {
@@ -348,20 +356,26 @@ export default function Analytics() {
     loadDashboardData()
   }, [loadDashboardData])
 
+  /* ── Multi-Outlet filtered orders ── */
+  const filteredOrders = useMemo(() => {
+    if (venueFilter === 'all') return orders
+    return orders.filter((o) => String(o.outlet_id) === String(venueFilter))
+  }, [orders, venueFilter])
+
   /* ── Derived metrics ── */
   const totalGrossSales = useMemo(() => {
-    if (summary?.total_revenue !== undefined) return Number(summary.total_revenue)
-    return orders.reduce((sum, o) => sum + (parseFloat(o.total_amount || o.subtotal) || 0), 0)
-  }, [summary, orders])
+    if (venueFilter === 'all' && summary?.total_revenue !== undefined) return Number(summary.total_revenue)
+    return filteredOrders.reduce((sum, o) => sum + (parseFloat(o.total_amount || o.subtotal) || 0), 0)
+  }, [summary, filteredOrders, venueFilter])
 
   const completedOrdersCount = useMemo(() => {
-    if (summary?.order_count !== undefined) return summary.order_count
-    return orders.filter((o) => ['completed', 'paid'].includes(String(o.status).toLowerCase())).length
-  }, [summary, orders])
+    if (venueFilter === 'all' && summary?.order_count !== undefined) return summary.order_count
+    return filteredOrders.filter((o) => ['completed', 'paid'].includes(String(o.status).toLowerCase())).length
+  }, [summary, filteredOrders, venueFilter])
 
   const activeOrders = useMemo(() => {
-    return orders.filter((o) => !['completed', 'cancelled', 'paid'].includes(String(o.status).toLowerCase()))
-  }, [orders])
+    return filteredOrders.filter((o) => !['completed', 'cancelled', 'paid'].includes(String(o.status).toLowerCase()))
+  }, [filteredOrders])
 
   const seatedTables = useMemo(() => {
     return tables.filter((t) => ['occupied', 'calling_waiter', 'bill_requested'].includes(t.status))
@@ -405,7 +419,7 @@ export default function Analytics() {
       isCustomer: true,
     }
 
-    orders.forEach((ord) => {
+    filteredOrders.forEach((ord) => {
       const isPaidOrCompleted = ['completed', 'paid'].includes(String(ord.status).toLowerCase())
       const amount = parseFloat(ord.total_amount || ord.subtotal) || 0
       const method = String(ord.payment_method || '').toLowerCase()
@@ -444,12 +458,12 @@ export default function Analytics() {
 
     const list = [...Object.values(staffMap), qrCustomerBucket]
     return list.sort((a, b) => b.totalSales - a.totalSales)
-  }, [users, orders])
+  }, [users, filteredOrders])
 
   // Top Selling Products ranked from live order line items
   const topProducts = useMemo(() => {
     const countMap = {}
-    orders.forEach((o) => {
+    filteredOrders.forEach((o) => {
       ;(o.items || o.order_items || []).forEach((it) => {
         const name = it.product?.name || it.name || it.title || 'Item'
         const qty = it.quantity || 1
@@ -473,7 +487,7 @@ export default function Analytics() {
       img: p.image_url,
       isCatalogOnly: true
     }))
-  }, [orders, products])
+  }, [filteredOrders, products])
 
   const avgTicket = completedOrdersCount > 0 ? totalGrossSales / completedOrdersCount : 0
 
@@ -486,16 +500,110 @@ export default function Analytics() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-extrabold tracking-tight" style={{ color: 'var(--color-text)' }}>
-                Analytics & Revenue Reports
+                Analytics &amp; Revenue Reports
               </h1>
               
             </div>
             <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>
-              Real-time POS revenue streams, sales distribution, and table performance analytics.
+              Real-time POS revenue streams, sales distribution, and venue performance analytics.
             </p>
           </div>
 
           
+        </div>
+
+        {/* ── Multi-Venue Selector ── */}
+        <div className="relative">
+          {/* Fade effect on mobile */}
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[var(--color-bg)] to-transparent pointer-events-none z-10 sm:hidden" />
+
+          <div
+            className="flex items-center gap-1 overflow-x-auto no-scrollbar rounded-xl p-1 border"
+            style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              borderColor: 'var(--color-border)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setVenueFilter('all')}
+              className={`inline-flex items-center gap-2.5 h-10 px-3.5 rounded-xl text-sm transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                venueFilter === 'all'
+                  ? 'shadow-xs font-semibold'
+                  : 'hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
+              style={
+                venueFilter === 'all'
+                  ? {
+                      background: 'var(--color-surface, #1e2230)',
+                      color: 'var(--color-text, #ffffff)',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                      border: '1px solid var(--color-border)',
+                    }
+                  : {
+                      color: 'var(--color-muted, #94a3b8)',
+                    }
+              }
+            >
+              <Building2 size={18} className="shrink-0 text-[#126973] dark:text-[#F1D8C2]" />
+              <span>All Venues</span>
+              <span
+                className="inline-flex items-center justify-center rounded-lg px-2 h-5 text-[11px] font-semibold"
+                style={{
+                  background: venueFilter === 'all'
+                    ? 'rgba(18, 105, 115, 0.18)'
+                    : 'rgba(255, 255, 255, 0.06)',
+                  color: venueFilter === 'all' ? 'var(--color-500, #126973)' : 'var(--color-muted, #94a3b8)',
+                }}
+              >
+                {orders.length}
+              </span>
+            </button>
+
+            {outlets.map((o) => {
+              const count = orders.filter((ord) => String(ord.outlet_id) === String(o.id)).length
+              const isSelected = String(venueFilter) === String(o.id)
+              const icon = o.type === 'cafe' ? '☕' : o.type === 'bar' ? '🍸' : o.type === 'retail' ? '🛒' : '🍽️'
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => setVenueFilter(String(o.id))}
+                  className={`inline-flex items-center gap-2.5 h-10 px-3.5 rounded-xl text-sm transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                    isSelected
+                      ? 'shadow-xs font-semibold'
+                      : 'hover:bg-black/5 dark:hover:bg-white/5'
+                  }`}
+                  style={
+                    isSelected
+                      ? {
+                          background: 'var(--color-surface, #1e2230)',
+                          color: 'var(--color-text, #ffffff)',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                          border: '1px solid var(--color-border)',
+                        }
+                      : {
+                          color: 'var(--color-muted, #94a3b8)',
+                        }
+                  }
+                >
+                  <span className="text-base shrink-0">{icon}</span>
+                  <span>{o.name}</span>
+                  <span
+                    className="inline-flex items-center justify-center rounded-lg px-2 h-5 text-[11px] font-semibold"
+                    style={{
+                      background: isSelected
+                        ? 'rgba(18, 105, 115, 0.18)'
+                        : 'rgba(255, 255, 255, 0.06)',
+                      color: isSelected ? 'var(--color-500, #126973)' : 'var(--color-muted, #94a3b8)',
+                    }}
+                  >
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         {/* ── 2. Date Range Filter Toolbar ── */}
@@ -505,18 +613,18 @@ export default function Analytics() {
         >
           {/* Quick Presets */}
           <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-[5px]">
-            {['24 hours', '7 days', '30 days', '12 Months'].map((p) => (
+            {['24 hours', '7 days', '30 days', '12 Months'].map((lbl) => (
               <button
-                key={p}
+                key={lbl}
                 type="button"
-                onClick={() => setChartPeriod(p)}
-                className={`px-3 py-1 rounded-[5px] text-xs font-bold transition-all cursor-pointer ${
-                  chartPeriod === p
-                    ? 'bg-white dark:bg-zinc-800 text-[var(--color-text)] shadow-xs'
+                onClick={() => setChartPeriod(lbl)}
+                className={`px-3 py-1.5 rounded-[4px] text-xs font-semibold transition-all cursor-pointer ${
+                  chartPeriod === lbl
+                    ? 'bg-white dark:bg-[#12151f] shadow-2xs text-[var(--color-text)]'
                     : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'
                 }`}
               >
-                {p}
+                {lbl}
               </button>
             ))}
           </div>
@@ -588,38 +696,34 @@ export default function Analytics() {
             </div>
           </div>
 
-          {/* Card 3: Tables Seated */}
-          <div
-            className="rounded-[5px] p-4 border flex items-center gap-3.5 shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
-            onClick={() => navigate('/tables')}
-            style={{ background: 'var(--color-card)', borderColor: 'var(--color-border)' }}
-          >
-            <div className="w-11 h-11 rounded-[5px] flex items-center justify-center shrink-0 text-amber-500 bg-amber-500/10 border border-amber-500/20">
-              <Armchair size={22} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Tables Seated</p>
-                <ArrowUpRight size={13} className="text-[var(--color-muted)] group-hover:text-amber-500 transition-colors" />
-              </div>
-              <p className="text-xl font-extrabold font-mono tracking-tight" style={{ color: 'var(--color-text)' }}>
-                {seatedTables.length} / {tables.length || 0}
-              </p>
-            </div>
-          </div>
-
-          {/* Card 4: Average Ticket Value */}
+          {/* Card 3: Avg Ticket */}
           <div
             className="rounded-[5px] p-4 border flex items-center gap-3.5 shadow-2xs hover:shadow-xs transition-all"
             style={{ background: 'var(--color-card)', borderColor: 'var(--color-border)' }}
           >
-            <div className="w-11 h-11 rounded-[5px] flex items-center justify-center shrink-0 text-indigo-500 bg-indigo-500/10 border border-indigo-500/20">
+            <div className="w-11 h-11 rounded-[5px] flex items-center justify-center shrink-0 text-amber-500 bg-amber-500/10 border border-amber-500/20">
               <TrendingUp size={22} />
             </div>
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Average Ticket</p>
               <p className="text-xl font-extrabold font-mono tracking-tight" style={{ color: 'var(--color-text)' }}>
                 ${avgTicket.toFixed(2)}
+              </p>
+            </div>
+          </div>
+
+          {/* Card 4: Tables Occupied */}
+          <div
+            className="rounded-[5px] p-4 border flex items-center gap-3.5 shadow-2xs hover:shadow-xs transition-all"
+            style={{ background: 'var(--color-card)', borderColor: 'var(--color-border)' }}
+          >
+            <div className="w-11 h-11 rounded-[5px] flex items-center justify-center shrink-0 text-blue-500 bg-blue-500/10 border border-blue-500/20">
+              <Armchair size={22} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Active Tables</p>
+              <p className="text-xl font-extrabold font-mono tracking-tight" style={{ color: 'var(--color-text)' }}>
+                {seatedTables.length} / {tables.length}
               </p>
             </div>
           </div>
@@ -650,8 +754,8 @@ export default function Analytics() {
               </div>
             </div>
 
-            {/* Render Bar Chart */}
-            <RevenueBarChart orders={orders} period={chartPeriod} />
+            {/* Render Bar Chart with filteredOrders */}
+            <RevenueBarChart orders={filteredOrders} period={chartPeriod} />
           </div>
 
           {/* Right 1-Col: Category Donut & Live Floor Mini-Map */}

@@ -19,16 +19,19 @@ import OrderViewDetails from '../pages/admin/views/orders/Order-View-Details'
 import AdminLayout from '../components/layout/AdminLayout'
 import TablesManagement from '../pages/admin/TablesManagement'
 import Products from '../pages/admin/Products'
-import Categories from '../pages/admin/Categories'
+import Categories from '../pages/admin/categories/Categories'
 import OptionGroups from '../pages/admin/OptionGroups'
 import Inventory from '../pages/admin/Inventory'
 import Recipes from '../pages/admin/Recipes'
 import Purchases from '../pages/admin/Purchases'
 import StockLogs from '../pages/admin/StockLogs'
-import Users from '../pages/admin/Users'
+import Users from '../pages/admin/users/Users'
 import Roles from '../pages/admin/Roles'
 import PermissionRole from '../pages/admin/PermissionRole'
 import Settings from '../pages/admin/Settings'
+import OutletsManagement from '../pages/admin/OutletsManagement'
+import ZonesManagement from '../pages/admin/ZonesManagement'
+import StationsManagement from '../pages/admin/StationsManagement'
 
 // Customer pages
 import QRMenu from '../pages/customer/QRMenu'
@@ -217,6 +220,23 @@ export default function AppRoutes() {
       <Route path="/permissions" element={
         <RoleBasedRoute roles={['admin']} permissions={['users.manage']}>
           <PermissionRole />
+        </RoleBasedRoute>
+      } />
+
+      {/* Venues & Multi-Outlet Management */}
+      <Route path="/outlets" element={
+        <RoleBasedRoute roles={['admin', 'manager']} permissions={['users.manage']}>
+          <OutletsManagement />
+        </RoleBasedRoute>
+      } />
+      <Route path="/zones" element={
+        <RoleBasedRoute roles={['admin', 'manager']} permissions={['users.manage']}>
+          <ZonesManagement />
+        </RoleBasedRoute>
+      } />
+      <Route path="/stations" element={
+        <RoleBasedRoute roles={['admin', 'manager']} permissions={['users.manage']}>
+          <StationsManagement />
         </RoleBasedRoute>
       } />
 

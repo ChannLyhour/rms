@@ -54,9 +54,12 @@ func (s *service) Create(req *CreateUserRequest, creatorID *uint64) (*User, erro
 
 	u := &User{
 		RoleID:    req.RoleID,
+		OutletID:  req.OutletID,
 		Name:      req.Name,
 		Username:  req.Username,
 		Email:     req.Email,
+		Phone:     req.Phone,
+		ImageURL:  req.ImageURL,
 		Password:  string(hashedPassword),
 		IsActive:  isActive,
 		CreatedBy: creatorID,
@@ -78,6 +81,9 @@ func (s *service) Update(id uint64, req *UpdateUserRequest) (*User, error) {
 	if req.RoleID != nil {
 		u.RoleID = *req.RoleID
 	}
+	if req.OutletID != nil {
+		u.OutletID = req.OutletID
+	}
 	if req.Name != nil {
 		u.Name = *req.Name
 	}
@@ -86,6 +92,12 @@ func (s *service) Update(id uint64, req *UpdateUserRequest) (*User, error) {
 	}
 	if req.Email != nil {
 		u.Email = req.Email
+	}
+	if req.Phone != nil {
+		u.Phone = req.Phone
+	}
+	if req.ImageURL != nil {
+		u.ImageURL = req.ImageURL
 	}
 	if req.Password != nil && *req.Password != "" {
 		hashed, err := bcrypt.GenerateFromPassword([]byte(*req.Password), bcrypt.DefaultCost)

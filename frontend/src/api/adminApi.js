@@ -66,5 +66,24 @@ export const adminApi = {
   getSettings: () => client.get('/admin/settings'),
   getSetting: (key) => client.get(`/admin/settings/${key}`),
   setSetting: (data) => client.post('/admin/settings', data),
+
+  // Multi-Outlet System (Venues, Zones, Stations)
+  getOutlets: (params) => client.get('/admin/outlets', { params }),
+  getOutlet: (id) => client.get(`/admin/outlets/${id}`),
+  createOutlet: (data) => client.post('/admin/outlets', data),
+  updateOutlet: (id, data) => client.put(`/admin/outlets/${id}`, data),
+  deleteOutlet: (id) => client.delete(`/admin/outlets/${id}`),
+
+  getZones: (params) => client.get('/admin/zones', { params }),
+  getZone: (id) => client.get(`/admin/zones/${id}`),
+  createZone: (data) => client.post('/admin/zones', data),
+  updateZone: (id, data) => client.put(`/admin/zones/${id}`, data),
+  deleteZone: (id) => client.delete(`/admin/zones/${id}`),
+
+  getStations: (params) => client.get('/admin/stations', { params }),
+  getStation: (id) => client.get(`/admin/stations/${id}`),
+  createStation: (data) => client.post('/admin/stations', data),
+  updateStation: (id, data) => client.put(`/admin/stations/${id}`, data),
+  deleteStation: (id) => client.delete(`/admin/stations/${id}`),
 }
 

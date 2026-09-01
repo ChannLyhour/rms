@@ -38,9 +38,12 @@ type RolePermission struct {
 type User struct {
 	ID        uint64    `gorm:"primaryKey;autoIncrement" json:"id"`
 	RoleID    uint64    `gorm:"not null" json:"role_id"`
+	OutletID  *uint64   `json:"outlet_id"`
 	Name      string    `gorm:"size:255;not null" json:"name"`
 	Username  string    `gorm:"uniqueIndex;size:100;not null" json:"username"`
 	Email     *string   `gorm:"uniqueIndex;size:255" json:"email"`
+	Phone     *string   `gorm:"size:50" json:"phone"`
+	ImageURL  *string   `gorm:"type:text" json:"image_url"`
 	Password  string    `gorm:"size:255;not null" json:"-"`
 	Token     *string   `gorm:"type:text" json:"token,omitempty"`
 	IsActive  bool      `gorm:"default:true" json:"is_active"`
@@ -53,9 +56,12 @@ type User struct {
 // CreateUserRequest payload
 type CreateUserRequest struct {
 	RoleID   uint64  `json:"role_id" binding:"required"`
+	OutletID *uint64 `json:"outlet_id"`
 	Name     string  `json:"name" binding:"required"`
 	Username string  `json:"username" binding:"required"`
 	Email    *string `json:"email"`
+	Phone    *string `json:"phone"`
+	ImageURL *string `json:"image_url"`
 	Password string  `json:"password" binding:"required,min=6"`
 	IsActive *bool   `json:"is_active"`
 }
@@ -63,9 +69,12 @@ type CreateUserRequest struct {
 // UpdateUserRequest payload
 type UpdateUserRequest struct {
 	RoleID   *uint64 `json:"role_id"`
+	OutletID *uint64 `json:"outlet_id"`
 	Name     *string `json:"name"`
 	Username *string `json:"username"`
 	Email    *string `json:"email"`
+	Phone    *string `json:"phone"`
+	ImageURL *string `json:"image_url"`
 	Password *string `json:"password"`
 	Token    *string `json:"token"`
 	IsActive *bool   `json:"is_active"`

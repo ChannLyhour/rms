@@ -12,6 +12,7 @@ import (
 	"github.com/pos-system/backend/internal/database"
 	"github.com/pos-system/backend/internal/inventory"
 	"github.com/pos-system/backend/internal/order"
+	"github.com/pos-system/backend/internal/outlet"
 	"github.com/pos-system/backend/internal/products"
 	"github.com/pos-system/backend/internal/system"
 	"github.com/pos-system/backend/internal/table"
@@ -40,6 +41,7 @@ func main() {
 	orderRepo := order.NewRepository(db)
 	inventoryRepo := inventory.NewRepository(db)
 	systemRepo := system.NewRepository(db)
+	outletRepo := outlet.NewRepository(db)
 
 	// 4. Instantiate Domain Services
 	authSvc := auth.NewService(userRepo, cfg.JWT.Secret, cfg.JWT.ExpiresIn)
@@ -49,6 +51,7 @@ func main() {
 	orderSvc := order.NewService(orderRepo, productRepo, systemRepo, 7.0) // default 7% tax, queries settings table
 	inventorySvc := inventory.NewService(inventoryRepo)
 	systemSvc := system.NewService(systemRepo)
+	outletSvc := outlet.NewService(outletRepo)
 
 	// 5. Instantiate Domain Handlers
 	authHdl := auth.NewHandler(authSvc)
@@ -58,6 +61,7 @@ func main() {
 	orderHdl := order.NewHandler(orderSvc, tableSvc, productRepo, systemRepo)
 	inventoryHdl := inventory.NewHandler(inventorySvc)
 	systemHdl := system.NewHandler(systemSvc)
+	outletHdl := outlet.NewHandler(outletSvc)
 	uploadHdl := upload.NewUploadHandler()
 	wsHub := ws.NewHub()
 	go wsHub.Run()
@@ -99,8 +103,8 @@ func main() {
 	r.GET("/api/health", healthHandler)
 
 	// Register API Routes for both /api/v1 and /api
-	registerAPIRoutes(r.Group("/api/v1"), cfg, authHdl, userHdl, tableHdl, productHdl, orderHdl, inventoryHdl, systemHdl, uploadHdl, wsHub)
-	registerAPIRoutes(r.Group("/api"), cfg, authHdl, userHdl, tableHdl, productHdl, orderHdl, inventoryHdl, systemHdl, uploadHdl, wsHub)
+	registerAPIRoutes(r.Group("/api/v1"), cfg, authHdl, userHdl, tableHdl, productHdl, orderHdl, inventoryHdl, systemHdl, outletHdl, uploadHdl, wsHub)
+	registerAPIRoutes(r.Group("/api"), cfg, authHdl, userHdl, tableHdl, productHdl, orderHdl, inventoryHdl, systemHdl, outletHdl, uploadHdl, wsHub)
 
 	// Start HTTP Server
 	addr := fmt.Sprintf(":%s", cfg.App.Port)
@@ -120,11 +124,15 @@ func registerAPIRoutes(
 	orderHdl *order.Handler,
 	inventoryHdl *inventory.Handler,
 	systemHdl *system.Handler,
+	outletHdl *outlet.Handler,
 	uploadHdl *upload.UploadHandler,
 	wsHub *ws.Hub,
 ) {
 	// ── File Upload Routes ───────────────────────────────────────
 	uploadHdl.RegisterRoutes(api)
+
+	// ── Multi-Outlet Routes ──────────────────────────────────────
+	outletHdl.RegisterRoutes(api)
 
 	// ── WebSockets ────────────────────────────────────────────────
 	api.GET("/ws", func(c *gin.Context) {
@@ -242,6 +250,28 @@ func registerAPIRoutes(
 		menuGroup.POST("/option-groups", productHdl.CreateOptionGroup)
 		menuGroup.PUT("/option-groups/:id", productHdl.UpdateOptionGroup)
 		menuGroup.DELETE("/option-groups/:id", productHdl.DeleteOptionGroup)
+	}
+
+	// 2.5 Multi-Outlet Management (Outlets, Zones, Stations)
+	outletAdminGroup := api.Group("/admin", auth.AuthMiddleware(cfg.JWT.Secret), auth.RequireRoleOrPermission([]string{"admin"}, "menu.manage", "tables.manage", "users.manage"))
+	{
+		outletAdminGroup.GET("/outlets", outletHdl.GetAllOutlets)
+		outletAdminGroup.GET("/outlets/:id", outletHdl.GetOutletByID)
+		outletAdminGroup.POST("/outlets", outletHdl.CreateOutlet)
+		outletAdminGroup.PUT("/outlets/:id", outletHdl.UpdateOutlet)
+		outletAdminGroup.DELETE("/outlets/:id", outletHdl.DeleteOutlet)
+
+		outletAdminGroup.GET("/zones", outletHdl.GetAllZones)
+		outletAdminGroup.GET("/zones/:id", outletHdl.GetZoneByID)
+		outletAdminGroup.POST("/zones", outletHdl.CreateZone)
+		outletAdminGroup.PUT("/zones/:id", outletHdl.UpdateZone)
+		outletAdminGroup.DELETE("/zones/:id", outletHdl.DeleteZone)
+
+		outletAdminGroup.GET("/stations", outletHdl.GetAllStations)
+		outletAdminGroup.GET("/stations/:id", outletHdl.GetStationByID)
+		outletAdminGroup.POST("/stations", outletHdl.CreateStation)
+		outletAdminGroup.PUT("/stations/:id", outletHdl.UpdateStation)
+		outletAdminGroup.DELETE("/stations/:id", outletHdl.DeleteStation)
 	}
 
 	// 3. Tables Mutations

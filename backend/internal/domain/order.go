@@ -24,7 +24,7 @@ type Order struct {
 type OrderItem struct {
 	ID                  uint64            `gorm:"primaryKey;autoIncrement" json:"id"`
 	OrderID             uint64            `gorm:"not null" json:"order_id"`
-	ProductID           uint64            `gorm:"not null" json:"product_id"`
+	ProductID           *uint64           `json:"product_id"`
 	Quantity            int               `gorm:"default:1" json:"quantity"`
 	UnitPrice           float64           `gorm:"type:numeric(10,2);default:0.00" json:"unit_price"`
 	SpecialInstructions *string           `json:"special_instructions"`

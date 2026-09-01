@@ -13,20 +13,20 @@ export function LogoIcon({ size = 32, className = '', style = {} }) {
     >
       <defs>
         <linearGradient id="clean-logo-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#FB923C" />
-          <stop offset="100%" stopColor="#EA580C" />
+          <stop offset="0%" stopColor="#126973" />
+          <stop offset="100%" stopColor="#072328" />
         </linearGradient>
       </defs>
-      <rect width="24" height="24" rx="6" fill="url(#clean-logo-bg)" />
+      <rect width="24" height="24" rx="6" fill="url(#clean-logo-bg)" stroke="#F1D8C2" strokeOpacity="0.4" strokeWidth="0.8" />
       {/* Fork */}
       <path
         d="M8 6V10C8 11.1 8.9 12 10 12V18H11V12C12.1 12 13 11.1 13 10V6H12V9.5C12 9.8 11.8 10 11.5 10H9.5C9.2 10 9 9.8 9 9.5V6H8Z"
-        fill="#FFFFFF"
+        fill="#F1D8C2"
       />
       {/* Knife */}
       <path
         d="M16 6C14.5 6 14 7.5 14 10V13H15V18H16V6Z"
-        fill="#FFFFFF"
+        fill="#F1D8C2"
       />
     </svg>
   )
@@ -516,5 +516,69 @@ export function UnpaidStatusIcon({ size = 18, className = '', style = {} }) {
     </svg>
   )
 }
+
+/**
+ * 20. Outlets / Venues Icon (Modern Teal Architectural Building)
+ */
+export function OutletsIcon({ size = 22, className = '', style = {} }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className={`shrink-0 ${className}`}
+      style={{ width: size, height: size, minWidth: size, minHeight: size, ...style }}
+    >
+      <defs>
+        <linearGradient id="clean-outlet-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#126973" />
+          <stop offset="100%" stopColor="#072328" />
+        </linearGradient>
+      </defs>
+      <rect x="3" y="4" width="18" height="17" rx="3" fill="url(#clean-outlet-bg)" stroke="#F1D8C2" strokeOpacity="0.3" strokeWidth="0.8" />
+      <rect x="6.5" y="7.5" width="3" height="3" rx="0.5" fill="#F1D8C2" opacity="0.9" />
+      <rect x="14.5" y="7.5" width="3" height="3" rx="0.5" fill="#F1D8C2" opacity="0.9" />
+      <rect x="6.5" y="12" width="3" height="3" rx="0.5" fill="#F1D8C2" opacity="0.9" />
+      <rect x="14.5" y="12" width="3" height="3" rx="0.5" fill="#F1D8C2" opacity="0.9" />
+      <path d="M10 21V17.5C10 17.2 10.2 17 10.5 17H13.5C13.8 17 14 17.2 14 17.5V21" fill="#F1D8C2" />
+    </svg>
+  )
+}
+
+/**
+ * 21. Zones & Floors Icon (Stacked Floor Layers)
+ */
+export function ZonesIcon({ size = 18, className = '', style = {} }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className={`shrink-0 ${className}`}
+      style={{ width: size, height: size, minWidth: size, minHeight: size, ...style }}
+    >
+      <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#126973" stroke="#F1D8C2" strokeWidth="1" strokeLinejoin="round" />
+      <path d="M2 12L12 17L22 12" stroke="#126973" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2 17L12 22L22 17" stroke="#126973" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/**
+ * 22. Stations & KDS Icon (Display Monitor & Router)
+ */
+export function StationsIcon({ size = 18, className = '', style = {} }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className={`shrink-0 ${className}`}
+      style={{ width: size, height: size, minWidth: size, minHeight: size, ...style }}
+    >
+      <rect x="3" y="3" width="18" height="13" rx="2" fill="#0E7490" />
+      <path d="M7 8H17M7 11H13" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M12 16V20M8 20H16" stroke="#0E7490" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 
 
