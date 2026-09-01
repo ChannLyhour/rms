@@ -356,7 +356,7 @@ export default function DropdownAccountCardMD({ collapsed, placement = 'top', co
       <LoadingPopup
         isOpen={isLoggingOut}
         user={user}
-        title="CATER POS"
+        title="SKYPARK"
         subMessage="INITIALIZING SYSTEM"
         duration={1500}
         onComplete={handleCompleteLogout}

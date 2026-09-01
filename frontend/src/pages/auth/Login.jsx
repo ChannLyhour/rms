@@ -1,22 +1,16 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { Lock, User, ArrowRight } from 'lucide-react'
+import { Lock, User, ArrowRight, Sun, Moon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import KdsLoadingPopup from '../../components/loading-page/loadingpopup'
 
-/* ── Static ambient orbs ── */
+/* ── Ambient floating orbs ── */
 const ORBS = [
-  { w: 500, h: 500, top: '-12%', left: '-8%',  delay: '0s',   dur: '20s', op: 0.10 },
-  { w: 360, h: 360, top: '55%',  left: '55%',  delay: '-7s',  dur: '24s', op: 0.08 },
-  { w: 260, h: 260, top: '15%',  left: '72%',  delay: '-3s',  dur: '16s', op: 0.06 },
-  { w: 180, h: 180, top: '80%',  left: '5%',   delay: '-11s', dur: '18s', op: 0.05 },
-]
-
-const DEMO_USERS = [
-  { label: 'Admin',   username: 'admin',   color: '#BF4040', bg: 'rgba(191,64,64,0.10)',   border: 'rgba(191,64,64,0.25)'   },
-  { label: 'Cashier', username: 'cashier', color: '#10b981', bg: 'rgba(16,185,129,0.10)',  border: 'rgba(16,185,129,0.25)'  },
-  { label: 'Kitchen', username: 'kitchen', color: '#f59e0b', bg: 'rgba(245,158,11,0.10)',  border: 'rgba(245,158,11,0.25)'  },
+  { w: 560, h: 560, top: '-12%', left: '-8%',  delay: '0s',   dur: '20s' },
+  { w: 450, h: 450, top: '48%',  left: '55%',  delay: '-6s',  dur: '24s' },
+  { w: 320, h: 320, top: '8%',   left: '68%',  delay: '-3s',  dur: '16s' },
+  { w: 260, h: 260, top: '78%',  left: '12%',  delay: '-10s', dur: '18s' },
 ]
 
 export default function Login() {
@@ -24,9 +18,30 @@ export default function Login() {
   const [loading, setLoading]     = useState(false)
   const [loggingIn, setLoggingIn] = useState(false)
   const [focused, setFocused]     = useState(null)
-  const roleRef                   = useRef('')   // ref avoids stale-closure in onComplete
+  const [theme, setTheme]         = useState(() => localStorage.getItem('skypark_theme') || 'dark')
+  const roleRef                   = useRef('')
   const { login }                 = useAuth()
   const navigate                  = useNavigate()
+
+  useEffect(() => {
+    localStorage.setItem('skypark_theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))
+  }
+
+  const isDark = theme === 'dark'
+
+  const demoUsers = isDark ? [
+    { label: 'Admin',   username: 'admin',   color: '#F1D8C2', bg: 'rgba(241, 216, 194, 0.14)', border: 'rgba(241, 216, 194, 0.40)' },
+    { label: 'Cashier', username: 'cashier', color: '#7ecbd4', bg: 'rgba(18, 105, 115, 0.25)',  border: 'rgba(126, 203, 212, 0.45)' },
+    { label: 'Kitchen', username: 'kitchen', color: '#f1d8c2', bg: 'rgba(18, 105, 115, 0.18)',  border: 'rgba(241, 216, 194, 0.25)' },
+  ] : [
+    { label: 'Admin',   username: 'admin',   color: '#126973', bg: 'rgba(241, 216, 194, 0.45)', border: 'rgba(241, 216, 194, 0.85)' },
+    { label: 'Cashier', username: 'cashier', color: '#126973', bg: 'rgba(18, 105, 115, 0.12)',  border: 'rgba(18, 105, 115, 0.35)' },
+    { label: 'Kitchen', username: 'kitchen', color: '#7c532b', bg: 'rgba(241, 216, 194, 0.35)', border: 'rgba(241, 216, 194, 0.75)' },
+  ]
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -35,15 +50,15 @@ export default function Login() {
     setLoading(false)
 
     if (result.success) {
-      roleRef.current = result.role ?? ''   // store role in ref immediately
+      roleRef.current = result.role ?? ''
       setLoggingIn(true)
     } else {
-      toast.error(result.error)
+      toast.error(result.error || 'Invalid credentials')
     }
   }
 
   const handleLoadComplete = useCallback(() => {
-    toast.success('Welcome back!')
+    toast.success('Welcome back to SKYPARK')
     switch (roleRef.current) {
       case 'admin':   navigate('/dashboard'); break
       case 'manager': navigate('/dashboard'); break
@@ -55,293 +70,532 @@ export default function Login() {
 
   return (
     <>
-      {/* ── Unified loading overlay ── */}
+      {/* ── Unified Loading Overlay ── */}
       <KdsLoadingPopup
         isOpen={loggingIn}
         user={{ username: form.username }}
-        title="exView POS"
-        subMessage="INITIALIZING SYSTEM"
+        title="SKYPARK"
+        subMessage="INITIALIZING HOSPITALITY SUITE"
         duration={1800}
         onComplete={handleLoadComplete}
       />
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap');
 
-        .lg-root {
+        /* ── THEME TOKENS ── */
+        .skypark-login-root.theme-dark {
+          --sp-bg-base: #041012;
+          --sp-bg-gradient: 
+            radial-gradient(circle at 18% 22%, rgba(18, 105, 115, 0.35) 0%, transparent 50%),
+            radial-gradient(circle at 82% 78%, rgba(241, 216, 194, 0.12) 0%, transparent 45%),
+            linear-gradient(180deg, #051316 0%, #020809 100%);
+          --sp-grid: rgba(241, 216, 194, 0.035);
+          --sp-orb-1: rgba(18, 105, 115, 0.32);
+          --sp-orb-2: rgba(241, 216, 194, 0.14);
+          --sp-orb-3: rgba(37, 138, 151, 0.25);
+          --sp-orb-4: rgba(241, 216, 194, 0.10);
+          
+          --sp-corner: #F1D8C2;
+          --sp-text-main: #F8F7F4;
+          --sp-text-sub: rgba(248, 247, 244, 0.7);
+          --sp-text-muted: rgba(248, 247, 244, 0.5);
+          
+          --sp-card-bg: linear-gradient(145deg, rgba(8, 30, 34, 0.90) 0%, rgba(4, 18, 20, 0.96) 100%);
+          --sp-card-border: rgba(241, 216, 194, 0.28);
+          --sp-card-title: #F1D8C2;
+          --sp-card-sub: rgba(248, 247, 244, 0.65);
+          --sp-card-shadow: 0 32px 80px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(18, 105, 115, 0.4), 0 12px 36px -10px rgba(18, 105, 115, 0.3);
+          
+          --sp-label: #F1D8C2;
+          --sp-field-bg: rgba(4, 15, 17, 0.7);
+          --sp-field-border: rgba(241, 216, 194, 0.22);
+          --sp-field-focus-bg: rgba(18, 105, 115, 0.22);
+          --sp-field-focus-border: #F1D8C2;
+          --sp-field-focus-shadow: 0 0 0 3px rgba(241, 216, 194, 0.18), 0 4px 20px rgba(18, 105, 115, 0.45);
+          --sp-field-icon: rgba(241, 216, 194, 0.5);
+          --sp-field-icon-active: #F1D8C2;
+          --sp-field-placeholder: rgba(248, 247, 244, 0.28);
+          
+          --sp-btn-bg: linear-gradient(135deg, #126973 0%, #0d4e56 100%);
+          --sp-btn-color: #F1D8C2;
+          --sp-btn-border: rgba(241, 216, 194, 0.45);
+          --sp-btn-hover-bg: linear-gradient(135deg, #1a838f 0%, #126973 100%);
+          --sp-btn-hover-color: #ffffff;
+          --sp-btn-shadow: 0 8px 24px rgba(18, 105, 115, 0.5);
+          
+          --sp-demo-bg: rgba(18, 105, 115, 0.15);
+          --sp-demo-border: rgba(241, 216, 194, 0.2);
+          --sp-demo-label: rgba(241, 216, 194, 0.7);
+          --sp-demo-strong: #F1D8C2;
+          
+          --sp-divider: linear-gradient(to bottom, transparent, rgba(241, 216, 194, 0.25) 20%, rgba(18, 105, 115, 0.6) 50%, rgba(241, 216, 194, 0.25) 80%, transparent);
+          --sp-footer: rgba(241, 216, 194, 0.5);
+          
+          --sp-toggle-bg: rgba(18, 105, 115, 0.25);
+          --sp-toggle-border: rgba(241, 216, 194, 0.35);
+          --sp-toggle-color: #F1D8C2;
+        }
+
+        .skypark-login-root.theme-light {
+          --sp-bg-base: #F8F7F4;
+          --sp-bg-gradient: 
+            radial-gradient(circle at 18% 22%, rgba(241, 216, 194, 0.45) 0%, transparent 50%),
+            radial-gradient(circle at 82% 78%, rgba(18, 105, 115, 0.12) 0%, transparent 45%),
+            linear-gradient(180deg, #FAF8F5 0%, #F1EEE8 100%);
+          --sp-grid: rgba(18, 105, 115, 0.04);
+          --sp-orb-1: rgba(241, 216, 194, 0.5);
+          --sp-orb-2: rgba(18, 105, 115, 0.15);
+          --sp-orb-3: rgba(241, 216, 194, 0.4);
+          --sp-orb-4: rgba(18, 105, 115, 0.10);
+          
+          --sp-corner: #126973;
+          --sp-text-main: #072328;
+          --sp-text-sub: #126973;
+          --sp-text-muted: #5c7075;
+          
+          --sp-card-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 247, 244, 0.98) 100%);
+          --sp-card-border: rgba(241, 216, 194, 0.85);
+          --sp-card-title: #126973;
+          --sp-card-sub: #5c7075;
+          --sp-card-shadow: 0 24px 60px rgba(18, 105, 115, 0.10), 0 0 0 1px rgba(241, 216, 194, 0.6), 0 8px 24px -6px rgba(18, 105, 115, 0.08);
+          
+          --sp-label: #126973;
+          --sp-field-bg: #FFFFFF;
+          --sp-field-border: rgba(18, 105, 115, 0.22);
+          --sp-field-focus-bg: rgba(18, 105, 115, 0.04);
+          --sp-field-focus-border: #126973;
+          --sp-field-focus-shadow: 0 0 0 3px rgba(18, 105, 115, 0.15), 0 4px 14px rgba(241, 216, 194, 0.35);
+          --sp-field-icon: #126973;
+          --sp-field-icon-active: #126973;
+          --sp-field-placeholder: rgba(18, 105, 115, 0.35);
+          
+          --sp-btn-bg: linear-gradient(135deg, #126973 0%, #0d4e56 100%);
+          --sp-btn-color: #F1D8C2;
+          --sp-btn-border: #126973;
+          --sp-btn-hover-bg: linear-gradient(135deg, #187a86 0%, #126973 100%);
+          --sp-btn-hover-color: #FFFFFF;
+          --sp-btn-shadow: 0 8px 24px rgba(18, 105, 115, 0.30);
+          
+          --sp-demo-bg: rgba(241, 216, 194, 0.25);
+          --sp-demo-border: rgba(241, 216, 194, 0.65);
+          --sp-demo-label: #5c7075;
+          --sp-demo-strong: #126973;
+          
+          --sp-divider: linear-gradient(to bottom, transparent, rgba(18, 105, 115, 0.2) 20%, rgba(241, 216, 194, 0.7) 50%, rgba(18, 105, 115, 0.2) 80%, transparent);
+          --sp-footer: #5c7075;
+          
+          --sp-toggle-bg: #FFFFFF;
+          --sp-toggle-border: rgba(18, 105, 115, 0.25);
+          --sp-toggle-color: #126973;
+        }
+
+        .skypark-login-root {
           min-height: 100dvh;
           display: flex;
           align-items: stretch;
-          background: #0b0606;
-          font-family: 'Inter', system-ui, sans-serif;
+          background: var(--sp-bg-base);
+          background-image: var(--sp-bg-gradient);
+          font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
           overflow: hidden;
           position: relative;
+          transition: background-color 0.4s ease, color 0.4s ease;
         }
-        .lg-root::before {
+
+        /* Subtle luxury grid lines */
+        .skypark-login-root::before {
           content: '';
           position: absolute; inset: 0;
           background-image:
-            linear-gradient(rgba(232,182,182,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(232,182,182,0.03) 1px, transparent 1px);
-          background-size: 44px 44px;
+            linear-gradient(var(--sp-grid) 1px, transparent 1px),
+            linear-gradient(90deg, var(--sp-grid) 1px, transparent 1px);
+          background-size: 52px 52px;
           pointer-events: none;
           z-index: 0;
         }
-        .lg-orb {
+
+        /* Floating orbs */
+        .sp-orb {
           position: absolute;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(191,64,64,1) 0%, transparent 70%);
+          filter: blur(50px);
           pointer-events: none;
-          animation: lgOrbFloat var(--dur) var(--delay) ease-in-out infinite alternate;
+          animation: spOrbFloat var(--dur) var(--delay) ease-in-out infinite alternate;
+          transition: background 0.4s ease;
         }
-        @keyframes lgOrbFloat {
-          from { transform: translate(0,0) scale(1); }
-          to   { transform: translate(16px,20px) scale(1.04); }
+        @keyframes spOrbFloat {
+          from { transform: translate(0, 0) scale(1); }
+          to   { transform: translate(22px, 26px) scale(1.06); }
         }
-        /* corner accents */
-        .lg-corner { position: fixed; width: 32px; height: 32px; pointer-events: none; z-index: 0; opacity: 0.3; }
-        .lg-corner-tl { top: 20px; left: 20px; border-top: 1px solid rgba(232,182,182,0.5); border-left: 1px solid rgba(232,182,182,0.5); }
-        .lg-corner-br { bottom: 20px; right: 20px; border-bottom: 1px solid rgba(232,182,182,0.5); border-right: 1px solid rgba(232,182,182,0.5); }
 
-        /* ── brand panel (left) ── */
-        .lg-brand {
-          flex: 1;
+        /* Corner Accents */
+        .sp-corner {
+          position: fixed;
+          width: 36px;
+          height: 36px;
+          pointer-events: none;
+          z-index: 1;
+          opacity: 0.6;
+        }
+        .sp-corner-tl {
+          top: 24px; left: 24px;
+          border-top: 1.5px solid var(--sp-corner);
+          border-left: 1.5px solid var(--sp-corner);
+        }
+        .sp-corner-br {
+          bottom: 24px; right: 24px;
+          border-bottom: 1.5px solid var(--sp-corner);
+          border-right: 1.5px solid var(--sp-corner);
+        }
+
+        /* Theme Toggle Button */
+        .sp-theme-toggle {
+          position: absolute;
+          top: 24px;
+          right: 24px;
+          z-index: 20;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          border-radius: 9999px;
+          background: var(--sp-toggle-bg);
+          border: 1px solid var(--sp-toggle-border);
+          color: var(--sp-toggle-color);
+          font-family: 'Montserrat', sans-serif;
+          font-size: 11.5px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          cursor: pointer;
+          backdrop-filter: blur(12px);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sp-theme-toggle:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ── BRAND PANEL (LEFT) ── */
+        .sp-brand-panel {
+          flex: 1.15;
           display: flex;
           flex-direction: column;
           justify-content: center;
-          padding: 60px 56px;
-          position: relative; z-index: 1;
+          padding: 64px 72px;
+          position: relative;
+          z-index: 1;
         }
-        @media (max-width: 860px) { .lg-brand { display: none; } }
-        .lg-brand-eyebrow {
-          font-size: 10px; letter-spacing: 0.35em; text-transform: uppercase;
-          color: rgba(232,182,182,0.4); margin-bottom: 28px;
-          display: flex; align-items: center; gap: 10px;
+        @media (max-width: 960px) { .sp-brand-panel { display: none; } }
+
+        .sp-logo-container {
+          margin-bottom: 24px;
         }
-        .lg-brand-eyebrow::before {
-          content: ''; display: block; width: 28px; height: 1px;
-          background: rgba(232,182,182,0.3);
+        .sp-logo-img {
+          height: 84px;
+          width: auto;
+          filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.3));
+          transition: transform 0.3s ease;
         }
-        .lg-brand-logo {
-          width: 68px; height: 68px; border-radius: 18px;
-          background: linear-gradient(135deg, #BF4040, #8A2E2E);
-          display: flex; align-items: center; justify-content: center;
-          margin-bottom: 32px;
-          box-shadow: 0 12px 40px rgba(191,64,64,0.35);
+
+        .sp-brand-desc {
+          font-size: 14.5px;
+          line-height: 1.8;
+          color: var(--sp-text-sub);
+          max-width: 420px;
+          margin-top: 8px;
         }
-        .lg-brand-title {
-          font-size: clamp(34px, 3.5vw, 52px); font-weight: 900;
-          letter-spacing: -0.02em; line-height: 1.12;
-          background: linear-gradient(160deg, #ffffff 30%, #E8B6B6 100%);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-          background-clip: text; margin-bottom: 18px;
-        }
-        .lg-brand-desc {
-          font-size: 13.5px; line-height: 1.8;
-          color: rgba(232,182,182,0.4); max-width: 360px; margin-bottom: 44px;
-        }
-        .lg-feature-item {
-          display: flex; align-items: center; gap: 12px;
-          font-size: 13px; color: rgba(232,182,182,0.55); margin-bottom: 14px;
-        }
-        .lg-feature-dot {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: #BF4040; box-shadow: 0 0 8px rgba(191,64,64,0.7);
+
+        /* ── VERTICAL DIVIDER ── */
+        .sp-divider {
+          width: 1px;
           flex-shrink: 0;
+          z-index: 1;
+          background: var(--sp-divider);
+        }
+        @media (max-width: 960px) { .sp-divider { display: none; } }
+
+        /* ── FORM PANEL (RIGHT) ── */
+        .sp-form-panel {
+          width: 100%;
+          max-width: 490px;
+          flex-shrink: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          padding: 48px 36px;
+          position: relative;
+          z-index: 1;
+        }
+        @media (max-width: 960px) { .sp-form-panel { max-width: 100%; } }
+        .sp-form-inner { width: 100%; max-width: 368px; }
+
+        /* ── CARD ── */
+        .sp-card {
+          background: var(--sp-card-bg);
+          border: 1px solid var(--sp-card-border);
+          border-radius: 24px;
+          padding: 38px 32px;
+          backdrop-filter: blur(28px);
+          -webkit-backdrop-filter: blur(28px);
+          box-shadow: var(--sp-card-shadow);
+          position: relative;
+          overflow: hidden;
+          transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
         }
 
-        /* ── divider ── */
-        .lg-divider {
-          width: 1px; flex-shrink: 0; z-index: 1;
-          background: linear-gradient(to bottom,
-            transparent, rgba(232,182,182,0.14) 30%,
-            rgba(232,182,182,0.14) 70%, transparent);
+        /* Top gold shimmer bar */
+        .sp-card::before {
+          content: '';
+          position: absolute; top: 0; left: 0; right: 0; height: 2px;
+          background: linear-gradient(90deg, transparent, var(--sp-corner), transparent);
         }
-        @media (max-width: 860px) { .lg-divider { display: none; } }
 
-        /* ── form panel (right) ── */
-        .lg-form-panel {
-          width: 100%; max-width: 460px; flex-shrink: 0;
-          display: flex; flex-direction: column;
-          justify-content: center; align-items: center;
-          padding: 48px 32px; position: relative; z-index: 1;
+        .sp-card-header {
+          text-align: center;
+          margin-bottom: 28px;
         }
-        @media (max-width: 860px) { .lg-form-panel { max-width: 100%; } }
-        .lg-form-inner { width: 100%; max-width: 348px; }
+        .sp-card-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 26px;
+          font-weight: 700;
+          color: var(--sp-card-title);
+          letter-spacing: 0.06em;
+          margin-bottom: 6px;
+        }
+        .sp-card-sub {
+          font-size: 12.5px;
+          color: var(--sp-card-sub);
+          letter-spacing: 0.04em;
+        }
 
-        /* ── card ── */
-        .lg-card {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(232,182,182,0.12);
-          border-radius: 24px; padding: 34px 30px;
-          backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-          box-shadow: 0 32px 80px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06);
-          position: relative; overflow: hidden;
+        /* ── INPUT FIELDS ── */
+        .sp-label {
+          display: block;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--sp-label);
+          margin-bottom: 8px;
         }
-        .lg-card::before {
-          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(232,182,182,0.35), transparent);
+        .sp-field {
+          position: relative;
+          border-radius: 12px;
+          background: var(--sp-field-bg);
+          border: 1px solid var(--sp-field-border);
+          transition: all 0.25s ease;
+          margin-bottom: 18px;
         }
-        .lg-card::after {
-          content: ''; position: absolute;
-          top: 0; left: -60%; width: 60%; height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(232,182,182,0.04), transparent);
-          animation: lgCardShimmer 3.5s 0.6s ease-in-out forwards;
+        .sp-field.focused {
+          border-color: var(--sp-field-focus-border);
+          background: var(--sp-field-focus-bg);
+          box-shadow: var(--sp-field-focus-shadow);
+        }
+        .sp-field-icon {
+          position: absolute;
+          left: 14px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: var(--sp-field-icon);
+          transition: color 0.2s;
           pointer-events: none;
         }
-        @keyframes lgCardShimmer { to { left: 150%; } }
+        .sp-field.focused .sp-field-icon {
+          color: var(--sp-field-icon-active);
+        }
+        .sp-input {
+          width: 100%;
+          background: transparent;
+          border: none;
+          outline: none;
+          padding: 14px 16px 14px 44px;
+          font-size: 13.5px;
+          font-family: 'Montserrat', sans-serif;
+          color: var(--sp-text-main);
+          border-radius: 12px;
+        }
+        .sp-input::placeholder {
+          color: var(--sp-field-placeholder);
+        }
 
-        /* ── card header ── */
-        .lg-card-logo {
-          width: 50px; height: 50px; border-radius: 13px;
-          background: linear-gradient(135deg, #BF4040, #8A2E2E);
-          display: flex; align-items: center; justify-content: center;
-          margin: 0 auto 16px;
-          box-shadow: 0 8px 24px rgba(191,64,64,0.4);
+        /* ── SUBMIT BUTTON ── */
+        .sp-btn-submit {
+          width: 100%;
+          padding: 14px 24px;
+          border-radius: 12px;
+          border: 1px solid var(--sp-btn-border);
+          cursor: pointer;
+          font-size: 13.5px;
+          font-weight: 700;
+          font-family: 'Montserrat', sans-serif;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--sp-btn-color);
+          background: var(--sp-btn-bg);
+          box-shadow: var(--sp-btn-shadow);
+          transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          margin-top: 8px;
+          position: relative;
+          overflow: hidden;
         }
-        .lg-card-title {
-          text-align: center; font-size: 20px; font-weight: 700;
-          color: #fff; letter-spacing: -0.02em; margin-bottom: 5px;
+        .sp-btn-submit:hover:not(:disabled) {
+          transform: translateY(-2px);
+          background: var(--sp-btn-hover-bg);
+          color: var(--sp-btn-hover-color);
+          box-shadow: 0 12px 34px rgba(18, 105, 115, 0.5);
         }
-        .lg-card-sub {
-          text-align: center; font-size: 12px;
-          color: rgba(232,182,182,0.4); margin-bottom: 28px;
+        .sp-btn-submit:active:not(:disabled) {
+          transform: translateY(1px) scale(0.99);
+        }
+        .sp-btn-submit:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
+        }
+        .sp-spinner {
+          width: 16px;
+          height: 16px;
+          border: 2px solid rgba(241, 216, 194, 0.3);
+          border-top-color: var(--sp-btn-color);
+          border-radius: 50%;
+          animation: spSpin 0.7s linear infinite;
+        }
+        @keyframes spSpin { to { transform: rotate(360deg); } }
+
+        /* ── DEMO SHORTCUT SECTION ── */
+        .sp-demo-box {
+          margin-top: 20px;
+          padding: 16px 18px;
+          border-radius: 14px;
+          border: 1px solid var(--sp-demo-border);
+          background: var(--sp-demo-bg);
+          transition: all 0.3s ease;
+        }
+        .sp-demo-label {
+          font-size: 10.5px;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--sp-demo-label);
+          margin-bottom: 12px;
+          text-align: center;
+        }
+        .sp-demo-label strong {
+          color: var(--sp-demo-strong);
+        }
+        .sp-pills {
+          display: flex;
+          gap: 8px;
+        }
+        .sp-pill {
+          flex: 1;
+          padding: 8px 4px;
+          border-radius: 9px;
+          border: 1px solid var(--pb);
+          background: var(--pbg);
+          color: var(--pc);
+          font-size: 12px;
+          font-weight: 700;
+          font-family: 'Montserrat', sans-serif;
+          cursor: pointer;
+          letter-spacing: 0.03em;
+          transition: all 0.18s ease;
+          text-align: center;
+        }
+        .sp-pill:hover {
+          filter: brightness(1.15);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .sp-pill:active {
+          transform: scale(0.96);
         }
 
-        /* ── inputs ── */
-        .lg-label {
-          display: block; font-size: 10.5px; font-weight: 600;
-          letter-spacing: 0.09em; text-transform: uppercase;
-          color: rgba(232,182,182,0.45); margin-bottom: 7px;
-        }
-        .lg-field {
-          position: relative; border-radius: 11px;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(232,182,182,0.12);
-          transition: border-color .2s, box-shadow .2s, background .2s;
-          margin-bottom: 14px;
-        }
-        .lg-field.focused {
-          border-color: rgba(191,64,64,0.55);
-          background: rgba(191,64,64,0.06);
-          box-shadow: 0 0 0 3px rgba(191,64,64,0.14), inset 0 1px 0 rgba(255,255,255,0.04);
-        }
-        .lg-field-icon {
-          position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
-          color: rgba(232,182,182,0.3); transition: color .2s; pointer-events: none;
-        }
-        .lg-field.focused .lg-field-icon { color: rgba(191,64,64,0.75); }
-        .lg-input {
-          width: 100%; background: transparent; border: none; outline: none;
-          padding: 13px 15px 13px 40px;
-          font-size: 13px; font-family: 'Inter', system-ui, sans-serif;
-          color: #fff; border-radius: 11px;
-        }
-        .lg-input::placeholder { color: rgba(232,182,182,0.2); }
-
-        /* ── submit ── */
-        .lg-btn {
-          width: 100%; padding: 13px 24px; border-radius: 11px; border: none;
-          cursor: pointer; font-size: 13.5px; font-weight: 700;
-          font-family: 'Inter', system-ui, sans-serif; letter-spacing: 0.03em;
-          color: #fff;
-          background: linear-gradient(135deg, #BF4040 0%, #8A2E2E 100%);
-          box-shadow: 0 6px 24px rgba(191,64,64,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
-          transition: transform .15s, box-shadow .15s, opacity .15s;
-          display: flex; align-items: center; justify-content: center; gap: 8px;
-          margin-top: 6px; position: relative; overflow: hidden;
-        }
-        .lg-btn::before {
-          content: ''; position: absolute; inset: 0;
-          background: linear-gradient(to bottom, rgba(255,255,255,0.1), transparent);
-          pointer-events: none;
-        }
-        .lg-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 32px rgba(191,64,64,0.5), inset 0 1px 0 rgba(255,255,255,0.12); }
-        .lg-btn:active:not(:disabled) { transform: translateY(1px) scale(0.985); }
-        .lg-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-        .lg-spinner {
-          width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3);
-          border-top-color: white; border-radius: 50%;
-          animation: lgSpin .7s linear infinite;
-        }
-        @keyframes lgSpin { to { transform: rotate(360deg); } }
-
-        /* ── demo section ── */
-        .lg-demo {
-          margin-top: 18px; padding: 15px 18px; border-radius: 13px;
-          border: 1px solid rgba(232,182,182,0.09);
-          background: rgba(255,255,255,0.025);
-        }
-        .lg-demo-label {
-          font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
-          color: rgba(232,182,182,0.3); margin-bottom: 11px; text-align: center;
-        }
-        .lg-pills { display: flex; gap: 7px; }
-        .lg-pill {
-          flex: 1; padding: 8px 0; border-radius: 8px;
-          border: 1px solid var(--pb); background: var(--pbg); color: var(--pc);
-          font-size: 11.5px; font-weight: 700; font-family: 'Inter', system-ui, sans-serif;
-          cursor: pointer; letter-spacing: 0.03em;
-          transition: filter .15s, transform .15s;
-        }
-        .lg-pill:hover { filter: brightness(1.35); transform: translateY(-1px); }
-        .lg-pill:active { transform: scale(0.96); }
-
-        /* ── theme toggle ── */
-        .lg-theme { position: absolute; top: 22px; right: 22px; z-index: 20; }
-
-        /* ── footer ── */
-        .lg-footer {
-          text-align: center; margin-top: 18px; font-size: 10.5px;
-          color: rgba(232,182,182,0.2); letter-spacing: 0.04em;
+        /* ── FOOTER ── */
+        .sp-footer {
+          text-align: center;
+          margin-top: 22px;
+          font-size: 11px;
+          color: var(--sp-footer);
+          letter-spacing: 0.08em;
         }
       `}</style>
 
-      <div className="lg-root">
+      <div className={`skypark-login-root theme-${theme}`}>
+        {/* Theme Toggle Button */}
+        <button
+          type="button"
+          className="sp-theme-toggle"
+          onClick={toggleTheme}
+          title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {isDark ? (
+            <>
+              <Sun size={14} /> <span>Light</span>
+            </>
+          ) : (
+            <>
+              <Moon size={14} /> <span>Dark</span>
+            </>
+          )}
+        </button>
+
+        {/* Floating background glowing orbs */}
         {ORBS.map((o, i) => (
-          <div key={i} className="lg-orb" style={{
-            width: o.w, height: o.h, top: o.top, left: o.left,
-            opacity: o.op, '--dur': o.dur, '--delay': o.delay,
+          <div key={i} className="sp-orb" style={{
+            width: o.w,
+            height: o.h,
+            top: o.top,
+            left: o.left,
+            background: `radial-gradient(circle, var(--sp-orb-${i + 1}) 0%, transparent 70%)`,
+            '--dur': o.dur,
+            '--delay': o.delay,
           }} />
         ))}
 
-        <div className="lg-corner lg-corner-tl" />
-        <div className="lg-corner lg-corner-br" />
+        {/* Decorative corner borders */}
+        <div className="sp-corner sp-corner-tl" />
+        <div className="sp-corner sp-corner-br" />
 
-
-        {/* ── LEFT: brand panel ── */}
-        <div className="lg-brand">
-
-          <div className="lg-brand-title" style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 'clamp(38px, 4vw, 58px)', fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', WebkitTextFillColor: 'unset', background: 'none', marginBottom: 18 }}>
-            <span style={{ color: '#ffffff' }}>CATER</span>
-            <span style={{ color: '#BF4040', marginLeft: '0.25em' }}>POS</span>
+        {/* ── LEFT: Brand Panel ── */}
+        <div className="sp-brand-panel">
+          <div className="sp-logo-container">
+            <img 
+              src={isDark ? '/skypark/Secondary Gold.png' : '/skypark/Primary.png'} 
+              alt="SKYPARK Logo" 
+              className="sp-logo-img" 
+              onError={(e) => { e.currentTarget.style.display = 'none' }}
+            />
           </div>
-          <p className="lg-brand-desc">
-            A unified point-of-sale & hospitality platform built for speed, clarity, and control.
+
+          <p className="sp-brand-desc">
+            A luxury point-of-sale and residence dining management platform engineered for speed, elegance, and complete guest satisfaction.
           </p>
-          {['Real-time kitchen display sync', 'Multi-role staff access control', 'Smart analytics & reporting', 'Seamless table & order management'].map(f => (
-            <div key={f} className="lg-feature-item">
-              <span className="lg-feature-dot" />
-              {f}
-            </div>
-          ))}
         </div>
 
-        {/* divider */}
-        <div className="lg-divider" />
+        {/* Elegant vertical divider */}
+        <div className="sp-divider" />
 
-        {/* ── RIGHT: form panel ── */}
-        <div className="lg-form-panel">
-          <div className="lg-form-inner">
-            <div className="lg-card">
-            
-              <div className="lg-card-title">Welcome back</div>
-              <div className="lg-card-sub">Sign in to your staff account</div>
+        {/* ── RIGHT: Login Form Panel ── */}
+        <div className="sp-form-panel">
+          <div className="sp-form-inner">
+            <div className="sp-card">
+              
+              <div className="sp-card-header">
+                <h2 className="sp-card-title">SKYPARK</h2>
+                <p className="sp-card-sub">Sign in to your SKYPARK account</p>
+              </div>
 
               <form onSubmit={handleSubmit}>
-                <label className="lg-label" htmlFor="login-username">Username</label>
-                <div className={`lg-field${focused === 'username' ? ' focused' : ''}`}>
-                  <User size={14} className="lg-field-icon" />
+                <label className="sp-label" htmlFor="login-username">Username</label>
+                <div className={`sp-field${focused === 'username' ? ' focused' : ''}`}>
+                  <User size={15} className="sp-field-icon" />
                   <input
                     id="login-username"
                     type="text"
@@ -351,14 +605,14 @@ export default function Login() {
                     onChange={e => setForm({ ...form, username: e.target.value })}
                     onFocus={() => setFocused('username')}
                     onBlur={() => setFocused(null)}
-                    placeholder="e.g. admin"
-                    className="lg-input"
+                    placeholder="e.g. admin, cashier"
+                    className="sp-input"
                   />
                 </div>
 
-                <label className="lg-label" htmlFor="login-password">Password</label>
-                <div className={`lg-field${focused === 'password' ? ' focused' : ''}`}>
-                  <Lock size={14} className="lg-field-icon" />
+                <label className="sp-label" htmlFor="login-password">Password</label>
+                <div className={`sp-field${focused === 'password' ? ' focused' : ''}`}>
+                  <Lock size={15} className="sp-field-icon" />
                   <input
                     id="login-password"
                     type="password"
@@ -369,28 +623,28 @@ export default function Login() {
                     onFocus={() => setFocused('password')}
                     onBlur={() => setFocused(null)}
                     placeholder="••••••••"
-                    className="lg-input"
+                    className="sp-input"
                   />
                 </div>
 
-                <button id="login-submit" type="submit" disabled={loading} className="lg-btn">
+                <button id="login-submit" type="submit" disabled={loading} className="sp-btn-submit">
                   {loading
-                    ? <><div className="lg-spinner" />…</>
-                    : <>Sign In <ArrowRight size={14} /></>
+                    ? <><div className="sp-spinner" /> Signing in…</>
+                    : <>Enter Portal <ArrowRight size={15} /></>
                   }
                 </button>
               </form>
             </div>
 
-            {/* demo credentials */}
-            <div className="lg-demo">
-              <div className="lg-demo-label">Quick demo · password: <strong style={{ color: 'rgba(232,182,182,0.6)' }}>password</strong></div>
-              <div className="lg-pills">
-                {DEMO_USERS.map(u => (
+            {/* Demo Quick Accounts */}
+            <div className="sp-demo-box">
+              <div className="sp-demo-label">Quick demo · password: <strong>password</strong></div>
+              <div className="sp-pills">
+                {demoUsers.map(u => (
                   <button
                     key={u.username}
                     type="button"
-                    className="lg-pill"
+                    className="sp-pill"
                     style={{ '--pc': u.color, '--pbg': u.bg, '--pb': u.border }}
                     onClick={() => setForm({ username: u.username, password: 'password' })}
                   >
@@ -400,7 +654,7 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="lg-footer">CATER POS · Hunter Enterprise Suite</div>
+            <div className="sp-footer">SKYPARK Condotel &amp; Residence · POS &amp; RMS Suite</div>
           </div>
         </div>
       </div>

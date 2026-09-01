@@ -21,8 +21,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'pwa-icon.svg', 'icons.svg'],
       manifest: {
-        name: 'Cater-POS',
-        short_name: 'Cater-POS',
+        name: 'SKYPARK',
+        short_name: 'SKYPARK',
         description: 'Restaurant Point of Sale & Contactless Table QR Ordering System',
         theme_color: '#ff1837',
         background_color: '#f5f6fa',

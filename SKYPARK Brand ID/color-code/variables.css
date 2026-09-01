@@ -1,0 +1,54 @@
+/**
+ * ============================================================================
+ * SKYPARK CONDOTEL & RESIDENCE — CSS CUSTOM PROPERTIES & TOKENS
+ * ============================================================================
+ */
+
+:root {
+  /* Brand Core */
+  --skypark-primary: #126973;
+  --skypark-gold: #F1D8C2;
+  --skypark-black: #020202;
+  --skypark-white: #F8F7F4;
+
+  /* RGB Values for opacity manipulation */
+  --skypark-primary-rgb: 18, 105, 115;
+  --skypark-gold-rgb: 241, 216, 194;
+  --skypark-black-rgb: 2, 2, 2;
+  --skypark-white-rgb: 248, 247, 244;
+
+  /* Primary Teal Scale */
+  --skypark-teal-50: #eff9fa;
+  --skypark-teal-100: #d7f0f3;
+  --skypark-teal-200: #b3e1e6;
+  --skypark-teal-300: #7ecbd4;
+  --skypark-teal-400: #45aab7;
+  --skypark-teal-500: #258a97;
+  --skypark-teal-600: #126973;
+  --skypark-teal-700: #10545c;
+  --skypark-teal-800: #11454c;
+  --skypark-teal-900: #113a40;
+  --skypark-teal-950: #072328;
+
+  /* Champagne Gold Scale */
+  --skypark-gold-50: #faf6f2;
+  --skypark-gold-100: #f6ebdf;
+  --skypark-gold-200: #f1d8c2;
+  --skypark-gold-300: #e5bf9c;
+  --skypark-gold-400: #d69f70;
+  --skypark-gold-500: #c5824c;
+  --skypark-gold-600: #b16b3b;
+  --skypark-gold-700: #935332;
+  --skypark-gold-800: #77432c;
+  --skypark-gold-900: #613827;
+  --skypark-gold-950: #351c13;
+
+  /* Gradients */
+  --skypark-grad-primary: linear-gradient(135deg, #126973 0%, #072328 100%);
+  --skypark-grad-gold: linear-gradient(135deg, #f6ebdf 0%, #f1d8c2 50%, #d69f70 100%);
+  --skypark-grad-hero: linear-gradient(180deg, #126973 0%, #0c3e44 100%);
+
+  /* Typography */
+  --skypark-font-display: 'KSMetika', 'Playfair Display', serif;
+  --skypark-font-sans: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+}

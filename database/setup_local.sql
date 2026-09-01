@@ -1,5 +1,5 @@
 -- Run as postgres superuser to bootstrap the POS database
--- Creates posuser role and posdb database
+-- Creates posuser role and rms database
 
 DO $$
 BEGIN
@@ -12,12 +12,12 @@ BEGIN
 END
 $$;
 
-SELECT 'CREATE DATABASE posdb OWNER posuser'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'posdb')\gexec
+SELECT 'CREATE DATABASE rms OWNER posuser'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'rms')\gexec
 
-GRANT ALL PRIVILEGES ON DATABASE posdb TO posuser;
+GRANT ALL PRIVILEGES ON DATABASE rms TO posuser;
 
--- Connect to posdb and grant schema privileges (required for PostgreSQL 15+)
-\connect posdb
+-- Connect to rms and grant schema privileges (required for PostgreSQL 15+)
+\connect rms
 GRANT ALL ON SCHEMA public TO posuser;
-ALTER DATABASE posdb OWNER TO posuser;
+ALTER DATABASE rms OWNER TO posuser;

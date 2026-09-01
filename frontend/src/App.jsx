@@ -15,7 +15,7 @@ function AppContent() {
       <KdsLoadingPopup
         isOpen={isBooting}
         user={user}
-        title="CATER POS"
+        title="SKYPARK"
         subMessage="INITIALIZING SYSTEM"
         onComplete={() => setIsBooting(false)}
       />

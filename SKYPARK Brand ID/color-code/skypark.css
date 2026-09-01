@@ -1,0 +1,321 @@
+/**
+ * ============================================================================
+ * SKYPARK CONDOTEL & RESIDENCE — MASTER BRAND STYLESHEET
+ * ============================================================================
+ * Brand Identity Design System
+ * Primary Color:   #126973 (Deep Teal / Ocean Pine)
+ * Secondary Gold:  #F1D8C2 (Champagne Gold / Sand Warmth)
+ * Secondary Black: #020202 (Deep Charcoal Black)
+ * Secondary White: #F8F7F4 (Warm Alabaster / Ivory)
+ * ============================================================================
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+/* --- Custom Brand Fonts --- */
+@font-face {
+  font-family: 'KSMetika';
+  src: url('../Font/KSMetika-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'KSMetika';
+  src: url('../Font/KSMetika-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'KSMetika';
+  src: url('../Font/KSMetika-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============================================================================
+ * 1. CSS CUSTOM PROPERTIES (DESIGN TOKENS)
+ * ============================================================================ */
+:root {
+  /* --- Core Brand Colors --- */
+  --skypark-primary: #126973;
+  --skypark-primary-rgb: 18, 105, 115;
+  --skypark-primary-hsl: 186, 73%, 26%;
+
+  --skypark-gold: #F1D8C2;
+  --skypark-gold-rgb: 241, 216, 194;
+  --skypark-gold-hsl: 28, 61%, 85%;
+
+  --skypark-black: #020202;
+  --skypark-black-rgb: 2, 2, 2;
+
+  --skypark-white: #F8F7F4;
+  --skypark-white-rgb: 248, 247, 244;
+
+  /* --- Primary Teal Palette Scale (50 - 950) --- */
+  --skypark-teal-50: #eff9fa;
+  --skypark-teal-100: #d7f0f3;
+  --skypark-teal-200: #b3e1e6;
+  --skypark-teal-300: #7ecbd4;
+  --skypark-teal-400: #45aab7;
+  --skypark-teal-500: #258a97;
+  --skypark-teal-600: #126973; /* BRAND PRIMARY */
+  --skypark-teal-700: #10545c;
+  --skypark-teal-800: #11454c;
+  --skypark-teal-900: #113a40;
+  --skypark-teal-950: #072328;
+
+  /* --- Champagne Gold Palette Scale (50 - 950) --- */
+  --skypark-gold-50: #faf6f2;
+  --skypark-gold-100: #f6ebdf;
+  --skypark-gold-200: #f1d8c2; /* BRAND GOLD */
+  --skypark-gold-300: #e5bf9c;
+  --skypark-gold-400: #d69f70;
+  --skypark-gold-500: #c5824c;
+  --skypark-gold-600: #b16b3b;
+  --skypark-gold-700: #935332;
+  --skypark-gold-800: #77432c;
+  --skypark-gold-900: #613827;
+  --skypark-gold-950: #351c13;
+
+  /* --- Neutral Warm Slate Scale --- */
+  --skypark-neutral-50: #fbfbf9;
+  --skypark-neutral-100: #f3f2ee;
+  --skypark-neutral-200: #e6e4dc;
+  --skypark-neutral-300: #d2cfc2;
+  --skypark-neutral-400: #b6b19f;
+  --skypark-neutral-500: #9c9581;
+  --skypark-neutral-600: #7e7867;
+  --skypark-neutral-700: #645f52;
+  --skypark-neutral-800: #514d43;
+  --skypark-neutral-900: #444038;
+  --skypark-neutral-950: #020202;
+
+  /* --- Opacity Transparencies --- */
+  --skypark-teal-10: rgba(18, 105, 115, 0.10);
+  --skypark-teal-20: rgba(18, 105, 115, 0.20);
+  --skypark-teal-40: rgba(18, 105, 115, 0.40);
+  --skypark-teal-80: rgba(18, 105, 115, 0.80);
+
+  --skypark-gold-10: rgba(241, 216, 194, 0.10);
+  --skypark-gold-20: rgba(241, 216, 194, 0.20);
+  --skypark-gold-40: rgba(241, 216, 194, 0.40);
+  --skypark-gold-80: rgba(241, 216, 194, 0.80);
+
+  /* --- Premium Brand Gradients --- */
+  --skypark-gradient-primary: linear-gradient(135deg, #126973 0%, #072328 100%);
+  --skypark-gradient-ocean: linear-gradient(135deg, #258a97 0%, #126973 50%, #072328 100%);
+  --skypark-gradient-gold: linear-gradient(135deg, #f6ebdf 0%, #f1d8c2 50%, #d69f70 100%);
+  --skypark-gradient-luxury: linear-gradient(135deg, #072328 0%, #126973 100%);
+  --skypark-gradient-dark-glass: linear-gradient(135deg, rgba(18, 105, 115, 0.15) 0%, rgba(7, 35, 40, 0.7) 100%);
+
+  /* --- Typography --- */
+  --skypark-font-display: 'KSMetika', 'Playfair Display', serif;
+  --skypark-font-sans: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* --- Semantic Tokens (Default / Light Theme) --- */
+  --bg-app: #F8F7F4;
+  --bg-surface: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --text-main: #020202;
+  --text-muted: #645f52;
+  --text-accent: #126973;
+  --border-subtle: #e6e4dc;
+  --border-strong: #126973;
+  --shadow-skypark: 0 10px 25px -5px rgba(18, 105, 115, 0.10), 0 8px 10px -6px rgba(18, 105, 115, 0.05);
+  --shadow-gold: 0 10px 25px -5px rgba(241, 216, 194, 0.35);
+}
+
+/* --- Dark Theme Variant --- */
+[data-theme="dark"],
+.dark-theme,
+.theme-dark {
+  --bg-app: #061517;
+  --bg-surface: #0a1f23;
+  --bg-card: #0f2b30;
+  --text-main: #F8F7F4;
+  --text-muted: #b3c7ca;
+  --text-accent: #F1D8C2;
+  --border-subtle: rgba(241, 216, 194, 0.15);
+  --border-strong: #F1D8C2;
+  --shadow-skypark: 0 10px 30px -5px rgba(0, 0, 0, 0.6);
+  --shadow-gold: 0 10px 30px -5px rgba(241, 216, 194, 0.15);
+}
+
+/* ============================================================================
+ * 2. UTILITY CLASSES (COLORS & BACKGROUNDS)
+ * ============================================================================ */
+
+/* Backgrounds - Core */
+.bg-skypark-primary      { background-color: var(--skypark-primary) !important; }
+.bg-skypark-gold         { background-color: var(--skypark-gold) !important; }
+.bg-skypark-black        { background-color: var(--skypark-black) !important; }
+.bg-skypark-white        { background-color: var(--skypark-white) !important; }
+.bg-skypark-teal-dark    { background-color: var(--skypark-teal-950) !important; }
+.bg-skypark-teal-light   { background-color: var(--skypark-teal-50) !important; }
+.bg-skypark-gold-light   { background-color: var(--skypark-gold-50) !important; }
+
+/* Teal Scale Backgrounds */
+.bg-skypark-teal-50,  .bg-teal-50   { background-color: var(--skypark-teal-50) !important; }
+.bg-skypark-teal-100, .bg-teal-100  { background-color: var(--skypark-teal-100) !important; }
+.bg-skypark-teal-200, .bg-teal-200  { background-color: var(--skypark-teal-200) !important; }
+.bg-skypark-teal-300, .bg-teal-300  { background-color: var(--skypark-teal-300) !important; }
+.bg-skypark-teal-400, .bg-teal-400  { background-color: var(--skypark-teal-400) !important; }
+.bg-skypark-teal-500, .bg-teal-500  { background-color: var(--skypark-teal-500) !important; }
+.bg-skypark-teal-600, .bg-teal-600  { background-color: var(--skypark-teal-600) !important; }
+.bg-skypark-teal-700, .bg-teal-700  { background-color: var(--skypark-teal-700) !important; }
+.bg-skypark-teal-800, .bg-teal-800  { background-color: var(--skypark-teal-800) !important; }
+.bg-skypark-teal-900, .bg-teal-900  { background-color: var(--skypark-teal-900) !important; }
+.bg-skypark-teal-950, .bg-teal-950  { background-color: var(--skypark-teal-950) !important; }
+
+/* Champagne Gold Scale Backgrounds */
+.bg-skypark-gold-50,  .bg-gold-50   { background-color: var(--skypark-gold-50) !important; }
+.bg-skypark-gold-100, .bg-gold-100  { background-color: var(--skypark-gold-100) !important; }
+.bg-skypark-gold-200, .bg-gold-200  { background-color: var(--skypark-gold-200) !important; }
+.bg-skypark-gold-300, .bg-gold-300  { background-color: var(--skypark-gold-300) !important; }
+.bg-skypark-gold-400, .bg-gold-400  { background-color: var(--skypark-gold-400) !important; }
+.bg-skypark-gold-500, .bg-gold-500  { background-color: var(--skypark-gold-500) !important; }
+.bg-skypark-gold-600, .bg-gold-600  { background-color: var(--skypark-gold-600) !important; }
+.bg-skypark-gold-700, .bg-gold-700  { background-color: var(--skypark-gold-700) !important; }
+.bg-skypark-gold-800, .bg-gold-800  { background-color: var(--skypark-gold-800) !important; }
+.bg-skypark-gold-900, .bg-gold-900  { background-color: var(--skypark-gold-900) !important; }
+.bg-skypark-gold-950, .bg-gold-950  { background-color: var(--skypark-gold-950) !important; }
+
+.bg-skypark-gradient-primary { background: var(--skypark-gradient-primary) !important; }
+.bg-skypark-gradient-gold    { background: var(--skypark-gradient-gold) !important; }
+.bg-skypark-gradient-luxury  { background: var(--skypark-gradient-luxury) !important; }
+
+/* Text Colors */
+.text-skypark-primary    { color: var(--skypark-primary) !important; }
+.text-skypark-gold       { color: var(--skypark-gold) !important; }
+.text-skypark-black      { color: var(--skypark-black) !important; }
+.text-skypark-white      { color: var(--skypark-white) !important; }
+.text-skypark-teal-dark  { color: var(--skypark-teal-950) !important; }
+.text-skypark-muted      { color: var(--text-muted) !important; }
+
+/* Borders */
+.border-skypark-primary  { border-color: var(--skypark-primary) !important; }
+.border-skypark-gold     { border-color: var(--skypark-gold) !important; }
+.border-skypark-black    { border-color: var(--skypark-black) !important; }
+.border-skypark-white    { border-color: var(--skypark-white) !important; }
+.border-skypark-subtle   { border-color: var(--border-subtle) !important; }
+
+/* Typography Helpers */
+.font-skypark-display    { font-family: var(--skypark-font-display); }
+.font-skypark-sans       { font-family: var(--skypark-font-sans); }
+
+/* ============================================================================
+ * 3. COMPONENT STYLES
+ * ============================================================================ */
+
+/* Buttons */
+.skypark-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--skypark-font-sans);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+}
+
+.skypark-btn-primary {
+  background-color: var(--skypark-primary);
+  color: var(--skypark-white);
+  box-shadow: 0 4px 14px 0 rgba(18, 105, 115, 0.35);
+}
+.skypark-btn-primary:hover {
+  background-color: var(--skypark-teal-700);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(18, 105, 115, 0.45);
+}
+
+.skypark-btn-gold {
+  background-color: var(--skypark-gold);
+  color: var(--skypark-teal-950);
+  box-shadow: 0 4px 14px rgba(241, 216, 194, 0.4);
+}
+.skypark-btn-gold:hover {
+  background-color: var(--skypark-gold-300);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(241, 216, 194, 0.55);
+}
+
+.skypark-btn-outline {
+  background-color: transparent;
+  color: var(--skypark-primary);
+  border-color: var(--skypark-primary);
+}
+.skypark-btn-outline:hover {
+  background-color: var(--skypark-teal-10);
+}
+
+.skypark-btn-outline-gold {
+  background-color: transparent;
+  color: var(--skypark-gold);
+  border-color: var(--skypark-gold);
+}
+.skypark-btn-outline-gold:hover {
+  background-color: var(--skypark-gold-10);
+}
+
+/* Badges & Tags */
+.skypark-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  font-family: var(--skypark-font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 9999px;
+}
+
+.skypark-badge-teal {
+  background-color: var(--skypark-teal-10);
+  color: var(--skypark-primary);
+  border: 1px solid var(--skypark-teal-20);
+}
+
+.skypark-badge-gold {
+  background-color: var(--skypark-gold-20);
+  color: var(--skypark-gold-800);
+  border: 1px solid var(--skypark-gold-40);
+}
+
+/* Cards */
+.skypark-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-skypark);
+  transition: all 0.3s ease;
+}
+
+.skypark-card-luxury {
+  background: var(--skypark-gradient-primary);
+  color: var(--skypark-white);
+  border: 1px solid rgba(241, 216, 194, 0.2);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: var(--shadow-skypark);
+}
+
+.skypark-card-luxury .card-title {
+  color: var(--skypark-gold);
+  font-family: var(--skypark-font-display);
+}

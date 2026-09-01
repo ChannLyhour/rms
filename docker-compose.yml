@@ -4,7 +4,7 @@ services:
     container_name: pos_db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME:-posdb}
+      POSTGRES_DB: ${DB_NAME:-rms}
       POSTGRES_USER: ${DB_USER:-posuser}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-pospassword}
     ports:
@@ -16,7 +16,7 @@ services:
     networks:
       - pos_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-posuser} -d ${DB_NAME:-posdb}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-posuser} -d ${DB_NAME:-rms}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -30,7 +30,7 @@ services:
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-posdb}
+      DB_NAME: ${DB_NAME:-rms}
       DB_USER: ${DB_USER:-posuser}
       DB_PASSWORD: ${DB_PASSWORD:-pospassword}
       JWT_SECRET: ${JWT_SECRET:-super-secret-jwt-key-change-in-production}

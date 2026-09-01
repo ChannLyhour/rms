@@ -195,6 +195,6 @@ func main() {
 	fmt.Printf("   • Products:      %d menu products\n", prodCount)
 	fmt.Printf("   • Option Groups: %d option groups with values\n", optCount)
 
-	fmt.Println("\n🎉 Database posdb is fully initialized and ready!")
+	fmt.Println("\n🎉 Database rms is fully initialized and ready!")
 	fmt.Println("===========================================")
 }

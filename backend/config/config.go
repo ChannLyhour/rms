@@ -56,7 +56,7 @@ func Load() (*Config, error) {
 	// Database
 	cfg.Database.Host = getEnv("DB_HOST", "localhost")
 	cfg.Database.Port = getEnv("DB_PORT", "5432")
-	cfg.Database.Name = getEnv("DB_NAME", "posdb")
+	cfg.Database.Name = getEnv("DB_NAME", "rms")
 	cfg.Database.User = getEnv("DB_USER", "posuser")
 	cfg.Database.Password = getEnv("DB_PASSWORD", "pospassword")
 	cfg.Database.SSLMode = getEnv("DB_SSL_MODE", "disable")

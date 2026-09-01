@@ -1,0 +1,48 @@
+/**
+ * ============================================================================
+ * SKYPARK CONDOTEL & RESIDENCE — COLOR UTILITY CLASSES
+ * ============================================================================
+ */
+
+/* Backgrounds */
+.bg-skypark-primary { background-color: #126973 !important; }
+.bg-skypark-gold    { background-color: #F1D8C2 !important; }
+.bg-skypark-black   { background-color: #020202 !important; }
+.bg-skypark-white   { background-color: #F8F7F4 !important; }
+
+.bg-teal-50   { background-color: #eff9fa !important; }
+.bg-teal-100  { background-color: #d7f0f3 !important; }
+.bg-teal-200  { background-color: #b3e1e6 !important; }
+.bg-teal-300  { background-color: #7ecbd4 !important; }
+.bg-teal-400  { background-color: #45aab7 !important; }
+.bg-teal-500  { background-color: #258a97 !important; }
+.bg-teal-600  { background-color: #126973 !important; }
+.bg-teal-700  { background-color: #10545c !important; }
+.bg-teal-800  { background-color: #11454c !important; }
+.bg-teal-900  { background-color: #113a40 !important; }
+.bg-teal-950  { background-color: #072328 !important; }
+
+.bg-gold-50   { background-color: #faf6f2 !important; }
+.bg-gold-100  { background-color: #f6ebdf !important; }
+.bg-gold-200  { background-color: #f1d8c2 !important; }
+.bg-gold-300  { background-color: #e5bf9c !important; }
+.bg-gold-400  { background-color: #d69f70 !important; }
+.bg-gold-500  { background-color: #c5824c !important; }
+.bg-gold-600  { background-color: #b16b3b !important; }
+.bg-gold-700  { background-color: #935332 !important; }
+.bg-gold-800  { background-color: #77432c !important; }
+.bg-gold-900  { background-color: #613827 !important; }
+.bg-gold-950  { background-color: #351c13 !important; }
+
+/* Text Colors */
+.text-skypark-primary { color: #126973 !important; }
+.text-skypark-gold    { color: #F1D8C2 !important; }
+.text-skypark-black   { color: #020202 !important; }
+.text-skypark-white   { color: #F8F7F4 !important; }
+.text-teal-950        { color: #072328 !important; }
+
+/* Borders */
+.border-skypark-primary { border-color: #126973 !important; }
+.border-skypark-gold    { border-color: #F1D8C2 !important; }
+.border-skypark-black   { border-color: #020202 !important; }
+.border-skypark-white   { border-color: #F8F7F4 !important; }

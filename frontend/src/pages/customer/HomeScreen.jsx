@@ -34,18 +34,16 @@ export default function HomeScreen({
       {/* 0. TOP BAR: RESTAURANT / POS NAME & TABLE NUMBER ONLY               */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="bg-white rounded-2xl p-3 px-4 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3">
-        {/* Left: Cater / POS Brand Name */}
+        
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#ff1837] to-[#ff4757] text-white flex items-center justify-center font-black shrink-0 shadow-xs">
             <Utensils size={17} />
           </div>
           <div>
             <h1 className="text-sm font-black text-slate-900 tracking-tight leading-tight">
-              Cater POS
+              
             </h1>
-            <p className="text-[10px] font-bold text-slate-400 leading-none mt-0.5">
-              Catering & Dining
-            </p>
+          
           </div>
         </div>
 

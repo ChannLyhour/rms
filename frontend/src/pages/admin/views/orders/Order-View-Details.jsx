@@ -97,7 +97,7 @@ export default function OrderViewDetails({
   const handlePrint = () => {
     if (order) {
       printInvoice(order, {
-        storeName: 'CATERPOS SUPERMARKET',
+        storeName: 'SKYPARK',
         cashier: order.accepted_role ? `#${order.accepted_role}` : '#1',
         manager: 'Eric Steer',
       })

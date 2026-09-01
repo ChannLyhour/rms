@@ -266,10 +266,10 @@ export default function AppSidebar() {
           {open && (
             <div className="flex flex-col min-w-0">
               <h1 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white leading-tight">
-                CaterPOS
+                SKYPARK
               </h1>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight mt-0.5">
-                Restaurant Suite
+                RMS
               </p>
             </div>
           )}

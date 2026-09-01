@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKYPARK Condotel & Residence — Brand Color System</title>
+  <link rel="stylesheet" href="./skypark.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--skypark-font-sans);
+      background-color: var(--bg-app);
+      color: var(--text-main);
+      padding: 2.5rem 1.5rem;
+      transition: background-color 0.3s, color 0.3s;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header Banner */
+    .header-banner {
+      background: var(--skypark-gradient-primary);
+      color: var(--skypark-white);
+      border-radius: 1.5rem;
+      padding: 3.5rem 2.5rem;
+      margin-bottom: 3rem;
+      box-shadow: 0 20px 40px -15px rgba(18, 105, 115, 0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(241, 216, 194, 0.2);
+    }
+
+    .header-banner::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(241, 216, 194, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .logo-img {
+      height: 80px;
+      margin-bottom: 1.5rem;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.2));
+    }
+
+    .header-title {
+      font-family: var(--skypark-font-display);
+      font-size: 2.75rem;
+      letter-spacing: 0.12em;
+      color: var(--skypark-gold);
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+
+    .header-subtitle {
+      font-size: 1rem;
+      letter-spacing: 0.25em;
+      color: var(--skypark-white);
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+
+    .theme-toggle-btn {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(241, 216, 194, 0.3);
+      color: var(--skypark-gold);
+      padding: 0.6rem 1.2rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .theme-toggle-btn:hover {
+      background: rgba(241, 216, 194, 0.25);
+      transform: scale(1.03);
+    }
+
+    /* Section Styles */
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 2.5rem 0 1.25rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 2px solid var(--border-subtle);
+      padding-bottom: 0.75rem;
+    }
+
+    .section-title span {
+      color: var(--skypark-primary);
+    }
+
+    /* Swatch Grid */
+    .swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .swatch-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 1rem;
+      overflow: hidden;
+      box-shadow: var(--shadow-skypark);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+
+    .swatch-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+    }
+
+    .swatch-color-box {
+      height: 140px;
+      width: 100%;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      padding: 0.75rem;
+    }
+
+    .swatch-details {
+      padding: 1.25rem;
+    }
+
+    .swatch-name {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 0.35rem;
+      color: var(--text-main);
+    }
+
+    .swatch-role {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .code-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: monospace;
+      font-size: 0.85rem;
+      padding: 0.35rem 0.5rem;
+      border-radius: 0.35rem;
+      background: var(--skypark-neutral-100);
+      margin-bottom: 0.35rem;
+    }
+
+    [data-theme="dark"] .code-row {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .click-copy-hint {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-align: right;
+      margin-top: 0.5rem;
+      font-style: italic;
+    }
+
+    /* Scale Row */
+    .scale-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .scale-item {
+      border-radius: 0.75rem;
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      cursor: pointer;
+      text-align: center;
+      transition: transform 0.15s;
+    }
+
+    .scale-item:hover {
+      transform: scale(1.05);
+    }
+
+    .scale-box {
+      height: 60px;
+    }
+
+    .scale-info {
+      padding: 0.5rem 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .scale-hex {
+      font-family: monospace;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    /* Components Showcase */
+    .component-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .preview-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: var(--shadow-skypark);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--skypark-teal-950);
+      color: var(--skypark-gold);
+      border: 1px solid var(--skypark-gold);
+      padding: 0.85rem 1.5rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      font-size: 0.9rem;
+      font-weight: 600;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Header Banner -->
+    <header class="header-banner">
+      <button class="theme-toggle-btn" onclick="toggleTheme()">
+        <span id="theme-icon">🌙</span> <span id="theme-text">Dark Mode</span>
+      </button>
+
+      <img src="../PNG/1000h/Secondary Gold.png" alt="SKYPARK Logo" class="logo-img" onerror="this.style.display='none'">
+      <h1 class="header-title">SKYPARK</h1>
+      <p class="header-subtitle">Condotel &amp; Residence — Brand Color System</p>
+    </header>
+
+    <!-- Core Brand Palette -->
+    <h2 class="section-title"><span>01.</span> Core Brand Colors</h2>
+    <div class="swatch-grid">
+
+      <!-- Primary Teal -->
+      <div class="swatch-card" onclick="copyCode('#126973')">
+        <div class="swatch-color-box bg-skypark-primary"></div>
+        <div class="swatch-details">
+          <div class="swatch-name">Primary Teal</div>
+          <div class="swatch-role">Primary Brand / Ocean Pine</div>
+          <div class="code-row"><span>HEX</span><strong>#126973</strong></div>
+          <div class="code-row"><span>RGB</span><span>18, 105, 115</span></div>
+          <div class="code-row"><span>HSL</span><span>186°, 73%, 26%</span></div>
+          <div class="click-copy-hint">Click to copy HEX</div>
+        </div>
+      </div>
+
+      <!-- Champagne Gold -->
+      <div class="swatch-card" onclick="copyCode('#F1D8C2')">
+        <div class="swatch-color-box bg-skypark-gold"></div>
+        <div class="swatch-details">
+          <div class="swatch-name">Champagne Gold</div>
+          <div class="swatch-role">Secondary Brand / Sand Warmth</div>
+          <div class="code-row"><span>HEX</span><strong>#F1D8C2</strong></div>
+          <div class="code-row"><span>RGB</span><span>241, 216, 194</span></div>
+          <div class="code-row"><span>HSL</span><span>28°, 61%, 85%</span></div>
+          <div class="click-copy-hint">Click to copy HEX</div>
+        </div>
+      </div>
+
+      <!-- Deep Charcoal Black -->
+      <div class="swatch-card" onclick="copyCode('#020202')">
+        <div class="swatch-color-box bg-skypark-black"></div>
+        <div class="swatch-details">
+          <div class="swatch-name">Secondary Black</div>
+          <div class="swatch-role">Deep Luxury Noir / Contrast</div>
+          <div class="code-row"><span>HEX</span><strong>#020202</strong></div>
+          <div class="code-row"><span>RGB</span><span>2, 2, 2</span></div>
+          <div class="code-row"><span>HSL</span><span>0°, 0%, 1%</span></div>
+          <div class="click-copy-hint">Click to copy HEX</div>
+        </div>
+      </div>
+
+      <!-- Warm Alabaster White -->
+      <div class="swatch-card" onclick="copyCode('#F8F7F4')">
+        <div class="swatch-color-box bg-skypark-white" style="border-bottom: 1px solid var(--border-subtle)"></div>
+        <div class="swatch-details">
+          <div class="swatch-name">Secondary White</div>
+          <div class="swatch-role">Warm Alabaster / Ivory Base</div>
+          <div class="code-row"><span>HEX</span><strong>#F8F7F4</strong></div>
+          <div class="code-row"><span>RGB</span><span>248, 247, 244</span></div>
+          <div class="code-row"><span>HSL</span><span>45°, 20%, 96%</span></div>
+          <div class="click-copy-hint">Click to copy HEX</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Teal Tonal Scale -->
+    <h2 class="section-title"><span>02.</span> Primary Teal Scale (50 — 950)</h2>
+    <div class="scale-row">
+      <div class="scale-item" onclick="copyCode('#eff9fa')"><div class="scale-box bg-teal-50" style="background-color: #eff9fa;"></div><div class="scale-info">50<div class="scale-hex">#eff9fa</div></div></div>
+      <div class="scale-item" onclick="copyCode('#d7f0f3')"><div class="scale-box bg-teal-100" style="background-color: #d7f0f3;"></div><div class="scale-info">100<div class="scale-hex">#d7f0f3</div></div></div>
+      <div class="scale-item" onclick="copyCode('#b3e1e6')"><div class="scale-box bg-teal-200" style="background-color: #b3e1e6;"></div><div class="scale-info">200<div class="scale-hex">#b3e1e6</div></div></div>
+      <div class="scale-item" onclick="copyCode('#7ecbd4')"><div class="scale-box bg-teal-300" style="background-color: #7ecbd4;"></div><div class="scale-info">300<div class="scale-hex">#7ecbd4</div></div></div>
+      <div class="scale-item" onclick="copyCode('#45aab7')"><div class="scale-box bg-teal-400" style="background-color: #45aab7;"></div><div class="scale-info">400<div class="scale-hex">#45aab7</div></div></div>
+      <div class="scale-item" onclick="copyCode('#258a97')"><div class="scale-box bg-teal-500" style="background-color: #258a97;"></div><div class="scale-info">500<div class="scale-hex">#258a97</div></div></div>
+      <div class="scale-item" onclick="copyCode('#126973')"><div class="scale-box bg-teal-600" style="background-color: #126973;"></div><div class="scale-info" style="color:var(--skypark-primary)">600*<div class="scale-hex">#126973</div></div></div>
+      <div class="scale-item" onclick="copyCode('#10545c')"><div class="scale-box bg-teal-700" style="background-color: #10545c;"></div><div class="scale-info">700<div class="scale-hex">#10545c</div></div></div>
+      <div class="scale-item" onclick="copyCode('#11454c')"><div class="scale-box bg-teal-800" style="background-color: #11454c;"></div><div class="scale-info">800<div class="scale-hex">#11454c</div></div></div>
+      <div class="scale-item" onclick="copyCode('#113a40')"><div class="scale-box bg-teal-900" style="background-color: #113a40;"></div><div class="scale-info">900<div class="scale-hex">#113a40</div></div></div>
+      <div class="scale-item" onclick="copyCode('#072328')"><div class="scale-box bg-teal-950" style="background-color: #072328;"></div><div class="scale-info">950<div class="scale-hex">#072328</div></div></div>
+    </div>
+
+    <!-- Champagne Gold Tonal Scale -->
+    <h2 class="section-title"><span>03.</span> Champagne Gold Scale (50 — 950)</h2>
+    <div class="scale-row">
+      <div class="scale-item" onclick="copyCode('#faf6f2')"><div class="scale-box bg-gold-50" style="background-color: #faf6f2;"></div><div class="scale-info">50<div class="scale-hex">#faf6f2</div></div></div>
+      <div class="scale-item" onclick="copyCode('#f6ebdf')"><div class="scale-box bg-gold-100" style="background-color: #f6ebdf;"></div><div class="scale-info">100<div class="scale-hex">#f6ebdf</div></div></div>
+      <div class="scale-item" onclick="copyCode('#f1d8c2')"><div class="scale-box bg-gold-200" style="background-color: #f1d8c2;"></div><div class="scale-info" style="color:#b16b3b">200*<div class="scale-hex">#f1d8c2</div></div></div>
+      <div class="scale-item" onclick="copyCode('#e5bf9c')"><div class="scale-box bg-gold-300" style="background-color: #e5bf9c;"></div><div class="scale-info">300<div class="scale-hex">#e5bf9c</div></div></div>
+      <div class="scale-item" onclick="copyCode('#d69f70')"><div class="scale-box bg-gold-400" style="background-color: #d69f70;"></div><div class="scale-info">400<div class="scale-hex">#d69f70</div></div></div>
+      <div class="scale-item" onclick="copyCode('#c5824c')"><div class="scale-box bg-gold-500" style="background-color: #c5824c;"></div><div class="scale-info">500<div class="scale-hex">#c5824c</div></div></div>
+      <div class="scale-item" onclick="copyCode('#b16b3b')"><div class="scale-box bg-gold-600" style="background-color: #b16b3b;"></div><div class="scale-info">600<div class="scale-hex">#b16b3b</div></div></div>
+      <div class="scale-item" onclick="copyCode('#935332')"><div class="scale-box bg-gold-700" style="background-color: #935332;"></div><div class="scale-info">700<div class="scale-hex">#935332</div></div></div>
+      <div class="scale-item" onclick="copyCode('#77432c')"><div class="scale-box bg-gold-800" style="background-color: #77432c;"></div><div class="scale-info">800<div class="scale-hex">#77432c</div></div></div>
+      <div class="scale-item" onclick="copyCode('#613827')"><div class="scale-box bg-gold-900" style="background-color: #613827;"></div><div class="scale-info">900<div class="scale-hex">#613827</div></div></div>
+      <div class="scale-item" onclick="copyCode('#351c13')"><div class="scale-box bg-gold-950" style="background-color: #351c13;"></div><div class="scale-info">950<div class="scale-hex">#351c13</div></div></div>
+    </div>
+
+    <!-- Interactive UI Components Preview -->
+    <h2 class="section-title"><span>04.</span> Brand UI Showcase</h2>
+    <div class="component-preview-grid">
+
+      <!-- Buttons Box -->
+      <div class="preview-box">
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem;">Button Styles</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+          <button class="skypark-btn skypark-btn-primary">Primary Teal</button>
+          <button class="skypark-btn skypark-btn-gold">Champagne Gold</button>
+          <button class="skypark-btn skypark-btn-outline">Outline Teal</button>
+        </div>
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+          <span class="skypark-badge skypark-badge-teal">Active Session</span>
+          <span class="skypark-badge skypark-badge-gold">VIP Table</span>
+        </div>
+      </div>
+
+      <!-- Luxury Card Box -->
+      <div class="skypark-card-luxury">
+        <span class="skypark-badge skypark-badge-gold" style="margin-bottom: 1rem;">Exclusive Residence</span>
+        <h3 class="card-title" style="font-size: 1.5rem; margin-bottom: 0.5rem;">Luxury Suite Experience</h3>
+        <p style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 1.25rem; line-height: 1.5;">
+          Experience unparalleled hospitality with seamless table ordering, curated dining, and elegant ambiance.
+        </p>
+        <button class="skypark-btn skypark-btn-gold" style="width: 100%;">Reserve Now</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast">Copied to clipboard!</div>
+
+  <script>
+    function copyCode(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById('toast');
+        toast.textContent = `Copied ${text} to clipboard!`;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+      });
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      if (isDark) {
+        document.documentElement.removeAttribute('data-theme');
+        document.getElementById('theme-icon').textContent = '🌙';
+        document.getElementById('theme-text').textContent = 'Dark Mode';
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-icon').textContent = '☀️';
+        document.getElementById('theme-text').textContent = 'Light Mode';
+      }
+    }
+  </script>
+</body>
+</html>

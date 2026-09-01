@@ -14,7 +14,7 @@ export default function LogoutLoadingPopup({
   sessionSummary = null,
   title = 'LOGGING OUT',
   subMessage = 'Ending System Session',
-  brandName = 'CATER POS',
+  brandName = 'SKYPARK',
   onComplete = null,
 }) {
   const [progress, setProgress] = useState(0);
@@ -119,12 +119,15 @@ export default function LogoutLoadingPopup({
         opacity: visible ? 1 : 0,
         transition: 'opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
         pointerEvents: visible ? 'all' : 'none',
+        fontFamily: "'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif",
       }}
     >
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap');
+
         @keyframes logoutPulseRing {
           0%, 100% { opacity: 0.3; transform: scale(1); }
-          50% { opacity: 0.8; transform: scale(1.08); }
+          50% { opacity: 0.85; transform: scale(1.08); }
         }
         @keyframes logoutRotate {
           from { transform: rotate(0deg); }
@@ -149,41 +152,41 @@ export default function LogoutLoadingPopup({
         .animate-logoutShimmer   { animation: logoutShimmer 1.8s infinite; }
       `}</style>
 
-      {/* ── Deep Luxury Dark Obsidian & Wine Backdrop ──────────── */}
+      {/* ── Deep Luxury Teal & Charcoal Backdrop ──────────── */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse at 50% 40%, #1c0a0a 0%, #120505 55%, #0a0202 100%)',
+            'radial-gradient(ellipse at 50% 40%, #082226 0%, #051417 55%, #030a0b 100%)',
           transition: 'opacity 0.5s ease',
         }}
       />
 
-      {/* Center Deep Wine Glow */}
+      {/* Center Deep Primary Teal Glow */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(138, 46, 46, 0.28) 0%, transparent 75%)',
+            'radial-gradient(ellipse 65% 55% at 50% 40%, rgba(18, 105, 115, 0.35) 0%, transparent 75%)',
         }}
       />
 
-      {/* ── Geometric Square Grid Pattern Background ───────────── */}
+      {/* ── Geometric Grid Pattern ───────────── */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-[0.2]"
+        className="absolute inset-0 pointer-events-none opacity-[0.25]"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(232, 182, 182, 0.45) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(232, 182, 182, 0.45) 1px, transparent 1px)
+            linear-gradient(rgba(241, 216, 194, 0.35) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(241, 216, 194, 0.35) 1px, transparent 1px)
           `,
-          backgroundSize: '40px 40px',
+          backgroundSize: '48px 48px',
           maskImage: 'radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 95%)',
           WebkitMaskImage: 'radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 95%)',
         }}
       />
 
       {/* ── Outer Precision Frame Box ──────────────────────────── */}
-      <div className="absolute inset-0 border border-[#8A2E2E]/30 pointer-events-none z-10 shadow-[inset_0_0_60px_rgba(138,46,46,0.3)]" />
+      <div className="absolute inset-0 border border-[#126973]/40 pointer-events-none z-10 shadow-[inset_0_0_60px_rgba(18,105,115,0.3)]" />
 
       {/* ── Four Precision Corner Square Brackets ──────────────── */}
       {[
@@ -196,8 +199,8 @@ export default function LogoutLoadingPopup({
           key={i}
           className={`absolute w-10 h-10 sm:w-14 sm:h-14 z-20 ${cls}`}
           style={{
-            borderColor: 'rgba(232, 182, 182, 0.85)',
-            filter: 'drop-shadow(0 0 10px rgba(232, 182, 182, 0.5))',
+            borderColor: '#F1D8C2',
+            filter: 'drop-shadow(0 0 10px rgba(241, 216, 194, 0.5))',
           }}
         />
       ))}
@@ -210,7 +213,7 @@ export default function LogoutLoadingPopup({
           {/* Outer Pulse Glow Ring */}
           <div
             className="absolute inset-0 rounded-full animate-logoutPulseRing"
-            style={{ border: '2px solid rgba(232, 182, 182, 0.35)' }}
+            style={{ border: '2px solid rgba(241, 216, 194, 0.4)' }}
           />
 
           {/* Middle Rotating Dashed Orbit Ring */}
@@ -223,7 +226,7 @@ export default function LogoutLoadingPopup({
               cy="50"
               r="46"
               fill="none"
-              stroke="#E8B6B6"
+              stroke="#F1D8C2"
               strokeWidth="1.4"
               strokeDasharray="6 10"
             />
@@ -232,29 +235,29 @@ export default function LogoutLoadingPopup({
           {/* Inner Dashed Ring */}
           <div
             className="absolute w-22 h-22 sm:w-28 sm:h-28 rounded-full"
-            style={{ border: '1.2px dashed rgba(232, 182, 182, 0.25)' }}
+            style={{ border: '1.2px dashed rgba(18, 105, 115, 0.6)' }}
           />
 
           {/* Center Logo / Lock Emblem */}
           <div
             className="w-18 h-18 sm:w-22 sm:h-22 rounded-full flex flex-col items-center justify-center shadow-2xl relative overflow-hidden p-3"
             style={{
-              background: 'radial-gradient(circle, rgba(138, 46, 46, 0.55) 0%, rgba(20, 6, 6, 0.95) 100%)',
-              border: '2px solid rgba(232, 182, 182, 0.75)',
-              boxShadow: '0 0 40px rgba(138, 46, 46, 0.7), inset 0 0 25px rgba(138, 46, 46, 0.5)',
+              background: 'radial-gradient(circle, rgba(18, 105, 115, 0.7) 0%, rgba(5, 20, 23, 0.98) 100%)',
+              border: '2px solid #F1D8C2',
+              boxShadow: '0 0 40px rgba(18, 105, 115, 0.8), inset 0 0 25px rgba(18, 105, 115, 0.5)',
             }}
           >
             <LogOut
               size={30}
-              className="text-[#FDF4F4] drop-shadow-[0_0_12px_rgba(232,182,182,0.8)] transform -translate-x-0.5"
+              className="text-[#F1D8C2] drop-shadow-[0_0_12px_rgba(241,216,194,0.8)] transform -translate-x-0.5"
             />
           </div>
         </div>
 
         {/* Brand Header Badge */}
-        <div className="flex items-center gap-2 mb-2 px-3 py-0.5 rounded-full bg-[#2a0e0e]/80 border border-[#8A2E2E]/50 shadow-md">
-          <Sparkles size={13} className="text-[#E8B6B6]" />
-          <span className="text-[10px] font-extrabold tracking-widest text-[#E8B6B6] uppercase">
+        <div className="flex items-center gap-2 mb-2 px-3.5 py-1 rounded-full bg-[#0d343a]/90 border border-[#F1D8C2]/40 shadow-md">
+          <Sparkles size={13} className="text-[#F1D8C2]" />
+          <span className="text-[10.5px] font-bold tracking-widest text-[#F1D8C2] uppercase">
             {brandName} • SESSION SUMMARY
           </span>
         </div>
@@ -263,59 +266,60 @@ export default function LogoutLoadingPopup({
         <h1
           className="font-black uppercase leading-none mb-1 animate-logoutFadeUp text-center"
           style={{
-            fontSize: 'clamp(26px, 4.5vw, 38px)',
-            letterSpacing: '0.15em',
-            color: '#FDF4F4',
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 'clamp(28px, 4.5vw, 40px)',
+            letterSpacing: '0.12em',
+            color: '#F8F7F4',
             animationDelay: '0.08s',
             textShadow: '0 4px 20px rgba(0, 0, 0, 0.95), 0 2px 6px rgba(0, 0, 0, 0.8)',
           }}
         >
-          LOGGING <span className="text-[#8A2E2E]" style={{ color: '#8A2E2E', textShadow: '0 0 25px rgba(138,46,46,0.8)' }}>OUT</span>
+          LOGGING <span style={{ color: '#F1D8C2', textShadow: '0 0 25px rgba(241,216,194,0.7)' }}>OUT</span>
         </h1>
 
         {/* Goodbye User Subtitle */}
         {user && (
           <p
             className="text-xs font-medium uppercase tracking-widest mb-4 animate-logoutFadeUp text-center"
-            style={{ color: 'rgba(232, 182, 182, 0.75)', animationDelay: '0.12s' }}
+            style={{ color: 'rgba(248, 247, 244, 0.75)', animationDelay: '0.12s' }}
           >
-            Ending Session for <span className="text-white font-bold">{displayName}</span>
+            Ending Session for <span className="text-[#F1D8C2] font-bold">{displayName}</span>
           </p>
         )}
 
         {/* ── End-of-Session Summary Card ──────────── */}
         <div
-          className="w-full bg-[#180707]/90 border border-[#5c1c1c]/80 rounded-2xl p-4 mb-4 backdrop-blur-md shadow-2xl animate-logoutFadeUp"
+          className="w-full bg-[#082024]/90 border border-[#F1D8C2]/25 rounded-2xl p-4 mb-4 backdrop-blur-md shadow-2xl animate-logoutFadeUp"
           style={{ animationDelay: '0.16s' }}
         >
-          <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-[#421414]">
-            <span className="text-[11px] font-extrabold tracking-wider text-[#E8B6B6] uppercase flex items-center gap-1.5">
+          <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-[#126973]/40">
+            <span className="text-[11px] font-extrabold tracking-wider text-[#F1D8C2] uppercase flex items-center gap-1.5">
               <CheckCircle2 size={14} className="text-emerald-400" />
               Session Performance
             </span>
-            <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-              <Clock size={12} />
+            <span className="text-[10px] font-bold text-slate-300 flex items-center gap-1">
+              <Clock size={12} className="text-[#F1D8C2]" />
               {duration}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             {/* Orders Taken */}
-            <div className="p-3 rounded-xl bg-[#2a0e0e]/80 border border-[#5c1c1c]/50 flex flex-col">
-              <div className="flex items-center gap-1.5 text-[#E8B6B6] text-[11px] font-bold uppercase tracking-wider mb-1">
+            <div className="p-3 rounded-xl bg-[#051619]/90 border border-[#126973]/40 flex flex-col">
+              <div className="flex items-center gap-1.5 text-[#F1D8C2] text-[11px] font-bold uppercase tracking-wider mb-1">
                 <Receipt size={14} />
                 <span>Orders Taken</span>
               </div>
               <span className="text-2xl font-black text-white tracking-tight">
                 {orderCount}
               </span>
-              <span className="text-[10px] text-slate-400 font-medium mt-0.5">
+              <span className="text-[10px] text-slate-300 font-medium mt-0.5">
                 {orderCount === 1 ? '1 Order Processed' : `${orderCount} Orders Processed`}
               </span>
             </div>
 
             {/* Total Sales */}
-            <div className="p-3 rounded-xl bg-[#2a0e0e]/80 border border-[#5c1c1c]/50 flex flex-col">
+            <div className="p-3 rounded-xl bg-[#051619]/90 border border-[#126973]/40 flex flex-col">
               <div className="flex items-center gap-1.5 text-emerald-400 text-[11px] font-bold uppercase tracking-wider mb-1">
                 <DollarSign size={14} />
                 <span>Total Sales</span>
@@ -323,7 +327,7 @@ export default function LogoutLoadingPopup({
               <span className="text-2xl font-black text-emerald-300 tracking-tight">
                 ${totalSales.toFixed(2)}
               </span>
-              <span className="text-[10px] text-slate-400 font-medium mt-0.5">
+              <span className="text-[10px] text-slate-300 font-medium mt-0.5">
                 Session Revenue
               </span>
             </div>
@@ -333,15 +337,15 @@ export default function LogoutLoadingPopup({
         {/* Live Status Pill & Progress Indicator */}
         {showSub && (
           <div className="animate-logoutFadeUp">
-            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#1e0a0a]/90 border border-[#5c1c1c] shadow-xl backdrop-blur-md">
+            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#072428]/95 border border-[#F1D8C2]/30 shadow-xl backdrop-blur-md">
               <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E8B6B6] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#8A2E2E]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F1D8C2] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#126973]"></span>
               </span>
-              <span className="text-[11px] font-bold tracking-widest text-[#E8B6B6] uppercase">
+              <span className="text-[11px] font-bold tracking-widest text-[#F1D8C2] uppercase">
                 {phaseText}{dots}
               </span>
-              <span className="font-mono text-[11px] font-extrabold text-[#fca5a5] border-l border-[#5c1c1c] pl-2.5">
+              <span className="font-mono text-[11px] font-extrabold text-[#7ecbd4] border-l border-[#F1D8C2]/30 pl-2.5">
                 {Math.round(progress)}%
               </span>
             </div>
@@ -350,13 +354,13 @@ export default function LogoutLoadingPopup({
       </div>
 
       {/* ── Full-Width Shimmering Progress Bar at Bottom ──────── */}
-      <div className="absolute bottom-0 left-0 w-full h-[4px] sm:h-[5px] bg-[#1a0808] z-20 overflow-hidden border-t border-[#4a1616]">
+      <div className="absolute bottom-0 left-0 w-full h-[4px] sm:h-[5px] bg-[#041113] z-20 overflow-hidden border-t border-[#126973]/50">
         <div
           className="h-full transition-all duration-75 ease-out"
           style={{
             width: `${progress}%`,
-            background: 'linear-gradient(90deg, #8A2E2E 0%, #E8B6B6 70%, #ffffff 100%)',
-            boxShadow: '0 0 16px rgba(232, 182, 182, 0.95), 0 0 30px rgba(138, 46, 46, 0.8)',
+            background: 'linear-gradient(90deg, #072328 0%, #126973 40%, #F1D8C2 85%, #ffffff 100%)',
+            boxShadow: '0 0 16px rgba(241, 216, 194, 0.95), 0 0 30px rgba(18, 105, 115, 0.8)',
           }}
         />
         {/* Continuous Gliding Shimmer Light Beam */}
@@ -365,4 +369,3 @@ export default function LogoutLoadingPopup({
     </div>
   );
 }
-
