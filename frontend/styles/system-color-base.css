@@ -1,0 +1,187 @@
+:root {
+  --color-50: #F9ECEC;  
+  --color-100: #EDC9C9;
+  --color-200: #E2A7A7;
+  --color-300: #D68585;
+  --color-400: #CB6262;
+  --color-500: #BF4040;
+  --color-600: #9D3434;
+  --color-700: #8A2E2E;
+  --color-800: #581D1D;
+  --color-900: #361212;
+  --color-950: #130606;
+  /* Payment Status Variables in Root */
+  --color-paid-50: #ECFDF5;
+  --color-paid-100: #D1FAE5;
+  --color-paid-500: #10B981;
+  --color-paid-600: #059669;
+  --color-paid-700: #047857;
+
+  --color-unpaid-50: #FEF2F2;
+  --color-unpaid-100: #FEE2E2;
+  --color-unpaid-500: #EF4444;
+  --color-unpaid-600: #DC2626;
+  --color-unpaid-700: #B91C1C;
+  
+
+  /* Color Status Order in customer screen */
+  /* Pending Status (Amber / In-Queue) */
+  --color-order-pending-bg: #FFFBEB;
+  --color-order-pending-border: #FDE68A;
+  --color-order-pending-text: #D97706;
+
+  /* Processing / Cooking Status (Blue / In-Kitchen) */
+  --color-order-processing-bg: #EFF6FF;
+  --color-order-processing-border: #BFDBFE;
+  --color-order-processing-text: #2563EB;
+
+  /* Finished / Completed Status (Emerald / Ready) */
+  --color-order-finished-bg: #ECFDF5;
+  --color-order-finished-border: #A7F3D0;
+  --color-order-finished-text: #059669;
+
+  /* Cancelled Status (Slate / Muted) */
+  --color-order-cancelled-bg: #F8FAFC;
+  --color-order-cancelled-border: #E2E8F0;
+  --color-order-cancelled-text: #64748B;
+}
+
+@theme {
+  --color-primary-50: #F9ECEC;
+  --color-primary-100: #EDC9C9;
+  --color-primary-200: #E2A7A7;
+  --color-primary-300: #D68585;
+  --color-primary-400: #CB6262;
+  --color-primary-500: #BF4040;
+  --color-primary-600: #9D3434;
+  --color-primary-700: #8A2E2E;
+  --color-primary-800: #581D1D;
+  --color-primary-900: #361212;
+  --color-primary-950: #130606;
+
+  /* Payment Status Theme Tokens */
+  --color-paid-bg: #ECFDF5;
+  --color-paid-border: #A7F3D0;
+  --color-paid-text: #059669;
+  --color-paid-dark: #34D399;
+
+  --color-unpaid-bg: #FEF2F2;
+  --color-unpaid-border: #FECACA;
+  --color-unpaid-text: #DC2626;
+  --color-unpaid-dark: #F87171;
+
+  /* Order Status Theme Tokens */
+  --color-order-pending-bg: #FFFBEB;
+  --color-order-pending-border: #FDE68A;
+  --color-order-pending-text: #D97706;
+
+  --color-order-processing-bg: #EFF6FF;
+  --color-order-processing-border: #BFDBFE;
+  --color-order-processing-text: #2563EB;
+
+  --color-order-finished-bg: #ECFDF5;
+  --color-order-finished-border: #A7F3D0;
+  --color-order-finished-text: #059669;
+
+  --color-order-cancelled-bg: #F8FAFC;
+  --color-order-cancelled-border: #E2E8F0;
+  --color-order-cancelled-text: #64748B;
+}
+
+/* ── Color text payment status utilities ── */
+/* Paid Status */
+.text-paid {
+  color: var(--color-paid-text, #059669);
+}
+.bg-paid {
+  background-color: var(--color-paid-bg, #ECFDF5);
+}
+.border-paid {
+  border-color: var(--color-paid-border, #A7F3D0);
+}
+.badge-paid {
+  background-color: var(--color-paid-bg, #ECFDF5);
+  color: var(--color-paid-text, #059669);
+  border: 1px solid var(--color-paid-border, #A7F3D0);
+}
+
+/* Unpaid Status (Red) */
+.text-unpaid {
+  color: var(--color-unpaid-text, #DC2626);
+}
+.bg-unpaid {
+  background-color: var(--color-unpaid-bg, #FEF2F2);
+}
+.border-unpaid {
+  border-color: var(--color-unpaid-border, #FECACA);
+}
+.badge-unpaid {
+  background-color: var(--color-unpaid-bg, #FEF2F2);
+  color: var(--color-unpaid-text, #DC2626);
+  border: 1px solid var(--color-unpaid-border, #FECACA);
+}
+
+/* ── Color order status utilities ── */
+/* Pending Status (Amber) */
+.text-order-pending {
+  color: var(--color-order-pending-text, #D97706);
+}
+.bg-order-pending {
+  background-color: var(--color-order-pending-bg, #FFFBEB);
+}
+.border-order-pending {
+  border-color: var(--color-order-pending-border, #FDE68A);
+}
+.badge-order-pending {
+  background-color: var(--color-order-pending-bg, #FFFBEB);
+  color: var(--color-order-pending-text, #D97706);
+  border: 1px solid var(--color-order-pending-border, #FDE68A);
+}
+
+/* Processing / Cooking Status (Blue) */
+.text-order-processing {
+  color: var(--color-order-processing-text, #2563EB);
+}
+.bg-order-processing {
+  background-color: var(--color-order-processing-bg, #EFF6FF);
+}
+.border-order-processing {
+  border-color: var(--color-order-processing-border, #BFDBFE);
+}
+.badge-order-processing {
+  background-color: var(--color-order-processing-bg, #EFF6FF);
+  color: var(--color-order-processing-text, #2563EB);
+  border: 1px solid var(--color-order-processing-border, #BFDBFE);
+}
+
+/* Finished / Ready / Completed Status (Emerald Green) */
+.text-order-finished {
+  color: var(--color-order-finished-text, #059669);
+}
+.bg-order-finished {
+  background-color: var(--color-order-finished-bg, #ECFDF5);
+}
+.border-order-finished {
+  border-color: var(--color-order-finished-border, #A7F3D0);
+}
+.badge-order-finished {
+  background-color: var(--color-order-finished-bg, #ECFDF5);
+  color: var(--color-order-finished-text, #059669);
+  border: 1px solid var(--color-order-finished-border, #A7F3D0);
+}
+
+/* Cancelled Status (Slate) */
+.text-order-cancelled {
+  color: var(--color-order-cancelled-text, #64748B);
+}
+.bg-order-cancelled {
+  background-color: var(--color-order-cancelled-bg, #F8FAFC);
+}
+.border-order-cancelled {
+  border-color: var(--color-order-cancelled-border, #E2E8F0);
+}
+.badge-order-cancelled {
+  background-color: var(--color-order-cancelled-bg, #F8FAFC);
+  color: var(--color-order-cancelled-text, #64748B);
+  border: 1px solid var(--color-order-cancelled-border, #E2E8F0);
+}

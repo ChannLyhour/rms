@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cater-POS - Executive Slide Presentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #BF4040;
+      --primary-dark: #8A2E2E;
+      --primary-light: #FEE2E2;
+      --accent: #7C6FF7;
+      --accent-gradient: linear-gradient(135deg, #7C6FF7, #4F46E5);
+      --crimson-gradient: linear-gradient(135deg, #BF4040, #8A2E2E);
+      --bg: #0F172A;
+      --card-bg: #1E293B;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --border: #334155;
+      --success: #10B981;
+      --warning: #F59E0B;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+
+    /* Deck Layout */
+    .deck-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 60px 80px;
+      display: flex;
+      flex-col;
+      flex-direction: column;
+      justify-content: space-between;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px) scale(0.98);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      background: radial-gradient(circle at top right, rgba(124, 111, 247, 0.12), transparent 50%),
+                  radial-gradient(circle at bottom left, rgba(191, 64, 64, 0.12), transparent 50%),
+                  var(--bg);
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Slide Header */
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+
+    .brand-tag {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--primary);
+    }
+
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--crimson-gradient);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .slide-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: var(--card-bg);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+
+    /* Slide Body */
+    .slide-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 30px 0;
+    }
+
+    .hero-title {
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #FFFFFF 40%, #94A3B8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 22px;
+      color: var(--text-muted);
+      font-weight: 500;
+      max-width: 800px;
+      line-height: 1.5;
+      margin-bottom: 36px;
+    }
+
+    .slide-heading {
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+      color: #FFF;
+    }
+
+    .slide-subheading {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+      font-weight: 500;
+    }
+
+    /* Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 26px;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 16px;
+    }
+
+    .card h3 {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      color: #FFF;
+    }
+
+    .card p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #E2E8F0;
+    }
+
+    /* Step Timeline */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .timeline-item {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 16px 20px;
+      border-radius: 10px;
+    }
+
+    .timeline-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--crimson-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 14px;
+      color: #FFF;
+      shrink-0;
+    }
+
+    /* Controls & Footer */
+    .slide-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      padding-top: 18px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .controls {
+      position: fixed;
+      bottom: 24px;
+      right: 32px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(30, 41, 59, 0.9);
+      backdrop-filter: blur(12px);
+      padding: 6px 12px;
+      border-radius: 30px;
+      border: 1px solid var(--border);
+      z-index: 100;
+    }
+
+    .ctrl-btn {
+      background: transparent;
+      border: none;
+      color: var(--text);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .ctrl-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #FFF;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      transition: width 0.3s ease;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Progress Bar -->
+  <div class="progress-bar" id="progressBar"></div>
+
+  <!-- Deck Wrapper -->
+  <div class="deck-container">
+
+    <!-- SLIDE 1: Title Slide -->
+    <div class="slide active" data-slide="1">
+      <div class="slide-header">
+        <div class="brand-tag">
+          <div class="brand-icon">C</div>
+          <span>Cater-POS Presentation</span>
+        </div>
+        <div class="slide-number">01 / 09</div>
+      </div>
+      <div class="slide-body">
+        <span class="pill" style="background: rgba(16, 185, 129, 0.15); color: #34D399; border-color: rgba(16, 185, 129, 0.3); width: fit-content; margin-bottom: 20px; padding: 6px 14px; font-size: 12px;">
+          🚀 Production Ready • v2.0
+        </span>
+        <h1 class="hero-title">Next-Gen Restaurant POS &amp;<br>Table QR Ordering Platform</h1>
+        <p class="hero-subtitle">
+          An end-to-end real-time ecosystem connecting guests, cashier terminals, and kitchen cook lines with instant WebSocket synchronization.
+        </p>
+        <div class="pill-list">
+          <span class="pill">⚡ Golang Backend</span>
+          <span class="pill">⚛️ React 19 Frontend</span>
+          <span class="pill">📡 Live WebSockets</span>
+          <span class="pill">📱 Contactless QR</span>
+          <span class="pill">👨‍🍳 Kitchen KDS</span>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Use Left / Right Arrows or Space to Navigate</span>
+        <span>Presenter: Engineering Team</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: Problem & Solution -->
+    <div class="slide" data-slide="2">
+      <div class="slide-header">
+        <div class="brand-tag">
+          <div class="brand-icon">C</div>
+          <span>The Problem vs Solution</span>
+        </div>
+        <div class="slide-number">02 / 09</div>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-heading">Why Cater-POS?</h2>
+        <p class="slide-subheading">Eliminating restaurant bottlenecks through digital table self-service &amp; automated dispatch.</p>
+        
+        <div class="grid-2">
+          <div class="card" style="border-color: rgba(239, 68, 68, 0.3);">
+            <div class="card-icon" style="background: rgba(239, 68, 68, 0.15); color: #EF4444;">❌</div>
+            <h3>Traditional Restaurant Challenges</h3>
+            <p>• Waiters manually writing down orders causing delays &amp; human errors.</p>
+            <p>• Kitchen line misplacing paper tickets during peak rush hours.</p>
+            <p>• Customers waiting 15+ minutes just to get a waiter for water or the bill.</p>
+            <p>• High staff overhead and disjointed cash register drawer reconciliation.</p>
+          </div>
+
+          <div class="card" style="border-color: rgba(16, 185, 129, 0.3);">
+            <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); color: #10B981;">✅</div>
+            <h3>The Cater-POS Solution</h3>
+            <p>• <strong>Contactless QR</strong>: Guests order instantly from table with modifiers.</p>
+            <p>• <strong>Real-time KDS</strong>: Kitchen receives cooking tickets with chime alerts.</p>
+            <p>• <strong>Instant Service Bell</strong>: 1-click calls for Ice, Cutlery, Cleaning, or Bill.</p>
+            <p>• <strong>Live Shift Sales Tracking</strong>: Automated operator shift attribution &amp; drawer reports.</p>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Cater-POS Architecture</span>
+        <span>Slide 02 of 09</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: System Architecture -->
+    <div class="slide" data-slide="3">
+      <div class="slide-header">
+        <div class="brand-tag">
+          <div class="brand-icon">C</div>
+          <span>System Architecture</span>
+        </div>
+        <div class="slide-number">03 / 09</div>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-heading">High-Performance Tech Stack</h2>
+        <p class="slide-subheading">Engineered for sub-millisecond response times and flawless concurrency.</p>
+        
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-icon" style="background: rgba(56, 189, 248, 0.15); color: #38BDF8;">⚛️</div>
+            <h3>Modern Web Frontend</h3>
+            <p>React 19, Vite, Vanilla CSS Design System, Responsive PWA for mobile &amp; tablet terminals, Zustand State Store.</p>
+            <div class="pill-list">
+              <span class="pill">React 19</span>
+              <span class="pill">Tailwind 4</span>
+              <span class="pill">PWA</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-icon" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA;">⚡</div>
+            <h3>Golang High-Speed API</h3>
+            <p>Go 1.22+, Gin Web Framework, Gorilla WebSocket Hub with multi-room broadcasting (`cashier`, `kitchen`, `table_<token>`).</p>
+            <div class="pill-list">
+              <span class="pill">Go Gin</span>
+              <span class="pill">GORM</span>
+              <span class="pill">WebSockets</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-icon" style="background: rgba(168, 85, 247, 0.15); color: #C084FC;">🗄️</div>
+            <h3>PostgreSQL Database</h3>
+            <p>Relational schema with connection pooling, transactional integrity, index optimization, and automated column migrations.</p>
+            <div class="pill-list">
+              <span class="pill">PostgreSQL 16</span>
+              <span class="pill">Connection Pool</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Cater-POS Architecture</span>
+        <span>Slide 03 of 09</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: Module 1 - Guest Table QR -->
+    <div class="slide" data-slide="4">
+      <div class="slide-header">
+        <div class="brand-tag">
+          <div class="brand-icon">C</div>
+          <span>Module 1: Table QR Journey</span>
+        </div>
+        <div class="slide-number">04 / 09</div>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-heading">Guest Contactless Ordering</h2>
+        <p class="slide-subheading">Zero friction, zero app installs. Instant dining from any smartphone browser.</p>
+        
+        <div class="grid-4">
+          <div class="card">
+            <div class="card-icon" style="background: rgba(191, 64, 64, 0.15); color: var(--primary);">📲</div>
+            <h3>1. Table QR Scan</h3>
+            <p>Unique session token binds the mobile browser directly to the table.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">🍔</div>
+            <h3>2. Menu &amp; Modifiers</h3>
+            <p>Select sizes, toppings, spice/sugar levels, and chef notes.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon" style="background: rgba(124, 111, 247, 0.15); color: var(--accent);">🛎️</div>
+            <h3>3. Service Bells</h3>
+            <p>Call for Ice, Cutlery, Cleaning, or Waiter with real-time cashier chime.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">🔥</div>
+            <h3>4. Live Cook Status</h3>
+            <p>Live ticker showing Pending ➔ Confirmed ➔ Cooking ➔ Ready.</p>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Guest Journey</span>
+        <span>Slide 04 of 09</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: Module 2 - Cashier Station -->
+    <div class="slide" data-slide="5">
+      <div class="slide-header">
+        <div class="brand-tag">
+          <div class="brand-icon">C</div>
+          <span>Module 2: Cashier Terminal</span>
+        </div>
+        <div class="slide-number">05 / 09</div>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-heading">Cashier Station &amp; Live Terminal</h2>
+        <p class="slide-subheading">Full dining session control, running tab management, and 1-click approvals.</p>
+        
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">✅</div>
+            <h3>1-Click Order Approval</h3>
+            <p>Incoming customer orders are held in Pending until cashier approves, auto-recording `accepted_by` &amp; `accepted_role`.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">🚨</div>
+            <h3>Table Assistance Alerts</h3>
+            <p>Real-time banner cards for guest service requests with instant "Mark as Handled" and "Pay Bill" quick actions.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon" style="background: rgba(191, 64, 64, 0.15); color: var(--primary);">🔒</div>
+            <h3>Cooking Edit Lock</h3>
+            <p>Items in kitchen cook line are automatically protected from accidental modification or deletion on POS tickets.</p>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Cashier Operations</span>
+        <span>Slide 05 of 09</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: Module 3 - Kitchen KDS -->
+    <div class="slide" data-slide="6">
+      <div class="slide-header">
+        <div class="brand-tag">
+          <div class="brand-icon">C</div>
+          <span>Module 3: Kitchen Display System</span>
+        </div>
+        <div class="slide-number">06 / 09</div>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-heading">Kitchen KDS Cook Line</h2>
+        <p class="slide-subheading">Paperless, organized order queue optimized for high-volume kitchen prep.</p>
+        
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-icon" style="background: rgba(239, 68, 68, 0.15); color: #EF4444;">⏱️</div>
+            <h3>Live Elapsed Timers</h3>
+            <p>Tickets color-coded by waiting duration (Green &lt; 5m, Yellow &lt; 15m, Red &gt; 15m) to prioritize tickets.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA;">🔔</div>
+            <h3>Audio Order Chimes</h3>
+            <p>Sound synthesis automatically rings on every new approved order without manual page refreshing.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">🍽️</div>
+            <h3>Item-Level Preparation</h3>
+            <p>Chefs can advance tickets or individual items through `Cooking` ➔ `Ready` ➔ `Served` with touch gestures.</p>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Kitchen Operations</span>
+        <span>Slide 06 of 09</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 7: Module 4 - Admin Analytics -->
+    <div class="slide" data-slide="7">
+      <div class="slide-header">
+        <div class="brand-tag">
+          <div class="brand-icon">C</div>
+          <span>Module 4: Admin Analytics</span>
+        </div>
+        <div class="slide-number">07 / 09</div>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-heading">Executive Analytics &amp; Role Reports</h2>
+        <p class="slide-subheading">Deep business intelligence and staff performance transparency.</p>
+        
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-icon" style="background: rgba(124, 111, 247, 0.15); color: var(--accent);">👤</div>
+            <h3>Staff Sales by Role</h3>
+            <p>Track exactly how much each Cashier, Waiter, or Guest QR ordered in a day, including Cash, KHQR, and Card breakdown.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">📈</div>
+            <h3>Gross Revenue Trends</h3>
+            <p>Periodic sales trend bar charts, average ticket values, and top-selling product volume rankings.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">🗺️</div>
+            <h3>Interactive Floor Plan</h3>
+            <p>Live bird's-eye view of dining zones, table occupancies, seated guest durations, and service calls.</p>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Business Intelligence</span>
+        <span>Slide 07 of 09</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 8: 6-Step Demo Script -->
+    <div class="slide" data-slide="8">
+      <div class="slide-header">
+        <div class="brand-tag">
+          <div class="brand-icon">C</div>
+          <span>Live Demo Script</span>
+        </div>
+        <div class="slide-number">08 / 09</div>
+      </div>
+      <div class="slide-body">
+        <h2 class="slide-heading">6-Step End-to-End Demonstration</h2>
+        <p class="slide-subheading">Follow this sequence to present a complete dining lifecycle to stakeholders.</p>
+        
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-num">1</div>
+            <div><strong>Guest Places Order</strong>: Scan Table QR, customize food with modifiers, submit order (Status: Pending).</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-num">2</div>
+            <div><strong>Cashier Approves</strong>: Cashier clicks [Approve Order ✅] ➔ System logs `accepted_by` and dispatches to kitchen.</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-num">3</div>
+            <div><strong>Kitchen Cooks</strong>: Chef hears audio chime &amp; sets status to Cooking 🔥 (Item locks on POS).</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-num">4</div>
+            <div><strong>Guest Calls Service</strong>: Guest taps "Request Ice 🧊" ➔ Live banner appears on Cashier screen.</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-num">5</div>
+            <div><strong>Checkout &amp; Settle</strong>: Cashier clicks [Pay Bill 💳] (Cash / KHQR / Card) ➔ Sales credited to Cashier Shift.</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-num">6</div>
+            <div><strong>Close Session</strong>: Cashier clicks [Close Session] ➔ Table resets to Free &amp; QR token expires.</div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Demonstration Guide</span>
+        <span>Slide 08 of 09</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 9: Conclusion -->
+    <div class="slide" data-slide="9">
+      <div class="slide-header">
+        <div class="brand-tag">
+          <div class="brand-icon">C</div>
+          <span>Summary &amp; Q&amp;A</span>
+        </div>
+        <div class="slide-number">09 / 09</div>
+      </div>
+      <div class="slide-body" style="text-align: center; align-items: center;">
+        <div class="brand-icon" style="width: 64px; height: 64px; font-size: 32px; border-radius: 16px; margin-bottom: 24px;">C</div>
+        <h1 class="hero-title" style="font-size: 48px; margin-bottom: 16px;">Thank You!</h1>
+        <p class="hero-subtitle" style="text-align: center; max-width: 650px;">
+          Cater-POS is ready for production deployment across restaurants, cafes, bars, and hospitality venues.
+        </p>
+        <div class="pill-list" style="justify-content: center; margin-top: 10px;">
+          <span class="pill" style="font-size: 13px; padding: 8px 16px;">Admin: http://localhost:5173/admin/login</span>
+          <span class="pill" style="font-size: 13px; padding: 8px 16px;">POS: http://localhost:5173/pos/dashboard</span>
+          <span class="pill" style="font-size: 13px; padding: 8px 16px;">KDS: http://localhost:5173/kds</span>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Cater-POS Platform v2.0</span>
+        <span>Questions &amp; Answers</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Floating Navigation Controls -->
+  <div class="controls">
+    <button class="ctrl-btn" id="prevBtn" title="Previous Slide (Left Arrow)">◀</button>
+    <span id="counter" style="font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace; padding: 0 4px;">1 / 9</span>
+    <button class="ctrl-btn" id="nextBtn" title="Next Slide (Right Arrow or Space)">▶</button>
+    <button class="ctrl-btn" id="fsBtn" title="Toggle Fullscreen (F)">⛶</button>
+  </div>
+
+  <!-- Interactive Slide Controller JS -->
+  <script>
+    let currentSlide = 1;
+    const totalSlides = document.querySelectorAll('.slide').length;
+    const slides = document.querySelectorAll('.slide');
+    const progressBar = document.getElementById('progressBar');
+    const counter = document.getElementById('counter');
+
+    function updateSlide(index) {
+      if (index < 1) index = 1;
+      if (index > totalSlides) index = totalSlides;
+      currentSlide = index;
+
+      slides.forEach((s, idx) => {
+        s.classList.toggle('active', idx + 1 === currentSlide);
+      });
+
+      // Update progress bar
+      const pct = ((currentSlide - 1) / (totalSlides - 1)) * 100;
+      progressBar.style.width = pct + '%';
+      counter.innerText = currentSlide + ' / ' + totalSlides;
+    }
+
+    document.getElementById('nextBtn').addEventListener('click', () => updateSlide(currentSlide + 1));
+    document.getElementById('prevBtn').addEventListener('click', () => updateSlide(currentSlide - 1));
+
+    document.getElementById('fsBtn').addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+
+    // Keyboard navigation
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'Space' || e.key === 'PageDown') {
+        updateSlide(currentSlide + 1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        updateSlide(currentSlide - 1);
+      } else if (e.key === 'f' || e.key === 'F') {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+    });
+
+    updateSlide(1);
+  </script>
+</body>
+</html>
