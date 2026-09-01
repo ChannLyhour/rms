@@ -34,6 +34,7 @@ type OrderItem struct {
 	ID                  uint64            `gorm:"primaryKey;autoIncrement" json:"id"`
 	OrderID             uint64            `gorm:"not null" json:"order_id"`
 	ProductID           *uint64           `json:"product_id"`
+	ItemProductName     string            `gorm:"column:item_product_name;size:255" json:"item_product_name"`
 	Quantity            int               `gorm:"default:1" json:"quantity"`
 	UnitPrice           float64           `gorm:"type:numeric(10,2);default:0.00" json:"unit_price"`
 	SpecialInstructions *string           `json:"special_instructions"`
@@ -72,6 +73,7 @@ type Payment struct {
 // OrderItemInput payload for creating items
 type OrderItemInput struct {
 	ProductID           uint64   `json:"product_id" binding:"required"`
+	ItemProductName     *string  `json:"item_product_name"`
 	Quantity            int      `json:"quantity" binding:"required,min=1"`
 	SpecialInstructions *string  `json:"special_instructions"`
 	OptionValueIDs      []uint64 `json:"option_value_ids"`

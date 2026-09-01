@@ -88,8 +88,13 @@ func (s *service) CreateOrder(req *CreateOrderRequest, orderType string, created
 
 		subtotal += itemSubtotal
 		pid := itemReq.ProductID
+		itemName := prod.Name
+		if itemReq.ItemProductName != nil && *itemReq.ItemProductName != "" {
+			itemName = *itemReq.ItemProductName
+		}
 		orderItems = append(orderItems, OrderItem{
 			ProductID:           &pid,
+			ItemProductName:     itemName,
 			Quantity:            itemReq.Quantity,
 			UnitPrice:           unitPrice,
 			SpecialInstructions: itemReq.SpecialInstructions,

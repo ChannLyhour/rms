@@ -201,7 +201,9 @@ export default function OrdersManagement() {
         ? String(o.id).includes(q) ||
           (o.order_number && o.order_number.toLowerCase().includes(q)) ||
           (o.table_session?.table?.table_number && String(o.table_session.table.table_number).includes(q)) ||
-          (o.items || []).some((i) => (i.product?.name || i.title || '').toLowerCase().includes(q))
+          (o.items || []).some((i) =>
+            (i.item_product_name || i.product?.name || i.title || '').toLowerCase().includes(q)
+          )
         : true
 
       const s = String(o.status || '').toLowerCase()
@@ -651,7 +653,7 @@ export default function OrdersManagement() {
                           {totalItems} items
                         </span>
                         <span className="text-[11px] text-[var(--color-muted)] truncate max-w-[160px] block mt-0.5">
-                          {(ord.items || []).map((i) => i.product?.name).filter(Boolean).slice(0, 2).join(', ')}
+                          {(ord.items || []).map((i) => i.item_product_name || i.product?.name).filter(Boolean).slice(0, 2).join(', ')}
                           {(ord.items || []).length > 2 ? '...' : ''}
                         </span>
                       </div>

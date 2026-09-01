@@ -1033,13 +1033,13 @@ function TableDetailView({ table, session, onClose, onRefresh, onUpdateStatus, o
                                   className="w-10 h-10 rounded-[5px] flex items-center justify-center font-bold text-xs border shrink-0"
                                   style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-500, #BF4040)' }}
                                 >
-                                  {(item.product?.name || item.name || item.title || 'IT').slice(0, 2).toUpperCase()}
+                                  {(item.item_product_name || item.product?.name || item.name || item.title || 'IT').slice(0, 2).toUpperCase()}
                                 </div>
                               )}
 
                               <div className="min-w-0">
                                 <h4 className={`font-bold text-xs truncate ${isOrderPaid ? 'line-through text-slate-500' : ''}`} style={{ color: isOrderPaid ? undefined : 'var(--color-text)' }}>
-                                  {item.product?.name || item.name || item.title || 'Food Item'}
+                                  {item.item_product_name || item.product?.name || item.name || item.title || 'Food Item'}
                                 </h4>
                                 <div className="flex items-center gap-2 mt-0.5 text-[11px]" style={{ color: 'var(--color-muted)' }}>
                                   <span>Qty: <strong className="font-mono text-slate-800 dark:text-slate-200">{item.quantity || 1}</strong></span>

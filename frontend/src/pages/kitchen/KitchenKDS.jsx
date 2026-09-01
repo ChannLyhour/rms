@@ -228,7 +228,7 @@ export default function KitchenKDS() {
         const q = searchQuery.toLowerCase()
         const orderNum = String(order.order_number || '').toLowerCase()
         const tableNum = String(order.table_session?.table?.table_number || order.table_session?.table_id || '').toLowerCase()
-        const hasItem = (order.items || []).some((i) => i.product?.name?.toLowerCase().includes(q))
+        const hasItem = (order.items || []).some((i) => (i.item_product_name || i.product?.name || '').toLowerCase().includes(q))
         return orderNum.includes(q) || tableNum.includes(q) || hasItem
       }
 
@@ -782,7 +782,7 @@ function KDSTicketCard({ order, completedItems, onToggleItem, onUpdateStatus, on
                   <span className="px-1.5 py-0.5 rounded-[5px] bg-amber-500/15 text-orange-600 dark:text-orange-400 font-mono font-black text-[11px] shrink-0">
                     {item.quantity}x
                   </span>
-                  <span className="truncate text-slate-900 dark:text-slate-100">{item.product?.name || 'Food Item'}</span>
+                  <span className="truncate text-slate-900 dark:text-slate-100">{item.item_product_name || item.product?.name || 'Food Item'}</span>
                 </div>
 
                 {/* Option Groups & Modifiers (Pill Badges) */}

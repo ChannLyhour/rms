@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="km" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RMS Order Status Architecture - SKYPARK Multi-Venue System</title>
+  
+  <!-- Google Fonts: Inter & Kantumruy Pro for flawless Khmer & English -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Kantumruy+Pro:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Kantumruy Pro', 'sans-serif'],
+            display: ['Outfit', 'Kantumruy Pro', 'sans-serif'],
+            khmer: ['Kantumruy Pro', 'Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#fff1f2',
+              500: '#f43f5e',
+              600: '#e11d48',
+              700: '#be123c',
+            },
+            teal: {
+              500: '#126973',
+              600: '#0e555d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', 'Kantumruy Pro', sans-serif;
+      background-color: #070b13;
+      color: #f8fafc;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .glass-card {
+      background: rgba(18, 26, 43, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    }
+
+    .glass-card-hover {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .glass-card-hover:hover {
+      background: rgba(22, 33, 56, 0.85);
+      border-color: rgba(18, 105, 115, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 25px 50px -12px rgba(18, 105, 115, 0.2);
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.96) translateY(20px);
+      transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                  visibility 0.5s;
+      pointer-events: none;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+    }
+
+    .glow-blob {
+      position: absolute;
+      border-radius: 9999px;
+      filter: blur(120px);
+      opacity: 0.22;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+
+    .pulse-badge {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .8; transform: scale(1.05); }
+    }
+  </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between p-4 sm:p-6 md:p-8 relative">
+
+  <!-- ── Dynamic Background Glow Accents ── -->
+  <div class="glow-blob w-96 h-96 bg-rose-600 top-[-10%] left-[-10%]"></div>
+  <div class="glow-blob w-[32rem] h-[32rem] bg-teal-500 bottom-[-10%] right-[-10%]"></div>
+  <div class="glow-blob w-80 h-80 bg-amber-500 top-[40%] left-[50%] -translate-x-1/2 -translate-y-1/2"></div>
+
+  <!-- ── Top Header & Navigation ── -->
+  <header class="relative z-20 flex items-center justify-between no-print pb-4 border-b border-slate-800/80">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#126973] to-rose-500 flex items-center justify-center font-bold text-white font-display text-lg shadow-lg shadow-teal-500/20">
+        RMS
+      </div>
+      <div>
+        <h1 class="text-sm sm:text-base font-bold font-display tracking-tight text-white flex items-center gap-2">
+          SKYPARK Multi-Venue POS
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-mono border border-emerald-500/20 font-normal">v2.4 Ready</span>
+        </h1>
+        <p class="text-[11px] text-slate-400 font-khmer">ស្ថាបត្យកម្មគ្រប់គ្រង Status Order &amp; Multi-Venue Lifecycle</p>
+      </div>
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="flex items-center gap-2">
+      <a href="index.html" class="p-2 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition cursor-pointer text-xs font-medium flex items-center gap-1.5" title="System Presentation Slide">
+        <span>🏠 Slides</span>
+      </a>
+      <button onclick="toggleOverview()" class="p-2 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition cursor-pointer text-xs font-medium flex items-center gap-1.5" title="Overview (O)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
+        <span class="hidden sm:inline font-mono">Overview</span>
+      </button>
+
+      <div class="flex items-center bg-slate-900/80 rounded-xl border border-slate-800 p-1">
+        <button id="prevBtn" onclick="prevSlide()" class="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="Previous (←)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <span class="px-2.5 font-mono text-xs font-bold text-rose-400">
+          <span id="currentSlideNum">01</span> / <span id="totalSlideNum" class="text-slate-500">06</span>
+        </span>
+        <button id="nextBtn" onclick="nextSlide()" class="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer" title="Next (→)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <button onclick="toggleFullScreen()" class="p-2 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition cursor-pointer hidden md:flex items-center justify-center" title="Fullscreen (F)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Main Slides Viewport ── -->
+  <main class="relative flex-1 w-full my-3 sm:my-4 overflow-hidden">
+
+    <!-- ════════ SLIDE 1: HERO & EXECUTIVE SUMMARY ════════ -->
+    <section class="slide active flex flex-col justify-center max-w-6xl w-full mx-auto px-4" data-title="Executive Overview">
+      <div class="text-center sm:text-left mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold uppercase tracking-wider mb-2 font-display">
+          ✨ Core Architecture Blueprint
+        </div>
+        <h2 class="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-white leading-tight font-khmer">
+          ស្ថាបត្យកម្ម Order Status &amp; Multi-Venue
+        </h2>
+        <p class="text-sm sm:text-base text-slate-300 mt-2 font-khmer max-w-3xl">
+          ដំណោះស្រាយគ្រប់គ្រងស្ថានភាពនៃការកុម្ម៉ង់ (Order Lifecycle) ដែលបត់បែនតាមគ្រប់ប្រភេទអាជីវកម្ម៖ <strong>Restaurant, Cafe, SkyBar, និង Mart</strong> ក្នុងប្រព័ន្ធតែមួយ។
+        </p>
+      </div>
+
+      <!-- 3 Pillar Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <!-- Pillar 1 -->
+        <div class="glass-card glass-card-hover p-6 rounded-3xl border-slate-700/60 relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 text-7xl font-mono font-black text-slate-800/20 select-none">01</div>
+          <div class="w-11 h-11 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-bold text-xl mb-4 border border-amber-500/30">
+            📋
+          </div>
+          <h3 class="text-lg font-bold text-white font-display">1. orders.status</h3>
+          <span class="text-xs text-amber-400 font-semibold block mb-2 font-khmer">ស្ថានភាពប្រតិបត្តិការទំនិញ</span>
+          <p class="text-xs text-slate-300 leading-relaxed font-khmer">
+            គ្រប់គ្រងដំណើរការពីពេលកុម្ម៉ង់ រហូតដល់លើកជូនភ្ញៀវ៖
+            <span class="font-mono text-amber-300 block mt-1">pending ➔ preparing ➔ ready ➔ completed</span>
+          </p>
+        </div>
+
+        <!-- Pillar 2 -->
+        <div class="glass-card glass-card-hover p-6 rounded-3xl border-slate-700/60 relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 text-7xl font-mono font-black text-slate-800/20 select-none">02</div>
+          <div class="w-11 h-11 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold text-xl mb-4 border border-emerald-500/30">
+            💳
+          </div>
+          <h3 class="text-lg font-bold text-white font-display">2. orders.payment_status</h3>
+          <span class="text-xs text-emerald-400 font-semibold block mb-2 font-khmer">ស្ថានភាពចរន្តសាច់ប្រាក់</span>
+          <p class="text-xs text-slate-300 leading-relaxed font-khmer">
+            បំបែកដាច់ពីស្ថានភាពម្ហូប ដើម្បីគាំទ្រ Pay-First (Cafe/Mart) និង Pay-Later (Restaurant)៖
+            <span class="font-mono text-emerald-300 block mt-1">unpaid | paid | refunded</span>
+          </p>
+        </div>
+
+        <!-- Pillar 3 -->
+        <div class="glass-card glass-card-hover p-6 rounded-3xl border-slate-700/60 relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 text-7xl font-mono font-black text-slate-800/20 select-none">03</div>
+          <div class="w-11 h-11 rounded-2xl bg-teal-500/15 text-[#126973] dark:text-[#F1D8C2] flex items-center justify-center font-bold text-xl mb-4 border border-teal-500/30">
+            🍲
+          </div>
+          <h3 class="text-lg font-bold text-white font-display">3. order_items.item_status</h3>
+          <span class="text-xs text-teal-400 font-semibold block mb-2 font-khmer">ស្ថានភាពមុខម្ហូបនីមួយៗ (KDS)</span>
+          <p class="text-xs text-slate-300 leading-relaxed font-khmer">
+            សម្រាប់ផ្ទះបាយដឹងថា មុខម្ហូបណាធ្វើរួច មុខណាខ្លះកំពុងចម្អិនក្នុង Order តែមួយ៖
+            <span class="font-mono text-cyan-300 block mt-1">pending ➔ preparing ➔ ready ➔ served</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SLIDE 2: THE 5 UNIVERSAL OPERATION STATUSES ════════ -->
+    <section class="slide flex flex-col justify-center max-w-6xl w-full mx-auto px-4" data-title="Universal Statuses">
+      <div class="text-center sm:text-left mb-5">
+        <div class="text-xs font-bold uppercase tracking-widest text-teal-400 mb-1 font-display">Section 01</div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-white font-khmer">
+          ៥ Status ស្នូលជាសកលក្នុង Database
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1 font-khmer">
+          រក្សាទុក Code តែ ៥ ម៉ាត់ក្នុង Database ប៉ុន្តែ Frontend បង្ហាញពាក្យ និងពណ៌ Badge ឆ្លាតវៃតាមប្រភេទ Venue
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-3.5">
+        <!-- 1. Pending -->
+        <div class="glass-card p-4.5 rounded-2xl border-amber-500/30 flex flex-col justify-between">
+          <div>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/15 text-amber-400 font-mono border border-amber-500/30 mb-2">
+              🟡 pending
+            </span>
+            <h4 class="text-sm font-bold text-white font-khmer mb-1">រង់ចាំចាប់ផ្តើម</h4>
+            <p class="text-[11px] text-slate-300 font-khmer leading-relaxed">
+              • <strong>Restaurant:</strong> ភ្ញៀវទើប Scan QR<br/>
+              • <strong>Cafe:</strong> រង់ចាំ Barista ទទួល<br/>
+              • <strong>Mart:</strong> រង់ចាំរៀបចំ Delivery
+            </p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-700/50 text-[10px] text-slate-400 font-mono">
+            KDS: Pending Queue
+          </div>
+        </div>
+
+        <!-- 2. Preparing -->
+        <div class="glass-card p-4.5 rounded-2xl border-blue-500/30 flex flex-col justify-between">
+          <div>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold bg-blue-500/15 text-blue-400 font-mono border border-blue-500/30 mb-2">
+              🔵 preparing
+            </span>
+            <h4 class="text-sm font-bold text-white font-khmer mb-1">កំពុងចម្អិន/រៀបចំ</h4>
+            <p class="text-[11px] text-slate-300 font-khmer leading-relaxed">
+              • <strong>Restaurant:</strong> ចុងភៅកំពុងចម្អិន<br/>
+              • <strong>Cafe:</strong> Barista កំពុងឆុង<br/>
+              • <strong>Mart:</strong> បុគ្គលិកកំពុងរើសទំនិញ
+            </p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-700/50 text-[10px] text-slate-400 font-mono">
+            KDS: In-Kitchen Cooking
+          </div>
+        </div>
+
+        <!-- 3. Ready -->
+        <div class="glass-card p-4.5 rounded-2xl border-purple-500/30 flex flex-col justify-between">
+          <div>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold bg-purple-500/15 text-purple-400 font-mono border border-purple-500/30 mb-2">
+              🟣 ready
+            </span>
+            <h4 class="text-sm font-bold text-white font-khmer mb-1">រួចរាល់</h4>
+            <p class="text-[11px] text-slate-300 font-khmer leading-relaxed">
+              • <strong>Restaurant:</strong> រង់ចាំអ្នករត់តុលើក<br/>
+              • <strong>Cafe:</strong> ហៅលេខ Buzzer យក<br/>
+              • <strong>Mart:</strong> ច្រកថង់រួចរង់ចាំយក
+            </p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-700/50 text-[10px] text-slate-400 font-mono">
+            KDS: Order Ready Alert
+          </div>
+        </div>
+
+        <!-- 4. Completed -->
+        <div class="glass-card p-4.5 rounded-2xl border-emerald-500/30 flex flex-col justify-between">
+          <div>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/15 text-emerald-400 font-mono border border-emerald-500/30 mb-2">
+              🟢 completed
+            </span>
+            <h4 class="text-sm font-bold text-white font-khmer mb-1">បានបញ្ចប់</h4>
+            <p class="text-[11px] text-slate-300 font-khmer leading-relaxed">
+              • <strong>Restaurant:</strong> ញ៉ាំ &amp; បង់លុយបិទតុ<br/>
+              • <strong>Cafe:</strong> ភ្ញៀវបានទទួលកាហ្វេ<br/>
+              • <strong>Mart:</strong> ស្កេន គិតលុយ យកភ្លាម
+            </p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-700/50 text-[10px] text-slate-400 font-mono">
+            POS: Closed &amp; Archived
+          </div>
+        </div>
+
+        <!-- 5. Cancelled -->
+        <div class="glass-card p-4.5 rounded-2xl border-rose-500/30 flex flex-col justify-between">
+          <div>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/15 text-rose-400 font-mono border border-rose-500/30 mb-2">
+              🔴 cancelled
+            </span>
+            <h4 class="text-sm font-bold text-white font-khmer mb-1">បានបោះបង់</h4>
+            <p class="text-[11px] text-slate-300 font-khmer leading-relaxed">
+              • ភ្ញៀវសុំប្តូរចិត្ត Cancel<br/>
+              • ទំនិញដាច់ស្តុក ឬខូច<br/>
+              • បោះបង់មុនពេលចម្អិន
+            </p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-700/50 text-[10px] text-slate-400 font-mono">
+            Audit: Reason Logged
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SLIDE 3: VENUE-ADAPTIVE LIFECYCLES ════════ -->
+    <section class="slide flex flex-col justify-center max-w-6xl w-full mx-auto px-4" data-title="Multi-Venue Lifecycles">
+      <div class="text-center sm:text-left mb-6">
+        <div class="text-xs font-bold uppercase tracking-widest text-rose-400 mb-1 font-display">Section 02</div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-white font-khmer">
+          លំហូរការងារតាមប្រភេទ Venue នីមួយៗ
+        </h2>
+        <p class="text-sm text-slate-400 mt-1 font-khmer">ដំណើរការប្រតិបត្តិការជាក់ស្តែងរវាង Cashier, KDS ផ្ទះបាយ និងអតិថិជន</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- Venue 1: Restaurant & SkyBar -->
+        <div class="glass-card p-5 rounded-3xl border-slate-700/60">
+          <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl">🍽️ 🍸</span>
+              <div>
+                <h3 class="text-base font-bold text-white font-display">Restaurant &amp; SkyBar</h3>
+                <span class="text-[11px] text-rose-400 font-khmer">Dine-in Table Service (Pay-Later)</span>
+              </div>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 font-mono">outlet.type: dine_in</span>
+          </div>
+
+          <div class="space-y-2 text-xs font-khmer text-slate-300">
+            <div class="flex items-center gap-2 p-2 rounded-xl bg-slate-900/60">
+              <span class="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 font-bold flex items-center justify-center shrink-0">1</span>
+              <span><strong>បើកតុ &amp; កុម្ម៉ង់:</strong> បង្កើត Table Session ➔ <code class="text-amber-400 font-mono">unpaid</code> + <code class="text-blue-400 font-mono">preparing</code></span>
+            </div>
+            <div class="flex items-center gap-2 p-2 rounded-xl bg-slate-900/60">
+              <span class="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center shrink-0">2</span>
+              <span><strong>ចុងភៅចម្អិន &amp; លើកជូន:</strong> KDS ចុចរួចរាល់ ➔ <code class="text-purple-400 font-mono">ready</code> ➔ លើកជូនតុ (<code class="text-teal-400 font-mono">served</code>)</span>
+            </div>
+            <div class="flex items-center gap-2 p-2 rounded-xl bg-slate-900/60">
+              <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center shrink-0">3</span>
+              <span><strong>គិតលុយបិទតុ:</strong> ទូទាត់ KHQR/Cash ➔ <code class="text-emerald-400 font-mono">paid</code> + <code class="text-emerald-400 font-mono">completed</code></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Venue 2: Cafe & Bakery -->
+        <div class="glass-card p-5 rounded-3xl border-slate-700/60">
+          <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl">☕ 🥐</span>
+              <div>
+                <h3 class="text-base font-bold text-white font-display">Cafe &amp; Bakery</h3>
+                <span class="text-[11px] text-amber-400 font-khmer">Quick Service (Pay-First + Buzzer Queue)</span>
+              </div>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 font-mono">outlet.type: cafe</span>
+          </div>
+
+          <div class="space-y-2 text-xs font-khmer text-slate-300">
+            <div class="flex items-center gap-2 p-2 rounded-xl bg-slate-900/60">
+              <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center shrink-0">1</span>
+              <span><strong>កុម្ម៉ង់ &amp; គិតលុយភ្លាម:</strong> ចេញលេខរង់ចាំ Buzzer ➔ <code class="text-emerald-400 font-mono">paid</code> + <code class="text-amber-400 font-mono">pending</code></span>
+            </div>
+            <div class="flex items-center gap-2 p-2 rounded-xl bg-slate-900/60">
+              <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 font-bold flex items-center justify-center shrink-0">2</span>
+              <span><strong>Barista ឆុងកាហ្វេ:</strong> Barista Display ទទួលធ្វើ ➔ <code class="text-blue-400 font-mono">preparing</code></span>
+            </div>
+            <div class="flex items-center gap-2 p-2 rounded-xl bg-slate-900/60">
+              <span class="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 font-bold flex items-center justify-center shrink-0">3</span>
+              <span><strong>ហៅលេខ &amp; ប្រគល់:</strong> ឆុងរួចចុចហៅលេខ ➔ <code class="text-purple-400 font-mono">ready</code> ➔ ភ្ញៀវយក (<code class="text-emerald-400 font-mono">completed</code>)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Venue 3: Mart & Retail -->
+        <div class="glass-card p-5 rounded-3xl border-slate-700/60 md:col-span-2">
+          <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl">🛒 📦</span>
+              <div>
+                <h3 class="text-base font-bold text-white font-display">Mart, Supermarket &amp; Retail Shop</h3>
+                <span class="text-[11px] text-emerald-400 font-khmer">Barcode Rapid Checkout &amp; Direct Stock Deduction</span>
+              </div>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 font-mono">outlet.type: retail</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-khmer text-slate-300">
+            <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800/80">
+              <span class="font-bold text-white block mb-1">⚡ Instant In-Store Checkout</span>
+              <p class="text-[11px] text-slate-400 leading-relaxed">
+                ស្កេន Barcode ➔ គិតលុយ ➔ កាត់ស្តុក &amp; ចេញវិក្កយបត្រភ្លាមៗ (<code class="text-emerald-400 font-mono">completed</code>) មិនបាច់រើសតុ ឬរំខាន KDS ផ្ទះបាយឡើយ។
+              </p>
+            </div>
+            <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800/80">
+              <span class="font-bold text-white block mb-1">📦 Order Fulfillment &amp; Packing</span>
+              <p class="text-[11px] text-slate-400 leading-relaxed">
+                ករណីកុម្ម៉ង់វេចខ្ចប់ទុកជាមុន៖ <code class="text-amber-400 font-mono">pending</code> (កុម្ម៉ង់) ➔ <code class="text-blue-400 font-mono">processing</code> (រើសទំនិញ) ➔ <code class="text-purple-400 font-mono">ready</code> (ច្រកថង់រួច)។
+              </p>
+            </div>
+            <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800/80">
+              <span class="font-bold text-white block mb-1">🛡️ Auto Stock Protection</span>
+              <p class="text-[11px] text-slate-400 leading-relaxed">
+                កាត់ស្តុក Real-time តាមចំនួនលក់ជាក់ស្តែង ជាមួយប្រព័ន្ធ Alert ស្វ័យប្រវត្តិកាលណាទំនិញជិតអស់ពីស្តុក។
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SLIDE 4: RETURN & EXCHANGE ARCHITECTURE ════════ -->
+    <section class="slide flex flex-col justify-center max-w-6xl w-full mx-auto px-4" data-title="Return & Exchange">
+      <div class="text-center sm:text-left mb-6">
+        <div class="text-xs font-bold uppercase tracking-widest text-amber-400 mb-1 font-display">Section 03</div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-white font-khmer">
+          ស្ថាបត្យកម្ម Return (បង្វិលសង) &amp; Exchange (ប្តូរទំនិញ)
+        </h2>
+        <p class="text-sm text-slate-400 mt-1 font-khmer">ការគ្រប់គ្រងចរន្តទំនិញក្នុងស្តុក និងការកាត់កងចរន្តសាច់ប្រាក់ត្រឹមត្រូវ ១០០%</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- Return / Refund Flow -->
+        <div class="glass-card p-5 rounded-3xl border-rose-500/30 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <span class="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-400 font-bold text-xs font-mono border border-rose-500/30">
+                💸 Return / Refund
+              </span>
+              <h3 class="text-base font-bold text-white font-khmer">បង្វិលទំនិញយកប្រាក់វិញ</h3>
+            </div>
+
+            <div class="space-y-2 text-xs font-khmer text-slate-300">
+              <div class="p-2.5 rounded-xl bg-slate-900/60 flex items-start gap-2">
+                <span class="text-rose-400 font-bold">1.</span>
+                <span><strong>ស្កេនវិក្កយបត្រ:</strong> ទាញយកប្រវត្តិ Order ដើម និងជ្រើសរើសចំនួនទំនិញដែលត្រូវ Return។</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-900/60 flex items-start gap-2">
+                <span class="text-rose-400 font-bold">2.</span>
+                <span>
+                  <strong>ពិនិត្យគុណភាពស្តុក:</strong><br/>
+                  • <span class="text-emerald-400 font-semibold">ទំនិញនៅល្អ:</span> បូកចូលស្តុកវិញ (<code class="text-emerald-400 font-mono">+Stock</code>)<br/>
+                  • <span class="text-rose-400 font-semibold">ទំនិញខូច/ផុតកំណត់:</span> កត់ត្រាចូល <strong class="text-rose-300">Waste Log</strong>
+                </span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-900/60 flex items-start gap-2">
+                <span class="text-rose-400 font-bold">3.</span>
+                <span><strong>សងប្រាក់:</strong> Update <code class="text-rose-400 font-mono">payment_status: 'refunded'</code> និងចេញប័ណ្ណ Refund Receipt។</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-400 font-mono">
+            Database: orders.payment_status = 'refunded'
+          </div>
+        </div>
+
+        <!-- Exchange Flow -->
+        <div class="glass-card p-5 rounded-3xl border-teal-500/30 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-3">
+              <span class="px-2.5 py-1 rounded-lg bg-teal-500/20 text-[#126973] dark:text-[#F1D8C2] font-bold text-xs font-mono border border-teal-500/30">
+                🔄 Exchange
+              </span>
+              <h3 class="text-base font-bold text-white font-khmer">ប្តូរយកមុខទំនិញថ្មី</h3>
+            </div>
+
+            <div class="space-y-2 text-xs font-khmer text-slate-300">
+              <div class="p-2 rounded-xl bg-slate-900/60">
+                <span class="text-teal-400 font-bold font-mono">A. ស្មើតម្លៃ ($10 = $10):</span>
+                <p class="text-[11px] text-slate-400 mt-0.5">បូកទំនិញចាស់ចូល (+1) &amp; កាត់ទំនិញថ្មីចេញ (-1) ➔ ភ្ញៀវមិនបាច់បង់បន្ថែម ($0.00)</p>
+              </div>
+              <div class="p-2 rounded-xl bg-slate-900/60">
+                <span class="text-amber-400 font-bold font-mono">B. លើសតម្លៃ (ទំនិញថ្មី $15 &gt; $10):</span>
+                <p class="text-[11px] text-slate-400 mt-0.5">ប្រព័ន្ធកាត់កង $10 ចេញ ➔ ភ្ញៀវបង់ប្រាក់បន្ថែមតែ <strong class="text-amber-300">+$5.00</strong> ប៉ុណ្ណោះ</p>
+              </div>
+              <div class="p-2 rounded-xl bg-slate-900/60">
+                <span class="text-purple-400 font-bold font-mono">C. ខ្វះតម្លៃ (ទំនិញថ្មី $7 &lt; $10):</span>
+                <p class="text-[11px] text-slate-400 mt-0.5">ប្រព័ន្ធកាត់កងរួច ➔ Cashier សងលុយអាប់ត្រឡប់ជូនភ្ញៀវវិញ <strong class="text-purple-300">-$3.00</strong></p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-400 font-mono">
+            Inventory: Swap Stock &amp; Settle Difference
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SLIDE 5: DATA INTEGRITY ON PRODUCT DELETION ════════ -->
+    <section class="slide flex flex-col justify-center max-w-6xl w-full mx-auto px-4" data-title="Product Deletion Integrity">
+      <div class="text-center sm:text-left mb-6">
+        <div class="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-1 font-display">Section 04</div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-white font-khmer">
+          សុវត្ថិភាពទិន្នន័យពេល Delete Products
+        </h2>
+        <p class="text-sm text-slate-400 mt-1 font-khmer">
+          របៀបដែលប្រព័ន្ធធានាថាប្រវត្តិវិក្កយបត្រចាស់ៗមិនបាត់បង់ឈ្មោះមុខទំនិញទោះបី Product ដើមត្រូវបានលុប
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <!-- Feature 1 -->
+        <div class="glass-card p-6 rounded-3xl border-slate-700/60">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold text-lg mb-4 border border-emerald-500/30">
+            📸
+          </div>
+          <h3 class="text-base font-bold text-white font-display">1. Item Name Snapshot</h3>
+          <span class="text-xs text-emerald-400 font-mono block mb-2">item_product_name</span>
+          <p class="text-xs text-slate-300 font-khmer leading-relaxed">
+            រាល់ពេលបង្កើត Order ឈ្មោះទំនិញត្រូវបាន Snapshot រក្សាទុកផ្ទាល់ក្នុង <code class="text-emerald-300 font-mono">order_items.item_product_name</code> មិនមែនគ្រាន់តែ Join ID នោះទេ។
+          </p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="glass-card p-6 rounded-3xl border-slate-700/60">
+          <div class="w-10 h-10 rounded-2xl bg-blue-500/15 text-blue-400 flex items-center justify-center font-bold text-lg mb-4 border border-blue-500/30">
+            🔒
+          </div>
+          <h3 class="text-base font-bold text-white font-display">2. ON DELETE SET NULL</h3>
+          <span class="text-xs text-blue-400 font-mono block mb-2">Database Foreign Key</span>
+          <p class="text-xs text-slate-300 font-khmer leading-relaxed">
+            ពេលលុប Product ចេញពី Menu គឺ <code class="text-blue-300 font-mono">order_items.product_id</code> នឹងប្រែជា <code class="text-slate-400 font-mono">NULL</code> ដោយមិនលុប ឬខូចជួរទិន្នន័យក្នុងវិក្កយបត្រឡើយ។
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="glass-card p-6 rounded-3xl border-slate-700/60">
+          <div class="w-10 h-10 rounded-2xl bg-purple-500/15 text-purple-400 flex items-center justify-center font-bold text-lg mb-4 border border-purple-500/30">
+            🧾
+          </div>
+          <h3 class="text-base font-bold text-white font-display">3. 100% Receipt Integrity</h3>
+          <span class="text-xs text-purple-400 font-mono block mb-2">Reports &amp; Invoice Safe</span>
+          <p class="text-xs text-slate-300 font-khmer leading-relaxed">
+            វិក្កយបត្រចាស់ៗ, អេក្រង់ KDS, និងរបាយការណ៍គណនេយ្យនៅតែបង្ហាញឈ្មោះទំនិញដើមបានត្រឹមត្រូវ ១០០% ដោយគ្មានបញ្ហា Error។
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SLIDE 6: LIVE INTERACTIVE STATUS SIMULATOR ════════ -->
+    <section class="slide flex flex-col justify-center max-w-6xl w-full mx-auto px-4" data-title="Live Status Simulator">
+      <div class="text-center sm:text-left mb-4">
+        <div class="text-xs font-bold uppercase tracking-widest text-rose-400 mb-1 font-display">Section 05</div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-white font-khmer">
+          ឧបករណ៍តេស្តលំហូរ Status (Interactive Simulator)
+        </h2>
+        <p class="text-xs text-slate-400 font-khmer">ចុចជ្រើសរើសប្រភេទ Venue ដើម្បីមើលការដើរ Status និងទិន្នន័យជាក់ស្តែង</p>
+      </div>
+
+      <div class="glass-card p-5 rounded-3xl border-slate-700/60 grid grid-cols-1 md:grid-cols-12 gap-5">
+        <!-- Simulator Controls -->
+        <div class="md:col-span-5 space-y-4 border-b md:border-b-0 md:border-r border-slate-800 pb-4 md:pb-0 md:pr-4">
+          <div>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2 font-display">
+              1. ជ្រើសរើសប្រភេទ Venue (Venue Type):
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="setSimVenue('restaurant')" id="simBtn-restaurant" class="p-2.5 rounded-xl border text-xs font-bold font-khmer flex items-center gap-2 transition cursor-pointer bg-rose-500/20 border-rose-500 text-white">
+                <span>🍽️ Restaurant</span>
+              </button>
+              <button onclick="setSimVenue('cafe')" id="simBtn-cafe" class="p-2.5 rounded-xl border text-xs font-bold font-khmer flex items-center gap-2 transition cursor-pointer bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700">
+                <span>☕ Cafe &amp; Bakery</span>
+              </button>
+              <button onclick="setSimVenue('bar')" id="simBtn-bar" class="p-2.5 rounded-xl border text-xs font-bold font-khmer flex items-center gap-2 transition cursor-pointer bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700">
+                <span>🍸 SkyBar</span>
+              </button>
+              <button onclick="setSimVenue('retail')" id="simBtn-retail" class="p-2.5 rounded-xl border text-xs font-bold font-khmer flex items-center gap-2 transition cursor-pointer bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700">
+                <span>🛒 Mart / Retail</span>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2 font-display">
+              2. ជំហានប្រតិបត្តិការ (Action Pipeline):
+            </label>
+            <div id="simActionButtons" class="flex flex-wrap gap-2">
+              <!-- Dynamically rendered -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulator Live State Display -->
+        <div class="md:col-span-7 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
+              <span class="text-xs font-bold font-display text-slate-300 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-badge"></span>
+                Live Order State Monitor
+              </span>
+              <span id="simVenueBadge" class="text-[10px] px-2 py-0.5 rounded font-mono bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                TYPE: DINE_IN
+              </span>
+            </div>
+
+            <!-- Visual Status Badges -->
+            <div class="grid grid-cols-2 gap-3 mb-3">
+              <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+                <span class="text-[10px] text-slate-400 block mb-1 font-mono">orders.status</span>
+                <span id="simStatusBadge" class="text-xs font-bold font-mono px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 inline-block">
+                  pending
+                </span>
+              </div>
+              <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+                <span class="text-[10px] text-slate-400 block mb-1 font-mono">orders.payment_status</span>
+                <span id="simPaymentBadge" class="text-xs font-bold font-mono px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700 inline-block">
+                  unpaid
+                </span>
+              </div>
+            </div>
+
+            <!-- JSON Output Preview -->
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80 font-mono text-[11px] text-slate-300 overflow-x-auto">
+              <pre id="simJsonOutput" class="text-cyan-300"></pre>
+            </div>
+          </div>
+
+          <div class="text-[11px] text-slate-400 font-khmer mt-2 flex items-center gap-1.5">
+            <span class="text-emerald-400 font-bold">✓</span>
+            <span id="simExplanation">ភ្ញៀវបានកុម្ម៉ង់ម្ហូបនៅតុ #12 ➔ ផ្ញើទៅផ្ទះបាយចម្អិន</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Bottom Progress Bar & Key Help ── -->
+  <footer class="relative z-20 flex items-center justify-between no-print pt-3 border-t border-slate-800/80">
+    <div class="flex items-center gap-2">
+      <div id="progressBarContainer" class="w-36 sm:w-64 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div id="progressBar" class="h-full bg-gradient-to-r from-[#126973] via-rose-500 to-amber-400 transition-all duration-300" style="width: 16.66%;"></div>
+      </div>
+      <span id="slideTitle" class="text-xs text-slate-400 ml-2 font-medium hidden sm:inline">Executive Overview</span>
+    </div>
+
+    <div class="text-xs text-slate-400 flex items-center gap-3">
+      <span class="hidden md:inline font-mono text-[11px] bg-slate-800 px-2 py-0.5 rounded border border-slate-700">← / →</span>
+      <span class="hidden md:inline font-mono text-[11px] bg-slate-800 px-2 py-0.5 rounded border border-slate-700">Space</span>
+      <span class="hidden md:inline font-mono text-[11px] bg-slate-800 px-2 py-0.5 rounded border border-slate-700">F: Fullscreen</span>
+      <span class="font-khmer text-slate-400">© 2026 SKYPARK RMS Architecture</span>
+    </div>
+  </footer>
+
+  <!-- ── Overview Modal / Drawer (Press O) ── -->
+  <div id="overviewModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-6 transition-all no-print">
+    <div class="glass-card max-w-4xl w-full p-6 rounded-3xl border-slate-700 shadow-2xl">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold font-display text-white">Slide Directory Overview</h3>
+        <button onclick="toggleOverview()" class="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white cursor-pointer">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div id="overviewGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto pr-2">
+        <!-- Generated Dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Presentation & Simulator Script ── -->
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    let currentSlide = 0;
+
+    const currentSlideNum = document.getElementById('currentSlideNum');
+    const totalSlideNum = document.getElementById('totalSlideNum');
+    const progressBar = document.getElementById('progressBar');
+    const slideTitle = document.getElementById('slideTitle');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const overviewModal = document.getElementById('overviewModal');
+    const overviewGrid = document.getElementById('overviewGrid');
+
+    totalSlideNum.textContent = String(totalSlides).padStart(2, '0');
+
+    function updateSlide() {
+      slides.forEach((slide, idx) => {
+        if (idx === currentSlide) {
+          slide.classList.add('active');
+          slideTitle.textContent = slide.getAttribute('data-title') || `Slide ${idx + 1}`;
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+
+      currentSlideNum.textContent = String(currentSlide + 1).padStart(2, '0');
+      progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+
+      prevBtn.disabled = currentSlide === 0;
+      nextBtn.disabled = currentSlide === totalSlides - 1;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function goToSlide(index) {
+      if (index >= 0 && index < totalSlides) {
+        currentSlide = index;
+        updateSlide();
+        if (!overviewModal.classList.contains('hidden')) {
+          toggleOverview();
+        }
+      }
+    }
+
+    function toggleOverview() {
+      const isHidden = overviewModal.classList.contains('hidden');
+      if (isHidden) {
+        overviewGrid.innerHTML = '';
+        slides.forEach((slide, idx) => {
+          const title = slide.getAttribute('data-title') || `Slide ${idx + 1}`;
+          const isCurrent = idx === currentSlide;
+          const card = document.createElement('div');
+          card.className = `p-4 rounded-2xl border transition-all cursor-pointer text-left ${
+            isCurrent ? 'bg-rose-500/20 border-rose-500 text-white' : 'bg-slate-900/60 border-slate-700/60 text-slate-300 hover:border-slate-500'
+          }`;
+          card.innerHTML = `
+            <div class="text-xs font-bold font-display ${isCurrent ? 'text-rose-400' : 'text-slate-500'} mb-1">SLIDE ${String(idx + 1).padStart(2, '0')}</div>
+            <div class="text-sm font-semibold truncate">${title}</div>
+          `;
+          card.onclick = () => goToSlide(idx);
+          overviewGrid.appendChild(card);
+        });
+        overviewModal.classList.remove('hidden');
+        overviewModal.classList.add('flex');
+      } else {
+        overviewModal.classList.add('hidden');
+        overviewModal.classList.remove('flex');
+      }
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      } else if (e.key === 'Home') {
+        goToSlide(0);
+      } else if (e.key === 'End') {
+        goToSlide(totalSlides - 1);
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullScreen();
+      } else if (e.key === 'o' || e.key === 'O') {
+        toggleOverview();
+      } else if (e.key === 'Escape') {
+        if (!overviewModal.classList.contains('hidden')) {
+          toggleOverview();
+        }
+      }
+    });
+
+    // ── Interactive Live Status Simulator Logic ──
+    let simState = {
+      venue: 'restaurant',
+      orderNumber: 'ORD-00042',
+      table: 'Table 12',
+      items: [
+        { name: 'Truffle Mushroom Pasta', qty: 1, price: 12.50, status: 'pending' },
+        { name: 'Iced Latte (Less Sweet)', qty: 2, price: 3.50, status: 'pending' }
+      ],
+      status: 'pending',
+      payment_status: 'unpaid',
+      explanation: 'ភ្ញៀវបានកុម្ម៉ង់ម្ហូបនៅតុ #12 ➔ រង់ចាំបញ្ជាក់ផ្ញើទៅផ្ទះបាយ'
+    };
+
+    const venueConfig = {
+      restaurant: {
+        badge: 'TYPE: DINE_IN (RESTAURANT)',
+        badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+        actions: [
+          { label: '👨‍🍳 ផ្ញើទៅផ្ទះបាយ (Cook)', status: 'preparing', payment: 'unpaid', desc: 'ចុងភៅកំពុងចម្អិនម្ហូបក្នុងផ្ទះបាយ' },
+          { label: '🔔 ម្ហូបឆ្អិន (Ready)', status: 'ready', payment: 'unpaid', desc: 'ម្ហូបឆ្អិនរួចរាល់ រង់ចាំអ្នករត់តុលើកជូន' },
+          { label: '🍽️ លើកដល់តុ (Served)', status: 'ready', payment: 'unpaid', desc: 'អ្នករត់តុបានលើកម្ហូបជូនដល់តុភ្ញៀវរួចរាល់' },
+          { label: '💵 គិតលុយបិទតុ (Pay & Close)', status: 'completed', payment: 'paid', desc: 'ភ្ញៀវបង់ប្រាក់ ABA KHQR រួចរាល់ និងបិទតុជោគជ័យ' },
+          { label: '❌ Cancel Order', status: 'cancelled', payment: 'unpaid', desc: 'បានបោះបង់ការកុម្ម៉ង់' }
+        ]
+      },
+      cafe: {
+        badge: 'TYPE: CAFE & BAKERY',
+        badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+        actions: [
+          { label: '💳 គិតលុយភ្លាម (Pay & Order)', status: 'pending', payment: 'paid', desc: 'ភ្ញៀវបានបង់ប្រាក់រួច ចេញលេខរង់ចាំ Buzzer #08' },
+          { label: '☕ Barista ឆុងកាហ្វេ (Brewing)', status: 'preparing', payment: 'paid', desc: 'Barista កំពុងឆុងកាហ្វេ និងរៀបចំនំ' },
+          { label: '📢 ហៅលេខមកយក (Pickup Ready)', status: 'ready', payment: 'paid', desc: 'កាហ្វេឆុងរួចរាល់ ចុចហៅលេខ Buzzer ឱ្យភ្ញៀវមកយក' },
+          { label: '✅ ភ្ញៀវទទួលយក (Completed)', status: 'completed', payment: 'paid', desc: 'ភ្ញៀវបានទទួលកាហ្វេ និងបញ្ចប់ការកុម្ម៉ង់' }
+        ]
+      },
+      bar: {
+        badge: 'TYPE: BAR & LOUNGE',
+        badgeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+        actions: [
+          { label: '🍸 បើក Tab & កុម្ម៉ង់ (Open Tab)', status: 'preparing', payment: 'unpaid', desc: 'បើក Tab កុម្ម៉ង់ Cocktail ផ្ញើទៅ Bartender' },
+          { label: '🍹 ក្រឡុកស្រារួច (Ready)', status: 'ready', payment: 'unpaid', desc: 'Bartender ក្រឡុកស្រារួចរាល់ លើកជូនភ្ញៀវ' },
+          { label: '💳 បិទ Tab គិតលុយ (Close Tab)', status: 'completed', payment: 'paid', desc: 'ភ្ញៀវគិតលុយបិទ Tab ចេញវិក្កយបត្រ' }
+        ]
+      },
+      retail: {
+        badge: 'TYPE: RETAIL (MART / SHOP)',
+        badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+        actions: [
+          { label: '⚡ ស្កេន & គិតលុយភ្លាម (Direct Checkout)', status: 'completed', payment: 'paid', desc: 'ស្កេន Barcode ➔ បង់ប្រាក់ ➔ កាត់ស្តុក & ចេញវិក្កយបត្រភ្លាមៗ (១ ជំហាន)' },
+          { label: '📦 រើសទំនិញ Delivery (Picking)', status: 'preparing', payment: 'paid', desc: 'បុគ្គលិកកំពុងដើររើសទំនិញពីលើធ្នើរ' },
+          { label: '🛍️ វេចខ្ចប់រួច (Packed)', status: 'ready', payment: 'paid', desc: 'ទំនិញបានច្រកថង់/ប្រអប់រួចរាល់ រង់ចាំអ្នកដឹក' },
+          { label: '🔄 Return & Refund', status: 'completed', payment: 'refunded', desc: 'ភ្ញៀវយកទំនិញមកបង្វិលសង បូកស្តុកចូលវិញ និងសងប្រាក់' }
+        ]
+      }
+    };
+
+    function setSimVenue(venueKey) {
+      simState.venue = venueKey;
+      ['restaurant', 'cafe', 'bar', 'retail'].forEach(v => {
+        const btn = document.getElementById(`simBtn-${v}`);
+        if (v === venueKey) {
+          btn.className = 'p-2.5 rounded-xl border text-xs font-bold font-khmer flex items-center gap-2 transition cursor-pointer bg-rose-500/20 border-rose-500 text-white';
+        } else {
+          btn.className = 'p-2.5 rounded-xl border text-xs font-bold font-khmer flex items-center gap-2 transition cursor-pointer bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700';
+        }
+      });
+
+      // Reset to default action of this venue
+      const cfg = venueConfig[venueKey];
+      const defaultAction = cfg.actions[0];
+      simState.status = defaultAction.status;
+      simState.payment_status = defaultAction.payment;
+      simState.explanation = defaultAction.desc;
+
+      renderSimActions();
+      renderSimState();
+    }
+
+    function renderSimActions() {
+      const container = document.getElementById('simActionButtons');
+      container.innerHTML = '';
+      const actions = venueConfig[simState.venue].actions;
+
+      actions.forEach((act, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'px-3 py-1.5 rounded-xl border text-xs font-semibold font-khmer bg-slate-900 border-slate-700/80 text-slate-200 hover:bg-slate-800 hover:border-slate-500 transition cursor-pointer';
+        btn.textContent = act.label;
+        btn.onclick = () => {
+          simState.status = act.status;
+          simState.payment_status = act.payment;
+          simState.explanation = act.desc;
+          renderSimState();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function renderSimState() {
+      const cfg = venueConfig[simState.venue];
+      const badge = document.getElementById('simVenueBadge');
+      badge.textContent = cfg.badge;
+      badge.className = `text-[10px] px-2 py-0.5 rounded font-mono border ${cfg.badgeClass}`;
+
+      const statusBadge = document.getElementById('simStatusBadge');
+      statusBadge.textContent = simState.status;
+      if (simState.status === 'pending') {
+        statusBadge.className = 'text-xs font-bold font-mono px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 inline-block';
+      } else if (simState.status === 'preparing') {
+        statusBadge.className = 'text-xs font-bold font-mono px-2.5 py-1 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 inline-block';
+      } else if (simState.status === 'ready') {
+        statusBadge.className = 'text-xs font-bold font-mono px-2.5 py-1 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 inline-block';
+      } else if (simState.status === 'completed') {
+        statusBadge.className = 'text-xs font-bold font-mono px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 inline-block';
+      } else {
+        statusBadge.className = 'text-xs font-bold font-mono px-2.5 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 inline-block';
+      }
+
+      const paymentBadge = document.getElementById('simPaymentBadge');
+      paymentBadge.textContent = simState.payment_status;
+      if (simState.payment_status === 'paid') {
+        paymentBadge.className = 'text-xs font-bold font-mono px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 inline-block';
+      } else if (simState.payment_status === 'refunded') {
+        paymentBadge.className = 'text-xs font-bold font-mono px-2.5 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 inline-block';
+      } else {
+        paymentBadge.className = 'text-xs font-bold font-mono px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700 inline-block';
+      }
+
+      const jsonPreview = {
+        order_number: simState.orderNumber,
+        venue_type: simState.venue,
+        status: simState.status,
+        payment_status: simState.payment_status,
+        items: [
+          {
+            item_product_name: "Truffle Mushroom Pasta",
+            quantity: 1,
+            unit_price: 12.50,
+            item_status: simState.status === 'completed' ? 'served' : simState.status
+          }
+        ]
+      };
+
+      document.getElementById('simJsonOutput').textContent = JSON.stringify(jsonPreview, null, 2);
+      document.getElementById('simExplanation').textContent = simState.explanation;
+    }
+
+    // Initialize Simulator
+    setSimVenue('restaurant');
+    updateSlide();
+  </script>
+</body>
+</html>

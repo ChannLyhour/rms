@@ -57,7 +57,7 @@ export function buildReceiptHTML(order = {}, options = {}) {
 
   const itemsHTML = items
     .map((item, idx) => {
-      const name = item.product?.name || item.name || `Item ${idx + 1}`
+      const name = item.item_product_name || item.product?.name || item.name || `Item ${idx + 1}`
       const qty = item.quantity || 1
       const unit = Number(item.unit_price || item.price || 0).toFixed(2)
       const total = (Number(unit) * qty).toFixed(2)

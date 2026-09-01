@@ -40,8 +40,14 @@ func (s *OrderService) CreateOrder(req *domain.CreateOrderRequest, userID *uint6
 			return nil, fmt.Errorf("product %d not found", itemReq.ProductID)
 		}
 
+		itemName := product.Name
+		if itemReq.ItemProductName != nil && *itemReq.ItemProductName != "" {
+			itemName = *itemReq.ItemProductName
+		}
+
 		item := domain.OrderItem{
 			ProductID:           product.ID,
+			ItemProductName:     itemName,
 			Quantity:            itemReq.Quantity,
 			UnitPrice:           product.Price,
 			SpecialInstructions: itemReq.SpecialInstructions,

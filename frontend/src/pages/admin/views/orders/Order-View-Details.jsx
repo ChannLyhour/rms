@@ -379,7 +379,7 @@ export default function OrderViewDetails({
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <h3 className="font-medium text-sm text-slate-900 dark:text-white truncate">
-                            {item.product?.name || `Product #${item.product_id}`}
+                            {item.item_product_name || item.product?.name || `Product #${item.product_id}`}
                           </h3>
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                             {item.product?.category?.name || item.category || 'Menu Item'}

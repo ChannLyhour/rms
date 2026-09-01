@@ -205,7 +205,7 @@ export default function OrderHistory() {
                               </div>
 
                               <span className="font-mono font-bold text-amber-500 shrink-0">{item.quantity}x</span>
-                              <span className="font-medium truncate text-slate-800 dark:text-slate-200">{item.product?.name || 'Item'}</span>
+                              <span className="font-medium truncate text-slate-800 dark:text-slate-200">{item.item_product_name || item.product?.name || 'Item'}</span>
                             </div>
                             <span className="font-mono font-semibold text-[var(--color-muted)] shrink-0 ml-2">
                               ${((item.unit_price || 0) * item.quantity).toFixed(2)}

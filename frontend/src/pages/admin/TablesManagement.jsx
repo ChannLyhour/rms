@@ -455,7 +455,7 @@ function TableOrdersModal({ table, session, orders = [], onClose, onOpenPOS, onO
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="font-mono font-bold text-slate-500">{item.quantity || 1}x</span>
                           <span className="font-medium truncate" style={{ color: 'var(--color-text)' }}>
-                            {item.product?.name || item.name || 'Food Item'}
+                            {item.item_product_name || item.product?.name || item.name || 'Food Item'}
                           </span>
                         </div>
                         <span className="font-mono text-slate-600 dark:text-slate-400 shrink-0">
