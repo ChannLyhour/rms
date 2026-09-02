@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/domain"
 	"github.com/pos-system/backend/internal/enum"
 	"gorm.io/gorm"
@@ -20,9 +21,9 @@ func NewOrderRepository(db *gorm.DB) *OrderRepository {
 
 // GetNextOrderNumber calculates the next sequential order number
 func (r *OrderRepository) GetNextOrderNumber() string {
-	var maxID int64
-	r.db.Model(&domain.Order{}).Select("COALESCE(MAX(id), 0)").Scan(&maxID)
-	return fmt.Sprintf("ORD-%05d", maxID+1)
+	var count int64
+	r.db.Model(&domain.Order{}).Count(&count)
+	return fmt.Sprintf("ORD-%05d", count+1)
 }
 
 // CreateOrder inserts a complete order with items and options
@@ -31,7 +32,7 @@ func (r *OrderRepository) CreateOrder(order *domain.Order) error {
 }
 
 // FindOrderByID returns an order with full item and option details
-func (r *OrderRepository) FindOrderByID(id uint64) (*domain.Order, error) {
+func (r *OrderRepository) FindOrderByID(id uuid.UUID) (*domain.Order, error) {
 	var order domain.Order
 	err := r.db.
 		Preload("Items.Product").
@@ -51,7 +52,7 @@ func (r *OrderRepository) FindOrderByNumber(num string) (*domain.Order, error) {
 }
 
 // ListOrdersBySession returns all orders for a given table session
-func (r *OrderRepository) ListOrdersBySession(sessionID uint64) ([]domain.Order, error) {
+func (r *OrderRepository) ListOrdersBySession(sessionID uuid.UUID) ([]domain.Order, error) {
 	var orders []domain.Order
 	err := r.db.
 		Preload("Items.Product").
@@ -73,7 +74,7 @@ func (r *OrderRepository) ListKitchenOrders() ([]domain.Order, error) {
 }
 
 // UpdateOrderStatus changes the status of an order and logs it
-func (r *OrderRepository) UpdateOrderStatus(orderID uint64, from enum.OrderStatus, to string, userID *uint64) error {
+func (r *OrderRepository) UpdateOrderStatus(orderID uuid.UUID, from enum.OrderStatus, to string, userID *uuid.UUID) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&domain.Order{}).Where("id = ?", orderID).Update("status", to).Error; err != nil {
 			return err
@@ -89,7 +90,7 @@ func (r *OrderRepository) UpdateOrderStatus(orderID uint64, from enum.OrderStatu
 }
 
 // UpdateOrderItemStatus changes the status of a single order item
-func (r *OrderRepository) UpdateOrderItemStatus(itemID uint64, status string) error {
+func (r *OrderRepository) UpdateOrderItemStatus(itemID uuid.UUID, status string) error {
 	return r.db.Model(&domain.OrderItem{}).Where("id = ?", itemID).Update("item_status", status).Error
 }
 

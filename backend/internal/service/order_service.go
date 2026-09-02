@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/domain"
 	"github.com/pos-system/backend/internal/enum"
 	"github.com/pos-system/backend/internal/repository"
@@ -22,13 +23,14 @@ func NewOrderService(orderRepo *repository.OrderRepository, productRepo *reposit
 }
 
 // CreateOrder validates and persists a new order
-func (s *OrderService) CreateOrder(req *domain.CreateOrderRequest, userID *uint64) (*domain.Order, error) {
+func (s *OrderService) CreateOrder(req *domain.CreateOrderRequest, userID *uuid.UUID) (*domain.Order, error) {
 	orderType := enum.OrderTypeDineIn
 	if req.OrderType != "" {
 		orderType = enum.OrderType(req.OrderType)
 	}
 
 	order := &domain.Order{
+		OutletID:       req.OutletID,
 		TableSessionID: req.TableSessionID,
 		OrderNumber:    s.orderRepo.GetNextOrderNumber(),
 		OrderType:      orderType,
@@ -41,7 +43,7 @@ func (s *OrderService) CreateOrder(req *domain.CreateOrderRequest, userID *uint6
 	for _, itemReq := range req.Items {
 		product, err := s.productRepo.FindProductByID(itemReq.ProductID)
 		if err != nil {
-			return nil, fmt.Errorf("product %d not found", itemReq.ProductID)
+			return nil, fmt.Errorf("product %s not found", itemReq.ProductID)
 		}
 
 		itemName := product.Name
@@ -65,7 +67,7 @@ func (s *OrderService) CreateOrder(req *domain.CreateOrderRequest, userID *uint6
 		for _, ovID := range itemReq.OptionValueIDs {
 			item.Options = append(item.Options, domain.OrderItemOption{
 				OptionValueID: ovID,
-				Price:         0, // price is looked up and can be populated here
+				Price:         0,
 				CreatedBy:     userID,
 			})
 		}
@@ -92,7 +94,7 @@ func (s *OrderService) ListKitchenOrders() ([]domain.Order, error) {
 }
 
 // UpdateStatus transitions an order's status
-func (s *OrderService) UpdateStatus(orderID uint64, status string, userID *uint64) error {
+func (s *OrderService) UpdateStatus(orderID uuid.UUID, status string, userID *uuid.UUID) error {
 	order, err := s.orderRepo.FindOrderByID(orderID)
 	if err != nil {
 		return fmt.Errorf("order not found")
@@ -118,17 +120,18 @@ func (s *OrderService) UpdateStatus(orderID uint64, status string, userID *uint6
 }
 
 // ProcessPayment creates a payment and closes the session
-func (s *OrderService) ProcessPayment(req *domain.ProcessPaymentRequest, cashierID uint64) (*domain.Payment, error) {
-	change := req.AmountPaid // simplified; deduct total in real logic
+func (s *OrderService) ProcessPayment(req *domain.ProcessPaymentRequest, cashierID *uuid.UUID) (*domain.Payment, error) {
+	change := req.AmountPaid
 	payment := &domain.Payment{
+		OrderID:        req.OrderID,
 		TableSessionID: req.TableSessionID,
-		CashierID:      &cashierID,
+		CashierID:      cashierID,
 		PaymentMethod:  enum.PaymentMethod(req.PaymentMethod),
 		AmountPaid:     req.AmountPaid,
 		ChangeGiven:    change,
 		PaymentStatus:  enum.PaymentStatusPaid,
 		TransactionRef: req.TransactionRef,
-		CreatedBy:      &cashierID,
+		CreatedBy:      cashierID,
 		PaidAt:         time.Now(),
 	}
 	if err := s.orderRepo.CreatePayment(payment); err != nil {
@@ -144,7 +147,7 @@ func (s *OrderService) GetSummary(from, to string) (float64, int64, error) {
 }
 
 // GetOrdersBySession returns all orders for a session
-func (s *OrderService) GetOrdersBySession(sessionID uint64) ([]domain.Order, error) {
+func (s *OrderService) GetOrdersBySession(sessionID uuid.UUID) ([]domain.Order, error) {
 	return s.orderRepo.ListOrdersBySession(sessionID)
 }
 

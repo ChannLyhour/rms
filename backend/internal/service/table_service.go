@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/domain"
 	"github.com/pos-system/backend/internal/repository"
 	"github.com/pos-system/backend/pkg/qrcode"
@@ -29,7 +30,7 @@ func (s *TableService) ListTables() ([]domain.Table, error) {
 }
 
 // OpenSession creates a new QR session for a table
-func (s *TableService) OpenSession(tableID, userID uint64) (*domain.TableSession, string, error) {
+func (s *TableService) OpenSession(tableID uuid.UUID, userID *uuid.UUID) (*domain.TableSession, string, error) {
 	// Ensure table exists
 	_, err := s.tableRepo.FindTableByID(tableID)
 	if err != nil {
@@ -53,7 +54,7 @@ func (s *TableService) OpenSession(tableID, userID uint64) (*domain.TableSession
 		SessionToken: token,
 		Status:       "active",
 		OpenedAt:     time.Now(),
-		CreatedBy:    &userID,
+		CreatedBy:    userID,
 	}
 
 	if err := s.tableRepo.CreateSession(session); err != nil {
@@ -78,7 +79,7 @@ func (s *TableService) ListActiveSessions() ([]domain.TableSession, error) {
 }
 
 // CloseSession closes a session and marks the table as available
-func (s *TableService) CloseSession(sessionID, tableID uint64) error {
+func (s *TableService) CloseSession(sessionID, tableID uuid.UUID) error {
 	if err := s.tableRepo.CloseSession(sessionID); err != nil {
 		return err
 	}

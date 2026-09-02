@@ -2,9 +2,9 @@ package cashier
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/middleware"
 	"github.com/pos-system/backend/internal/service"
 )
@@ -34,7 +34,7 @@ func (h *TableSessionHandler) ListTables(c *gin.Context) {
 // POST /api/v1/cashier/sessions
 func (h *TableSessionHandler) OpenSession(c *gin.Context) {
 	var req struct {
-		TableID uint64 `json:"table_id" binding:"required"`
+		TableID uuid.UUID `json:"table_id" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -42,9 +42,10 @@ func (h *TableSessionHandler) OpenSession(c *gin.Context) {
 	}
 
 	claims := middleware.GetClaims(c)
-	userID := uint64(0)
+	var userID *uuid.UUID
 	if claims != nil {
-		userID = claims.UserID
+		uid := claims.UserID
+		userID = &uid
 	}
 
 	session, qrData, err := h.tableSvc.OpenSession(req.TableID, userID)
@@ -73,15 +74,15 @@ func (h *TableSessionHandler) ListActiveSessions(c *gin.Context) {
 // CloseSession godoc
 // DELETE /api/v1/cashier/sessions/:id
 func (h *TableSessionHandler) CloseSession(c *gin.Context) {
-	sessionID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	sessionID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid session id"})
 		return
 	}
 
-	tableID, err := strconv.ParseUint(c.Query("table_id"), 10, 64)
+	tableID, err := uuid.Parse(c.Query("table_id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "table_id query param required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "table_id query param required and must be valid uuid"})
 		return
 	}
 

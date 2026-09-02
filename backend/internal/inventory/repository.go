@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/pkg/pagination"
 	"gorm.io/gorm"
 )
@@ -36,7 +37,7 @@ func (r *Repository) ListSuppliers(search string, p pagination.Params) ([]Suppli
 	return list, total, err
 }
 
-func (r *Repository) GetSupplierByID(id uint64) (*Supplier, error) {
+func (r *Repository) GetSupplierByID(id uuid.UUID) (*Supplier, error) {
 	var s Supplier
 	if err := r.db.First(&s, id).Error; err != nil {
 		return nil, err
@@ -48,11 +49,11 @@ func (r *Repository) CreateSupplier(s *Supplier) error {
 	return r.db.Create(s).Error
 }
 
-func (r *Repository) UpdateSupplier(id uint64, s *Supplier) error {
+func (r *Repository) UpdateSupplier(id uuid.UUID, s *Supplier) error {
 	return r.db.Model(&Supplier{}).Where("id = ?", id).Updates(s).Error
 }
 
-func (r *Repository) DeleteSupplier(id uint64) error {
+func (r *Repository) DeleteSupplier(id uuid.UUID) error {
 	return r.db.Delete(&Supplier{}, id).Error
 }
 
@@ -78,7 +79,7 @@ func (r *Repository) ListIngredients(search string, lowStock bool, p pagination.
 	return list, total, err
 }
 
-func (r *Repository) GetIngredientByID(id uint64) (*Ingredient, error) {
+func (r *Repository) GetIngredientByID(id uuid.UUID) (*Ingredient, error) {
 	var ing Ingredient
 	if err := r.db.First(&ing, id).Error; err != nil {
 		return nil, err
@@ -90,22 +91,22 @@ func (r *Repository) CreateIngredient(ing *Ingredient) error {
 	return r.db.Create(ing).Error
 }
 
-func (r *Repository) UpdateIngredient(id uint64, ing *Ingredient) error {
+func (r *Repository) UpdateIngredient(id uuid.UUID, ing *Ingredient) error {
 	return r.db.Model(&Ingredient{}).Where("id = ?", id).Updates(ing).Error
 }
 
-func (r *Repository) DeleteIngredient(id uint64) error {
+func (r *Repository) DeleteIngredient(id uuid.UUID) error {
 	return r.db.Delete(&Ingredient{}, id).Error
 }
 
 // ── Recipes CRUD ─────────────────────────────────────────────────
 
-func (r *Repository) ListRecipes(productID *uint64, p pagination.Params) ([]Recipe, int64, error) {
+func (r *Repository) ListRecipes(productID *uuid.UUID, p pagination.Params) ([]Recipe, int64, error) {
 	var list []Recipe
 	var total int64
 
 	q := r.db.Model(&Recipe{}).Preload("Ingredient")
-	if productID != nil && *productID > 0 {
+	if productID != nil && *productID != uuid.Nil {
 		q = q.Where("product_id = ?", *productID)
 	}
 
@@ -117,7 +118,7 @@ func (r *Repository) ListRecipes(productID *uint64, p pagination.Params) ([]Reci
 	return list, total, err
 }
 
-func (r *Repository) GetRecipeByID(id uint64) (*Recipe, error) {
+func (r *Repository) GetRecipeByID(id uuid.UUID) (*Recipe, error) {
 	var rec Recipe
 	if err := r.db.Preload("Ingredient").First(&rec, id).Error; err != nil {
 		return nil, err
@@ -129,22 +130,22 @@ func (r *Repository) CreateRecipe(rec *Recipe) error {
 	return r.db.Create(rec).Error
 }
 
-func (r *Repository) UpdateRecipe(id uint64, rec *Recipe) error {
+func (r *Repository) UpdateRecipe(id uuid.UUID, rec *Recipe) error {
 	return r.db.Model(&Recipe{}).Where("id = ?", id).Updates(rec).Error
 }
 
-func (r *Repository) DeleteRecipe(id uint64) error {
+func (r *Repository) DeleteRecipe(id uuid.UUID) error {
 	return r.db.Delete(&Recipe{}, id).Error
 }
 
 // ── Purchase Orders CRUD ─────────────────────────────────────────
 
-func (r *Repository) ListPurchaseOrders(supplierID *uint64, status string, p pagination.Params) ([]PurchaseOrder, int64, error) {
+func (r *Repository) ListPurchaseOrders(supplierID *uuid.UUID, status string, p pagination.Params) ([]PurchaseOrder, int64, error) {
 	var list []PurchaseOrder
 	var total int64
 
 	q := r.db.Model(&PurchaseOrder{}).Preload("Supplier").Preload("Items.Ingredient")
-	if supplierID != nil && *supplierID > 0 {
+	if supplierID != nil && *supplierID != uuid.Nil {
 		q = q.Where("supplier_id = ?", *supplierID)
 	}
 	if status != "" {
@@ -159,7 +160,7 @@ func (r *Repository) ListPurchaseOrders(supplierID *uint64, status string, p pag
 	return list, total, err
 }
 
-func (r *Repository) GetPurchaseOrderByID(id uint64) (*PurchaseOrder, error) {
+func (r *Repository) GetPurchaseOrderByID(id uuid.UUID) (*PurchaseOrder, error) {
 	var po PurchaseOrder
 	if err := r.db.Preload("Supplier").Preload("Items.Ingredient").First(&po, id).Error; err != nil {
 		return nil, err
@@ -174,7 +175,7 @@ func (r *Repository) CreatePurchaseOrder(po *PurchaseOrder) error {
 	return r.db.Create(po).Error
 }
 
-func (r *Repository) UpdatePurchaseOrderStatus(id uint64, status string) error {
+func (r *Repository) UpdatePurchaseOrderStatus(id uuid.UUID, status string) error {
 	updates := map[string]interface{}{"status": status, "updated_at": time.Now()}
 	if status == "received" {
 		now := time.Now()
@@ -183,18 +184,18 @@ func (r *Repository) UpdatePurchaseOrderStatus(id uint64, status string) error {
 	return r.db.Model(&PurchaseOrder{}).Where("id = ?", id).Updates(updates).Error
 }
 
-func (r *Repository) DeletePurchaseOrder(id uint64) error {
+func (r *Repository) DeletePurchaseOrder(id uuid.UUID) error {
 	return r.db.Delete(&PurchaseOrder{}, id).Error
 }
 
 // ── Stock Logs & Movements ───────────────────────────────────────
 
-func (r *Repository) ListIngredientStockLogs(ingredientID *uint64, p pagination.Params) ([]IngredientStockLog, int64, error) {
+func (r *Repository) ListIngredientStockLogs(ingredientID *uuid.UUID, p pagination.Params) ([]IngredientStockLog, int64, error) {
 	var list []IngredientStockLog
 	var total int64
 
 	q := r.db.Model(&IngredientStockLog{}).Preload("Ingredient")
-	if ingredientID != nil && *ingredientID > 0 {
+	if ingredientID != nil && *ingredientID != uuid.Nil {
 		q = q.Where("ingredient_id = ?", *ingredientID)
 	}
 
@@ -210,12 +211,12 @@ func (r *Repository) CreateIngredientStockLog(log *IngredientStockLog) error {
 	return r.db.Create(log).Error
 }
 
-func (r *Repository) ListProductStockLogs(productID *uint64, p pagination.Params) ([]ProductStockLog, int64, error) {
+func (r *Repository) ListProductStockLogs(productID *uuid.UUID, p pagination.Params) ([]ProductStockLog, int64, error) {
 	var list []ProductStockLog
 	var total int64
 
 	q := r.db.Model(&ProductStockLog{})
-	if productID != nil && *productID > 0 {
+	if productID != nil && *productID != uuid.Nil {
 		q = q.Where("product_id = ?", *productID)
 	}
 

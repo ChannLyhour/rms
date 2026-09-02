@@ -1,30 +1,32 @@
 package user
 
 import (
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/pkg/pagination"
 	"gorm.io/gorm"
 )
 
 type Repository interface {
 	FindByUsername(username string) (*User, error)
-	FindByID(id uint64) (*User, error)
-	List(search string, roleID *uint64, p pagination.Params) ([]User, int64, error)
+	FindByID(id uuid.UUID) (*User, error)
+	List(search string, roleID *uuid.UUID, p pagination.Params) ([]User, int64, error)
 	Create(u *User) error
 	Update(u *User) error
-	UpdateToken(id uint64, token *string) error
-	Delete(id uint64) error
+	UpdateToken(id uuid.UUID, token *string) error
+	Delete(id uuid.UUID) error
+	SetUserOutlets(userID uuid.UUID, outletIDs []uuid.UUID) error
 
 	// Roles
 	ListRoles(p pagination.Params) ([]Role, int64, error)
-	GetRoleByID(id uint64) (*Role, error)
+	GetRoleByID(id uuid.UUID) (*Role, error)
 	CreateRole(r *Role) error
-	UpdateRole(id uint64, r *Role) error
-	DeleteRole(id uint64) error
+	UpdateRole(id uuid.UUID, r *Role) error
+	DeleteRole(id uuid.UUID) error
 
 	// Permissions
 	ListPermissions(p pagination.Params) ([]Permission, int64, error)
-	AssignPermission(roleID, permID uint64) error
-	RevokePermission(roleID, permID uint64) error
+	AssignPermission(roleID, permID uuid.UUID) error
+	RevokePermission(roleID, permID uuid.UUID) error
 }
 
 type repository struct {
@@ -41,6 +43,7 @@ func (r *repository) FindByUsername(username string) (*User, error) {
 		Preload("Role").
 		Preload("Role.Permissions").
 		Preload("Outlet").
+		Preload("Outlets").
 		Where("username = ? AND is_active = true", username).
 		First(&u).Error
 	if err != nil {
@@ -49,12 +52,13 @@ func (r *repository) FindByUsername(username string) (*User, error) {
 	return &u, nil
 }
 
-func (r *repository) FindByID(id uint64) (*User, error) {
+func (r *repository) FindByID(id uuid.UUID) (*User, error) {
 	var u User
 	err := r.db.
 		Preload("Role").
 		Preload("Role.Permissions").
 		Preload("Outlet").
+		Preload("Outlets").
 		First(&u, id).Error
 	if err != nil {
 		return nil, err
@@ -62,16 +66,16 @@ func (r *repository) FindByID(id uint64) (*User, error) {
 	return &u, nil
 }
 
-func (r *repository) List(search string, roleID *uint64, p pagination.Params) ([]User, int64, error) {
+func (r *repository) List(search string, roleID *uuid.UUID, p pagination.Params) ([]User, int64, error) {
 	var users []User
 	var total int64
 
-	q := r.db.Model(&User{}).Preload("Role").Preload("Outlet")
+	q := r.db.Model(&User{}).Preload("Role").Preload("Outlet").Preload("Outlets")
 	if search != "" {
 		s := "%" + search + "%"
 		q = q.Where("name ILIKE ? OR username ILIKE ? OR email ILIKE ?", s, s, s)
 	}
-	if roleID != nil && *roleID > 0 {
+	if roleID != nil && *roleID != uuid.Nil {
 		q = q.Where("role_id = ?", *roleID)
 	}
 
@@ -91,11 +95,27 @@ func (r *repository) Update(u *User) error {
 	return r.db.Save(u).Error
 }
 
-func (r *repository) UpdateToken(id uint64, token *string) error {
+func (r *repository) SetUserOutlets(userID uuid.UUID, outletIDs []uuid.UUID) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec("DELETE FROM user_outlets WHERE user_id = ?", userID).Error; err != nil {
+			return err
+		}
+		for _, oid := range outletIDs {
+			if oid != uuid.Nil {
+				if err := tx.Exec("INSERT INTO user_outlets (user_id, outlet_id) VALUES (?, ?) ON CONFLICT DO NOTHING", userID, oid).Error; err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+}
+
+func (r *repository) UpdateToken(id uuid.UUID, token *string) error {
 	return r.db.Model(&User{}).Where("id = ?", id).Update("token", token).Error
 }
 
-func (r *repository) Delete(id uint64) error {
+func (r *repository) Delete(id uuid.UUID) error {
 	return r.db.Delete(&User{}, id).Error
 }
 
@@ -112,7 +132,7 @@ func (r *repository) ListRoles(p pagination.Params) ([]Role, int64, error) {
 	return roles, total, err
 }
 
-func (r *repository) GetRoleByID(id uint64) (*Role, error) {
+func (r *repository) GetRoleByID(id uuid.UUID) (*Role, error) {
 	var role Role
 	err := r.db.Preload("Permissions").First(&role, id).Error
 	if err != nil {
@@ -125,11 +145,11 @@ func (r *repository) CreateRole(role *Role) error {
 	return r.db.Create(role).Error
 }
 
-func (r *repository) UpdateRole(id uint64, role *Role) error {
+func (r *repository) UpdateRole(id uuid.UUID, role *Role) error {
 	return r.db.Model(&Role{}).Where("id = ?", id).Updates(role).Error
 }
 
-func (r *repository) DeleteRole(id uint64) error {
+func (r *repository) DeleteRole(id uuid.UUID) error {
 	return r.db.Delete(&Role{}, id).Error
 }
 
@@ -146,11 +166,11 @@ func (r *repository) ListPermissions(p pagination.Params) ([]Permission, int64, 
 	return perms, total, err
 }
 
-func (r *repository) AssignPermission(roleID, permID uint64) error {
+func (r *repository) AssignPermission(roleID, permID uuid.UUID) error {
 	rp := RolePermission{RoleID: roleID, PermissionID: permID}
 	return r.db.FirstOrCreate(&rp).Error
 }
 
-func (r *repository) RevokePermission(roleID, permID uint64) error {
+func (r *repository) RevokePermission(roleID, permID uuid.UUID) error {
 	return r.db.Where("role_id = ? AND permission_id = ?", roleID, permID).Delete(&RolePermission{}).Error
 }

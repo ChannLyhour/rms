@@ -3,6 +3,7 @@ package system
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/pkg/pagination"
 	"gorm.io/gorm"
 )
@@ -10,11 +11,11 @@ import (
 type Repository interface {
 	ListSettings(p pagination.Params) ([]Setting, int64, error)
 	GetSettingByKey(key string) (*Setting, error)
-	UpsertSetting(key, val string, userID *uint64) error
+	UpsertSetting(key, val string, userID *uuid.UUID) error
 	DeleteSetting(key string) error
 
 	// Logs
-	ListOrderStatusLogs(orderID *uint64, p pagination.Params) ([]OrderStatusLog, int64, error)
+	ListOrderStatusLogs(orderID *uuid.UUID, p pagination.Params) ([]OrderStatusLog, int64, error)
 	CreateOrderStatusLog(log *OrderStatusLog) error
 }
 
@@ -47,7 +48,7 @@ func (r *repository) GetSettingByKey(key string) (*Setting, error) {
 	return &s, nil
 }
 
-func (r *repository) UpsertSetting(key, val string, userID *uint64) error {
+func (r *repository) UpsertSetting(key, val string, userID *uuid.UUID) error {
 	var s Setting
 	err := r.db.Where("setting_key = ?", key).First(&s).Error
 	if err == nil {
@@ -70,12 +71,12 @@ func (r *repository) DeleteSetting(key string) error {
 	return r.db.Where("setting_key = ?", key).Delete(&Setting{}).Error
 }
 
-func (r *repository) ListOrderStatusLogs(orderID *uint64, p pagination.Params) ([]OrderStatusLog, int64, error) {
+func (r *repository) ListOrderStatusLogs(orderID *uuid.UUID, p pagination.Params) ([]OrderStatusLog, int64, error) {
 	var list []OrderStatusLog
 	var total int64
 
 	q := r.db.Model(&OrderStatusLog{})
-	if orderID != nil && *orderID > 0 {
+	if orderID != nil && *orderID != uuid.Nil {
 		q = q.Where("order_id = ?", *orderID)
 	}
 

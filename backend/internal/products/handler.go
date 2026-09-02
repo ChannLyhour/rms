@@ -2,9 +2,9 @@ package products
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/pkg/pagination"
 )
 
@@ -21,9 +21,9 @@ func NewHandler(svc Service) *Handler {
 func (h *Handler) ListCategories(c *gin.Context) {
 	p := pagination.GetPagination(c)
 	search := c.Query("search")
-	var outletID *uint64
+	var outletID *uuid.UUID
 	if outStr := c.Query("outlet_id"); outStr != "" && outStr != "all" {
-		if outID, err := strconv.ParseUint(outStr, 10, 64); err == nil {
+		if outID, err := uuid.Parse(outStr); err == nil {
 			outletID = &outID
 		}
 	}
@@ -37,7 +37,7 @@ func (h *Handler) ListCategories(c *gin.Context) {
 }
 
 func (h *Handler) GetCategory(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid category id"})
 		return
@@ -57,9 +57,9 @@ func (h *Handler) CreateCategory(c *gin.Context) {
 		return
 	}
 
-	var creatorID *uint64
+	var creatorID *uuid.UUID
 	if uidVal, exists := c.Get("user_id"); exists {
-		if uid, ok := uidVal.(uint64); ok {
+		if uid, ok := uidVal.(uuid.UUID); ok {
 			creatorID = &uid
 		}
 	}
@@ -73,7 +73,7 @@ func (h *Handler) CreateCategory(c *gin.Context) {
 }
 
 func (h *Handler) UpdateCategory(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid category id"})
 		return
@@ -91,7 +91,7 @@ func (h *Handler) UpdateCategory(c *gin.Context) {
 }
 
 func (h *Handler) DeleteCategory(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid category id"})
 		return
@@ -108,16 +108,16 @@ func (h *Handler) DeleteCategory(c *gin.Context) {
 func (h *Handler) ListProducts(c *gin.Context) {
 	p := pagination.GetPagination(c)
 	search := c.Query("search")
-	var categoryID *uint64
-	if catStr := c.Query("category_id"); catStr != "" {
-		if catID, err := strconv.ParseUint(catStr, 10, 64); err == nil {
+	var categoryID *uuid.UUID
+	if catStr := c.Query("category_id"); catStr != "" && catStr != "all" {
+		if catID, err := uuid.Parse(catStr); err == nil {
 			categoryID = &catID
 		}
 	}
 
-	var outletID *uint64
+	var outletID *uuid.UUID
 	if outStr := c.Query("outlet_id"); outStr != "" && outStr != "all" {
-		if outID, err := strconv.ParseUint(outStr, 10, 64); err == nil {
+		if outID, err := uuid.Parse(outStr); err == nil {
 			outletID = &outID
 		}
 	}
@@ -137,7 +137,7 @@ func (h *Handler) ListProducts(c *gin.Context) {
 }
 
 func (h *Handler) GetProduct(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid product id"})
 		return
@@ -157,9 +157,9 @@ func (h *Handler) CreateProduct(c *gin.Context) {
 		return
 	}
 
-	var creatorID *uint64
+	var creatorID *uuid.UUID
 	if uidVal, exists := c.Get("user_id"); exists {
-		if uid, ok := uidVal.(uint64); ok {
+		if uid, ok := uidVal.(uuid.UUID); ok {
 			creatorID = &uid
 		}
 	}
@@ -173,7 +173,7 @@ func (h *Handler) CreateProduct(c *gin.Context) {
 }
 
 func (h *Handler) UpdateProduct(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid product id"})
 		return
@@ -194,7 +194,7 @@ func (h *Handler) UpdateProduct(c *gin.Context) {
 }
 
 func (h *Handler) DeleteProduct(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid product id"})
 		return
@@ -211,9 +211,9 @@ func (h *Handler) DeleteProduct(c *gin.Context) {
 func (h *Handler) ListOptionGroups(c *gin.Context) {
 	p := pagination.GetPagination(c)
 	search := c.Query("search")
-	var outletID *uint64
+	var outletID *uuid.UUID
 	if outStr := c.Query("outlet_id"); outStr != "" && outStr != "all" {
-		if outID, err := strconv.ParseUint(outStr, 10, 64); err == nil {
+		if outID, err := uuid.Parse(outStr); err == nil {
 			outletID = &outID
 		}
 	}
@@ -227,7 +227,7 @@ func (h *Handler) ListOptionGroups(c *gin.Context) {
 }
 
 func (h *Handler) GetOptionGroup(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid option group id"})
 		return
@@ -247,9 +247,9 @@ func (h *Handler) CreateOptionGroup(c *gin.Context) {
 		return
 	}
 
-	var creatorID *uint64
+	var creatorID *uuid.UUID
 	if uidVal, exists := c.Get("user_id"); exists {
-		if uid, ok := uidVal.(uint64); ok {
+		if uid, ok := uidVal.(uuid.UUID); ok {
 			creatorID = &uid
 		}
 	}
@@ -263,7 +263,7 @@ func (h *Handler) CreateOptionGroup(c *gin.Context) {
 }
 
 func (h *Handler) UpdateOptionGroup(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid option group id"})
 		return
@@ -281,7 +281,7 @@ func (h *Handler) UpdateOptionGroup(c *gin.Context) {
 }
 
 func (h *Handler) DeleteOptionGroup(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid option group id"})
 		return

@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useOutletStore } from '../../store/useOutletStore'
-import { ChevronDown, Check } from '@untitledui/icons'
+import { ChevronDown, Check, ChevronSelectorVertical } from '@untitledui/icons'
 
-export default function OutletSwitcher({ collapsed = false }) {
+export default function OutletSwitcher({ collapsed = false, align = 'right' }) {
   const { outlets, currentOutlet, setCurrentOutlet, fetchOutlets } = useOutletStore()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -52,39 +52,38 @@ export default function OutletSwitcher({ collapsed = false }) {
   if (!currentOutlet && outlets.length === 0) return null
 
   return (
-    <div className="relative w-full" ref={dropdownRef}>
+    <div className={`relative ${collapsed ? 'w-auto' : 'w-auto inline-block'}`} ref={dropdownRef}>
       {/* ── Switcher Trigger Button ── */}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`w-full flex items-center justify-between transition-all duration-200 cursor-pointer rounded-xl border ${
+        className={`flex items-center justify-between transition-all duration-200 cursor-pointer select-none rounded-xl border ${
           isOpen
-            ? 'bg-[#126973]/15 dark:bg-[#126973]/30 border-[#126973] dark:border-[#F1D8C2] shadow-sm'
-            : 'bg-white/80 dark:bg-[#072328]/60 hover:bg-[#126973]/10 dark:hover:bg-[#126973]/20 border-[#126973]/20 dark:border-[#F1D8C2]/20'
-        } ${collapsed ? 'p-2 justify-center' : 'px-3 py-2'}`}
+            ? 'ring-2 ring-[#126973]/25 dark:ring-[#F1D8C2]/30 border-[#126973] dark:border-[#F1D8C2] bg-[#126973]/10 dark:bg-[#126973]/25 shadow-xs'
+            : 'bg-white/90 dark:bg-[#072328]/80 hover:bg-[#126973]/8 dark:hover:bg-[#126973]/20 border-[#126973]/20 dark:border-[#F1D8C2]/20 hover:border-[#126973]/40 dark:hover:border-[#F1D8C2]/40 shadow-2xs'
+        } ${collapsed ? 'w-10 h-10 p-0 mx-auto justify-center' : 'px-2.5 py-1.5 gap-2.5 min-w-[160px] sm:min-w-[180px]'}`}
         title={currentOutlet?.name || 'Switch Outlet'}
       >
-        <div className={`flex items-center gap-2.5 min-w-0 ${collapsed ? 'justify-center' : ''}`}>
-          <div className="w-7 h-7 rounded-lg bg-[#126973]/10 dark:bg-[#126973]/30 border border-[#126973]/20 dark:border-[#F1D8C2]/30 flex items-center justify-center text-sm shrink-0 shadow-2xs">
-            {getOutletIcon(currentOutlet?.type)}
-          </div>
+        <div className={`flex items-center gap-2 min-w-0 ${collapsed ? 'justify-center' : ''}`}>
+         
+         
 
           {!collapsed && (
-            <div className="flex flex-col text-left min-w-0">
-              <span className="text-[12.5px] font-bold text-[#126973] dark:text-[#F1D8C2] truncate leading-tight">
-                {currentOutlet?.name || 'SKYPARK Outlet'}
+            <div className="flex flex-col text-left min-w-0 pr-0.5">
+              <span className="text-[12px] sm:text-[12.5px] font-bold text-[#072328] dark:text-[#F8F7F4] truncate leading-tight">
+                {currentOutlet?.name || '--'}
               </span>
-              <span className="text-[10px] uppercase font-semibold tracking-wider text-slate-500 dark:text-slate-400 mt-0.5">
-                {getOutletBadge(currentOutlet?.type)} · {currentOutlet?.has_tables ? 'Tables Active' : 'Direct Checkout'}
+              <span className="text-[9.5px] uppercase font-bold tracking-wider text-[#126973] dark:text-[#F1D8C2] mt-0.5 leading-none">
+                {getOutletBadge(currentOutlet?.type)}
               </span>
             </div>
           )}
         </div>
 
         {!collapsed && (
-          <ChevronDown
-            size={16}
-            className={`shrink-0 ml-1 text-slate-400 dark:text-slate-400 transition-transform duration-200 ${
+          <ChevronSelectorVertical
+            size={14}
+            className={`shrink-0 ml-auto transition-transform duration-200 text-slate-400 dark:text-slate-500 ${
               isOpen ? 'rotate-180 text-[#126973] dark:text-[#F1D8C2]' : ''
             }`}
           />
@@ -94,19 +93,24 @@ export default function OutletSwitcher({ collapsed = false }) {
       {/* ── Dropdown Menu ── */}
       {isOpen && (
         <div
-          className={`absolute z-50 mt-1.5 w-64 rounded-xl bg-white dark:bg-[#06181b] border border-[#126973]/25 dark:border-[#F1D8C2]/30 shadow-2xl p-1.5 backdrop-blur-md animate-in fade-in-50 zoom-in-95 duration-150 ${
-            collapsed ? 'left-12 top-0' : 'left-0 right-0 w-full'
+          className={`absolute z-50 mt-2 w-72 sm:w-80 rounded-2xl bg-[#FAF8F5] dark:bg-[#06181b] border border-[#126973]/25 dark:border-[#F1D8C2]/30 shadow-2xl p-2 backdrop-blur-md animate-in fade-in-50 zoom-in-95 duration-150 ${
+            collapsed ? 'left-12 top-0' : align === 'right' ? 'right-0' : 'left-0'
           }`}
+          style={{
+            boxShadow: '0 20px 40px -15px rgba(7, 35, 40, 0.45)',
+          }}
         >
-          <div className="px-2.5 py-1.5 mb-1 border-b border-[#126973]/15 dark:border-[#126973]/30 flex items-center justify-between">
-            <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500">
-              Select SKYPARK Venue
+          {/* Header Banner */}
+          <div className="px-3 py-2 mb-1.5 rounded-xl border border-[#126973]/15 dark:border-[#126973]/30 bg-gradient-to-r from-[#126973]/10 via-[#126973]/5 to-[#F1D8C2]/10 dark:from-[#126973]/25 dark:to-[#072328] flex items-center justify-between">
+            <span className="text-[10px] font-extrabold tracking-wider uppercase text-[#126973] dark:text-[#F1D8C2]">
+              Select Venue
             </span>
-            <span className="text-[10px] font-medium text-[#126973] dark:text-[#F1D8C2]">
-              {outlets.length} Venues
+            <span className="text-[9.5px] font-bold px-2 py-0.5 rounded-md bg-[#126973]/15 dark:bg-[#126973]/30 text-[#126973] dark:text-[#F1D8C2] border border-[#126973]/20 dark:border-[#F1D8C2]/20">
+              {outlets.length} Venue
             </span>
           </div>
 
+          {/* Outlet List */}
           <div className="space-y-1">
             {outlets.map((outlet) => {
               const isSelected = currentOutlet?.id === outlet.id
@@ -118,26 +122,35 @@ export default function OutletSwitcher({ collapsed = false }) {
                     setCurrentOutlet(outlet)
                     setIsOpen(false)
                   }}
-                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-all cursor-pointer ${
+                  className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-all cursor-pointer border ${
                     isSelected
-                      ? 'bg-[#126973]/15 dark:bg-[#126973]/35 text-[#126973] dark:text-[#F1D8C2] font-semibold border border-[#126973]/30 dark:border-[#F1D8C2]/30 shadow-2xs'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-[#126973]/8 dark:hover:bg-[#126973]/20 hover:text-slate-900 dark:hover:text-white'
+                      ? 'bg-[#126973]/12 dark:bg-[#126973]/30 border-[#126973]/30 dark:border-[#F1D8C2]/30 shadow-2xs'
+                      : 'border-transparent text-slate-700 dark:text-slate-300 hover:bg-[#126973]/8 dark:hover:bg-[#126973]/20 hover:border-[#126973]/15'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="text-base shrink-0">{getOutletIcon(outlet.type)}</span>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[12.5px] truncate font-semibold leading-tight">
+                    
+
+                    <div className="flex flex-col min-w-0 pr-1">
+                      <span
+                        className={`text-[12.5px] truncate font-bold leading-tight ${
+                          isSelected
+                            ? 'text-[#126973] dark:text-[#F1D8C2]'
+                            : 'text-[#072328] dark:text-[#F8F7F4]'
+                        }`}
+                      >
                         {outlet.name}
                       </span>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                        {outlet.description || `${getOutletBadge(outlet.type)} Service`}
+                      <span className="text-[10.5px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {outlet.description || `${getOutletBadge(outlet.type)} · ${outlet.has_tables ? 'Table Service' : 'Quick Order'}`}
                       </span>
                     </div>
                   </div>
 
                   {isSelected && (
-                    <Check size={16} className="shrink-0 text-[#126973] dark:text-[#F1D8C2]" />
+                    <div className="w-5 h-5 rounded-full bg-[#126973] dark:bg-[#F1D8C2] flex items-center justify-center shrink-0 shadow-2xs ml-1">
+                      <Check size={12} className="text-white dark:text-[#072328] stroke-[3]" />
+                    </div>
                   )}
                 </button>
               )

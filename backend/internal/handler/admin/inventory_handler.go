@@ -2,9 +2,9 @@ package admin
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/domain"
 	"github.com/pos-system/backend/internal/repository"
 )
@@ -53,9 +53,9 @@ func (h *InventoryHandler) CreateCategory(c *gin.Context) {
 // GET /api/v1/admin/products
 func (h *InventoryHandler) ListProducts(c *gin.Context) {
 	catIDStr := c.Query("category_id")
-	var catID uint64
-	if catIDStr != "" {
-		catID, _ = strconv.ParseUint(catIDStr, 10, 64)
+	var catID uuid.UUID
+	if catIDStr != "" && catIDStr != "all" {
+		catID, _ = uuid.Parse(catIDStr)
 	}
 	products, err := h.productRepo.ListProducts(catID, false)
 	if err != nil {
@@ -74,6 +74,11 @@ func (h *InventoryHandler) CreateProduct(c *gin.Context) {
 		return
 	}
 
+	isAvail := true
+	if req.IsAvailable != nil {
+		isAvail = *req.IsAvailable
+	}
+
 	product := &domain.Product{
 		CategoryID:        req.CategoryID,
 		Name:              req.Name,
@@ -83,7 +88,7 @@ func (h *InventoryHandler) CreateProduct(c *gin.Context) {
 		LowStockThreshold: req.LowStockThreshold,
 		TrackStock:        req.TrackStock,
 		ImageURL:          req.ImageURL,
-		IsAvailable:       req.IsAvailable,
+		IsAvailable:       isAvail,
 	}
 
 	if err := h.productRepo.CreateProduct(product); err != nil {
@@ -101,7 +106,7 @@ func (h *InventoryHandler) CreateProduct(c *gin.Context) {
 // UpdateProduct godoc
 // PUT /api/v1/admin/products/:id
 func (h *InventoryHandler) UpdateProduct(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid product id"})
 		return
@@ -129,7 +134,7 @@ func (h *InventoryHandler) UpdateProduct(c *gin.Context) {
 // DeleteProduct godoc
 // DELETE /api/v1/admin/products/:id
 func (h *InventoryHandler) DeleteProduct(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid product id"})
 		return

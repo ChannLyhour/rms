@@ -1,7 +1,7 @@
 import React from 'react'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import DropdownAccountCardMD from '../pos/DropdownAccountCardMD'
-
+import OutletSwitcher from '../pos/OutletSwitcher'
 export default function HeaderLayout({ className = '', children }) {
   return (
     <header
@@ -13,9 +13,10 @@ export default function HeaderLayout({ className = '', children }) {
         {children}
       </div>
 
-      <div className="flex items-center gap-3">
-        {/* User Profile Dropdown */}
-        <DropdownAccountCardMD placement="bottom" compact={true} />
+      {/* right header layout */}
+      <div className="flex items-center gap-2">
+        {/* Outlet Information */}
+        <OutletSwitcher />
       </div>
     </header>
   )

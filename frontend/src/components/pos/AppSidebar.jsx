@@ -49,7 +49,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import OutletSwitcher from './OutletSwitcher'
+import DropdownAccountCardMD from './DropdownAccountCardMD'
 
 export default function AppSidebar() {
   const { user, hasPermission } = useAuth()
@@ -309,9 +309,9 @@ export default function AppSidebar() {
           </div>
         </div>
 
-        {/* ── Multi-Outlet Venue Switcher (Cafe, Bar, Mart, Restaurant) ── */}
+        {/* ── User Profile Account Card ── */}
         <div className="w-full">
-          <OutletSwitcher collapsed={!open} />
+          <DropdownAccountCardMD collapsed={!open} placement="bottom" />
         </div>
       </SidebarHeader>
 

@@ -3,30 +3,31 @@ package products
 import (
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/pkg/pagination"
 )
 
 type Service interface {
 	// Categories
-	ListCategories(search string, outletID *uint64, p pagination.Params) ([]Category, int64, error)
-	GetCategory(id uint64) (*Category, error)
-	CreateCategory(req *CreateCategoryRequest, creatorID *uint64) (*Category, error)
-	UpdateCategory(id uint64, c *Category) error
-	DeleteCategory(id uint64) error
+	ListCategories(search string, outletID *uuid.UUID, p pagination.Params) ([]Category, int64, error)
+	GetCategory(id uuid.UUID) (*Category, error)
+	CreateCategory(req *CreateCategoryRequest, creatorID *uuid.UUID) (*Category, error)
+	UpdateCategory(id uuid.UUID, c *Category) error
+	DeleteCategory(id uuid.UUID) error
 
 	// Products
-	ListProducts(search string, categoryID *uint64, outletID *uint64, isAvailable *bool, p pagination.Params) ([]Product, int64, error)
-	GetProduct(id uint64) (*Product, error)
-	CreateProduct(req *CreateProductRequest, creatorID *uint64) (*Product, error)
-	UpdateProduct(id uint64, req *UpdateProductRequest) (*Product, error)
-	DeleteProduct(id uint64) error
+	ListProducts(search string, categoryID *uuid.UUID, outletID *uuid.UUID, isAvailable *bool, p pagination.Params) ([]Product, int64, error)
+	GetProduct(id uuid.UUID) (*Product, error)
+	CreateProduct(req *CreateProductRequest, creatorID *uuid.UUID) (*Product, error)
+	UpdateProduct(id uuid.UUID, req *UpdateProductRequest) (*Product, error)
+	DeleteProduct(id uuid.UUID) error
 
 	// Option Groups
-	ListOptionGroups(search string, outletID *uint64, p pagination.Params) ([]OptionGroup, int64, error)
-	GetOptionGroup(id uint64) (*OptionGroup, error)
-	CreateOptionGroup(req *CreateOptionGroupRequest, creatorID *uint64) (*OptionGroup, error)
-	UpdateOptionGroup(id uint64, g *OptionGroup) error
-	DeleteOptionGroup(id uint64) error
+	ListOptionGroups(search string, outletID *uuid.UUID, p pagination.Params) ([]OptionGroup, int64, error)
+	GetOptionGroup(id uuid.UUID) (*OptionGroup, error)
+	CreateOptionGroup(req *CreateOptionGroupRequest, creatorID *uuid.UUID) (*OptionGroup, error)
+	UpdateOptionGroup(id uuid.UUID, g *OptionGroup) error
+	DeleteOptionGroup(id uuid.UUID) error
 }
 
 type service struct {
@@ -37,15 +38,15 @@ func NewService(repo Repository) Service {
 	return &service{repo: repo}
 }
 
-func (s *service) ListCategories(search string, outletID *uint64, p pagination.Params) ([]Category, int64, error) {
+func (s *service) ListCategories(search string, outletID *uuid.UUID, p pagination.Params) ([]Category, int64, error) {
 	return s.repo.ListCategories(search, outletID, p)
 }
 
-func (s *service) GetCategory(id uint64) (*Category, error) {
+func (s *service) GetCategory(id uuid.UUID) (*Category, error) {
 	return s.repo.GetCategoryByID(id)
 }
 
-func (s *service) CreateCategory(req *CreateCategoryRequest, creatorID *uint64) (*Category, error) {
+func (s *service) CreateCategory(req *CreateCategoryRequest, creatorID *uuid.UUID) (*Category, error) {
 	isAct := true
 	if req.IsActive != nil {
 		isAct = *req.IsActive
@@ -66,39 +67,65 @@ func (s *service) CreateCategory(req *CreateCategoryRequest, creatorID *uint64) 
 	return c, nil
 }
 
-func (s *service) UpdateCategory(id uint64, c *Category) error {
+func (s *service) UpdateCategory(id uuid.UUID, c *Category) error {
 	return s.repo.UpdateCategory(id, c)
 }
 
-func (s *service) DeleteCategory(id uint64) error {
+func (s *service) DeleteCategory(id uuid.UUID) error {
 	return s.repo.DeleteCategory(id)
 }
 
-func (s *service) ListProducts(search string, categoryID *uint64, outletID *uint64, isAvailable *bool, p pagination.Params) ([]Product, int64, error) {
+func (s *service) ListProducts(search string, categoryID *uuid.UUID, outletID *uuid.UUID, isAvailable *bool, p pagination.Params) ([]Product, int64, error) {
 	return s.repo.ListProducts(search, categoryID, outletID, isAvailable, p)
 }
 
-func (s *service) GetProduct(id uint64) (*Product, error) {
+func (s *service) GetProduct(id uuid.UUID) (*Product, error) {
 	return s.repo.GetProductByID(id)
 }
 
-func (s *service) CreateProduct(req *CreateProductRequest, creatorID *uint64) (*Product, error) {
+func (s *service) CreateProduct(req *CreateProductRequest, creatorID *uuid.UUID) (*Product, error) {
 	isAvail := true
 	if req.IsAvailable != nil {
 		isAvail = *req.IsAvailable
 	}
+	isFeat := false
+	if req.IsFeatured != nil {
+		isFeat = *req.IsFeatured
+	}
+	discType := "percentage"
+	if req.DiscountType != nil && *req.DiscountType != "" {
+		discType = *req.DiscountType
+	}
+	kitchenStation := "Kitchen"
+	if req.KitchenStation != nil && *req.KitchenStation != "" {
+		kitchenStation = *req.KitchenStation
+	}
+	prepTime := 15
+	if req.PrepTimeMins != nil && *req.PrepTimeMins > 0 {
+		prepTime = *req.PrepTimeMins
+	}
+
 	p := &Product{
 		OutletID:          req.OutletID,
+		StationID:         req.StationID,
 		CategoryID:        req.CategoryID,
 		Name:              req.Name,
 		Barcode:           req.Barcode,
 		Description:       req.Description,
 		Price:             req.Price,
+		CostPrice:         req.CostPrice,
+		DiscountType:      discType,
+		DiscountValue:     req.DiscountValue,
+		DiscountPct:       req.DiscountPct,
 		StockQuantity:     req.StockQuantity,
 		LowStockThreshold: req.LowStockThreshold,
 		TrackStock:        req.TrackStock,
+		ImageProductsID:   req.ImageProductsID,
 		ImageURL:          req.ImageURL,
 		IsAvailable:       isAvail,
+		IsFeatured:        isFeat,
+		KitchenStation:    kitchenStation,
+		PrepTimeMins:      prepTime,
 		CreatedBy:         creatorID,
 	}
 	if err := s.repo.CreateProduct(p, req.OptionGroupIDs); err != nil {
@@ -107,7 +134,7 @@ func (s *service) CreateProduct(req *CreateProductRequest, creatorID *uint64) (*
 	return s.repo.GetProductByID(p.ID)
 }
 
-func (s *service) UpdateProduct(id uint64, req *UpdateProductRequest) (*Product, error) {
+func (s *service) UpdateProduct(id uuid.UUID, req *UpdateProductRequest) (*Product, error) {
 	p, err := s.repo.GetProductByID(id)
 	if err != nil {
 		return nil, errors.New("product not found")
@@ -115,6 +142,9 @@ func (s *service) UpdateProduct(id uint64, req *UpdateProductRequest) (*Product,
 
 	if req.OutletID != nil {
 		p.OutletID = req.OutletID
+	}
+	if req.StationID != nil {
+		p.StationID = req.StationID
 	}
 	if req.CategoryID != nil {
 		p.CategoryID = *req.CategoryID
@@ -131,6 +161,18 @@ func (s *service) UpdateProduct(id uint64, req *UpdateProductRequest) (*Product,
 	if req.Price != nil {
 		p.Price = *req.Price
 	}
+	if req.CostPrice != nil {
+		p.CostPrice = *req.CostPrice
+	}
+	if req.DiscountType != nil {
+		p.DiscountType = *req.DiscountType
+	}
+	if req.DiscountValue != nil {
+		p.DiscountValue = *req.DiscountValue
+	}
+	if req.DiscountPct != nil {
+		p.DiscountPct = *req.DiscountPct
+	}
 	if req.StockQuantity != nil {
 		p.StockQuantity = *req.StockQuantity
 	}
@@ -140,11 +182,23 @@ func (s *service) UpdateProduct(id uint64, req *UpdateProductRequest) (*Product,
 	if req.TrackStock != nil {
 		p.TrackStock = *req.TrackStock
 	}
+	if req.ImageProductsID != nil {
+		p.ImageProductsID = req.ImageProductsID
+	}
 	if req.ImageURL != nil {
 		p.ImageURL = req.ImageURL
 	}
 	if req.IsAvailable != nil {
 		p.IsAvailable = *req.IsAvailable
+	}
+	if req.IsFeatured != nil {
+		p.IsFeatured = *req.IsFeatured
+	}
+	if req.KitchenStation != nil {
+		p.KitchenStation = *req.KitchenStation
+	}
+	if req.PrepTimeMins != nil {
+		p.PrepTimeMins = *req.PrepTimeMins
 	}
 
 	if err := s.repo.UpdateProduct(p, req.OptionGroupIDs); err != nil {
@@ -153,48 +207,45 @@ func (s *service) UpdateProduct(id uint64, req *UpdateProductRequest) (*Product,
 	return s.repo.GetProductByID(id)
 }
 
-func (s *service) DeleteProduct(id uint64) error {
+func (s *service) DeleteProduct(id uuid.UUID) error {
 	return s.repo.DeleteProduct(id)
 }
 
-func (s *service) ListOptionGroups(search string, outletID *uint64, p pagination.Params) ([]OptionGroup, int64, error) {
+func (s *service) ListOptionGroups(search string, outletID *uuid.UUID, p pagination.Params) ([]OptionGroup, int64, error) {
 	return s.repo.ListOptionGroups(search, outletID, p)
 }
 
-func (s *service) GetOptionGroup(id uint64) (*OptionGroup, error) {
+func (s *service) GetOptionGroup(id uuid.UUID) (*OptionGroup, error) {
 	return s.repo.GetOptionGroupByID(id)
 }
 
-func (s *service) CreateOptionGroup(req *CreateOptionGroupRequest, creatorID *uint64) (*OptionGroup, error) {
+func (s *service) CreateOptionGroup(req *CreateOptionGroupRequest, creatorID *uuid.UUID) (*OptionGroup, error) {
+	vals := make([]OptionValue, len(req.Values))
+	for i, v := range req.Values {
+		vals[i] = OptionValue{
+			Name:      v.Name,
+			Price:     v.Price,
+			CreatedBy: creatorID,
+		}
+	}
 	g := &OptionGroup{
 		OutletID:   req.OutletID,
 		Name:       req.Name,
 		Type:       req.Type,
 		IsRequired: req.IsRequired,
+		Values:     vals,
 		CreatedBy:  creatorID,
-	}
-	if g.Type == "" {
-		g.Type = "single"
 	}
 	if err := s.repo.CreateOptionGroup(g); err != nil {
 		return nil, err
 	}
-	for _, v := range req.Values {
-		val := OptionValue{
-			OptionGroupID: g.ID,
-			Name:          v.Name,
-			Price:         v.Price,
-			CreatedBy:     creatorID,
-		}
-		_ = s.repo.CreateOptionValue(&val)
-	}
 	return s.repo.GetOptionGroupByID(g.ID)
 }
 
-func (s *service) UpdateOptionGroup(id uint64, g *OptionGroup) error {
+func (s *service) UpdateOptionGroup(id uuid.UUID, g *OptionGroup) error {
 	return s.repo.UpdateOptionGroup(id, g)
 }
 
-func (s *service) DeleteOptionGroup(id uint64) error {
+func (s *service) DeleteOptionGroup(id uuid.UUID) error {
 	return s.repo.DeleteOptionGroup(id)
 }

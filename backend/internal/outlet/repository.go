@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/domain"
 	"gorm.io/gorm"
 )
@@ -11,27 +12,27 @@ import (
 type Repository interface {
 	// Outlets
 	FindAll(ctx context.Context, search string, onlyActive bool) ([]domain.Outlet, error)
-	FindByID(ctx context.Context, id uint64) (*domain.Outlet, error)
+	FindByID(ctx context.Context, id uuid.UUID) (*domain.Outlet, error)
 	FindByCode(ctx context.Context, code string) (*domain.Outlet, error)
 	Create(ctx context.Context, outlet *domain.Outlet) error
 	Update(ctx context.Context, outlet *domain.Outlet) error
-	Delete(ctx context.Context, id uint64) error
+	Delete(ctx context.Context, id uuid.UUID) error
 
 	// Zones
-	FindAllZones(ctx context.Context, outletID *uint64, search string) ([]domain.Zone, error)
-	FindZonesByOutletID(ctx context.Context, outletID uint64) ([]domain.Zone, error)
-	FindZoneByID(ctx context.Context, id uint64) (*domain.Zone, error)
+	FindAllZones(ctx context.Context, outletID *uuid.UUID, search string) ([]domain.Zone, error)
+	FindZonesByOutletID(ctx context.Context, outletID uuid.UUID) ([]domain.Zone, error)
+	FindZoneByID(ctx context.Context, id uuid.UUID) (*domain.Zone, error)
 	CreateZone(ctx context.Context, zone *domain.Zone) error
 	UpdateZone(ctx context.Context, zone *domain.Zone) error
-	DeleteZone(ctx context.Context, id uint64) error
+	DeleteZone(ctx context.Context, id uuid.UUID) error
 
 	// Stations
-	FindAllStations(ctx context.Context, outletID *uint64, search string) ([]domain.Station, error)
-	FindStationsByOutletID(ctx context.Context, outletID uint64) ([]domain.Station, error)
-	FindStationByID(ctx context.Context, id uint64) (*domain.Station, error)
+	FindAllStations(ctx context.Context, outletID *uuid.UUID, search string) ([]domain.Station, error)
+	FindStationsByOutletID(ctx context.Context, outletID uuid.UUID) ([]domain.Station, error)
+	FindStationByID(ctx context.Context, id uuid.UUID) (*domain.Station, error)
 	CreateStation(ctx context.Context, station *domain.Station) error
 	UpdateStation(ctx context.Context, station *domain.Station) error
-	DeleteStation(ctx context.Context, id uint64) error
+	DeleteStation(ctx context.Context, id uuid.UUID) error
 }
 
 type repository struct {
@@ -57,7 +58,7 @@ func (r *repository) FindAll(ctx context.Context, search string, onlyActive bool
 	return outlets, err
 }
 
-func (r *repository) FindByID(ctx context.Context, id uint64) (*domain.Outlet, error) {
+func (r *repository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Outlet, error) {
 	var outlet domain.Outlet
 	err := r.db.WithContext(ctx).
 		Preload("Zones").
@@ -92,7 +93,7 @@ func (r *repository) Update(ctx context.Context, outlet *domain.Outlet) error {
 	return r.db.WithContext(ctx).Save(outlet).Error
 }
 
-func (r *repository) Delete(ctx context.Context, id uint64) error {
+func (r *repository) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Delete related stations & zones
 		if err := tx.Where("outlet_id = ?", id).Delete(&domain.Station{}).Error; err != nil {
@@ -107,10 +108,10 @@ func (r *repository) Delete(ctx context.Context, id uint64) error {
 
 // ── Zones ──────────────────────────────────────────────────────────
 
-func (r *repository) FindAllZones(ctx context.Context, outletID *uint64, search string) ([]domain.Zone, error) {
+func (r *repository) FindAllZones(ctx context.Context, outletID *uuid.UUID, search string) ([]domain.Zone, error) {
 	var zones []domain.Zone
 	query := r.db.WithContext(ctx)
-	if outletID != nil && *outletID > 0 {
+	if outletID != nil && *outletID != uuid.Nil {
 		query = query.Where("outlet_id = ?", *outletID)
 	}
 	if search != "" {
@@ -120,11 +121,11 @@ func (r *repository) FindAllZones(ctx context.Context, outletID *uint64, search 
 	return zones, err
 }
 
-func (r *repository) FindZonesByOutletID(ctx context.Context, outletID uint64) ([]domain.Zone, error) {
+func (r *repository) FindZonesByOutletID(ctx context.Context, outletID uuid.UUID) ([]domain.Zone, error) {
 	return r.FindAllZones(ctx, &outletID, "")
 }
 
-func (r *repository) FindZoneByID(ctx context.Context, id uint64) (*domain.Zone, error) {
+func (r *repository) FindZoneByID(ctx context.Context, id uuid.UUID) (*domain.Zone, error) {
 	var zone domain.Zone
 	err := r.db.WithContext(ctx).First(&zone, id).Error
 	if err != nil {
@@ -144,16 +145,16 @@ func (r *repository) UpdateZone(ctx context.Context, zone *domain.Zone) error {
 	return r.db.WithContext(ctx).Save(zone).Error
 }
 
-func (r *repository) DeleteZone(ctx context.Context, id uint64) error {
+func (r *repository) DeleteZone(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Delete(&domain.Zone{}, id).Error
 }
 
 // ── Stations ───────────────────────────────────────────────────────
 
-func (r *repository) FindAllStations(ctx context.Context, outletID *uint64, search string) ([]domain.Station, error) {
+func (r *repository) FindAllStations(ctx context.Context, outletID *uuid.UUID, search string) ([]domain.Station, error) {
 	var stations []domain.Station
 	query := r.db.WithContext(ctx)
-	if outletID != nil && *outletID > 0 {
+	if outletID != nil && *outletID != uuid.Nil {
 		query = query.Where("outlet_id = ?", *outletID)
 	}
 	if search != "" {
@@ -163,11 +164,11 @@ func (r *repository) FindAllStations(ctx context.Context, outletID *uint64, sear
 	return stations, err
 }
 
-func (r *repository) FindStationsByOutletID(ctx context.Context, outletID uint64) ([]domain.Station, error) {
+func (r *repository) FindStationsByOutletID(ctx context.Context, outletID uuid.UUID) ([]domain.Station, error) {
 	return r.FindAllStations(ctx, &outletID, "")
 }
 
-func (r *repository) FindStationByID(ctx context.Context, id uint64) (*domain.Station, error) {
+func (r *repository) FindStationByID(ctx context.Context, id uuid.UUID) (*domain.Station, error) {
 	var station domain.Station
 	err := r.db.WithContext(ctx).First(&station, id).Error
 	if err != nil {
@@ -187,6 +188,6 @@ func (r *repository) UpdateStation(ctx context.Context, station *domain.Station)
 	return r.db.WithContext(ctx).Save(station).Error
 }
 
-func (r *repository) DeleteStation(ctx context.Context, id uint64) error {
+func (r *repository) DeleteStation(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Delete(&domain.Station{}, id).Error
 }

@@ -255,8 +255,8 @@ export default function CategoriesCreateView({
     }
 
     const payload = {
-      outlet_id: formData.outlet_id ? Number(formData.outlet_id) : null,
-      parent_id: formData.parent_id ? Number(formData.parent_id) : null,
+      outlet_id: formData.outlet_id || null,
+      parent_id: formData.parent_id || null,
       name: formData.name.trim(),
       description: formData.description.trim(),
       sort_order: parseInt(formData.sort_order) || 0,
@@ -275,7 +275,7 @@ export default function CategoriesCreateView({
 
     try {
       await adminApi.createCategory({
-        outlet_id: item.outlet_id ? Number(item.outlet_id) : null,
+        outlet_id: item.outlet_id || null,
         parent_id: item.id,
         name: subCatName,
         description: '',

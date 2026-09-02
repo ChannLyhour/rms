@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/domain"
 	"github.com/pos-system/backend/internal/repository"
 	"github.com/pos-system/backend/internal/service"
@@ -36,7 +37,7 @@ func (h *QROrderHandler) GetMenu(c *gin.Context) {
 		return
 	}
 
-	products, err := h.productRepo.ListProducts(0, true)
+	products, err := h.productRepo.ListProducts(uuid.Nil, true)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -62,7 +63,7 @@ func (h *QROrderHandler) PlaceOrder(c *gin.Context) {
 		return
 	}
 
-	req.TableSessionID = session.ID
+	req.TableSessionID = &session.ID
 	req.OrderType = "qr_scan"
 
 	order, err := h.orderSvc.CreateOrder(&req, nil)

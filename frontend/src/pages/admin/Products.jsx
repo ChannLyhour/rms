@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import AdminLayout from '../../components/layout/AdminLayout'
-import MenuitemCreateView from '../../components/admin/MenuitemCreateView'
+import MenuitemCreateView from './products/ProductsitemCreateView'
 import { adminApi } from '../../api/adminApi'
 import axiosClient from '../../api/axiosClient'
 import { Table, TableCard, BadgeWithIcon, Button, PaginationPageMinimalCenter } from '../../components/TablesComponents'

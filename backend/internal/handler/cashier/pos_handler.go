@@ -2,9 +2,9 @@ package cashier
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/domain"
 	"github.com/pos-system/backend/internal/middleware"
 	"github.com/pos-system/backend/internal/service"
@@ -30,7 +30,7 @@ func (h *POSHandler) CreateOrder(c *gin.Context) {
 	}
 
 	claims := middleware.GetClaims(c)
-	var userID *uint64
+	var userID *uuid.UUID
 	if claims != nil {
 		uid := claims.UserID
 		userID = &uid
@@ -52,7 +52,7 @@ func (h *POSHandler) CreateOrder(c *gin.Context) {
 // GET /api/v1/cashier/orders?session_id=:id
 func (h *POSHandler) GetOrdersBySession(c *gin.Context) {
 	sessionIDStr := c.Query("session_id")
-	sessionID, err := strconv.ParseUint(sessionIDStr, 10, 64)
+	sessionID, err := uuid.Parse(sessionIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid session_id"})
 		return
@@ -70,7 +70,7 @@ func (h *POSHandler) GetOrdersBySession(c *gin.Context) {
 // UpdateOrderStatus godoc
 // PATCH /api/v1/cashier/orders/:id/status
 func (h *POSHandler) UpdateOrderStatus(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid order id"})
 		return
@@ -83,7 +83,7 @@ func (h *POSHandler) UpdateOrderStatus(c *gin.Context) {
 	}
 
 	claims := middleware.GetClaims(c)
-	var userID *uint64
+	var userID *uuid.UUID
 	if claims != nil {
 		uid := claims.UserID
 		userID = &uid
@@ -107,9 +107,10 @@ func (h *POSHandler) ProcessPayment(c *gin.Context) {
 	}
 
 	claims := middleware.GetClaims(c)
-	cashierID := uint64(0)
+	var cashierID *uuid.UUID
 	if claims != nil {
-		cashierID = claims.UserID
+		uid := claims.UserID
+		cashierID = &uid
 	}
 
 	payment, err := h.orderSvc.ProcessPayment(&req, cashierID)

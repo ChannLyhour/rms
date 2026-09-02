@@ -163,7 +163,7 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
     }
 
     const payload = {
-      outlet_id: formData.outlet_id ? Number(formData.outlet_id) : null,
+      outlet_id: formData.outlet_id || null,
       name: formData.name.trim(),
       type: formData.type,
       is_required: Boolean(formData.is_required),

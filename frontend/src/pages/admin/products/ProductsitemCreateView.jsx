@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Scrollspy } from '../reui/scrollspy'
+import { Scrollspy } from '../../../components/reui/scrollspy'
 import {
   X,
   Image as ImageIcon,
@@ -13,13 +13,14 @@ import {
   Layers,
   Sparkles,
   Tag,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import axiosClient from '../../api/axiosClient'
-import { adminApi } from '../../api/adminApi'
-import { Button } from '../common/ButtonComponent'
-import { SearchSelection } from '../plugin/components/Search-Selection-components'
+import axiosClient from '../../../api/axiosClient'
+import { adminApi } from '../../../api/adminApi'
+import { Button } from '../../../components/common/ButtonComponent'
+import { SearchSelection } from '../../../components/plugin/components/Search-Selection-components'
 
 function CreateSubCatModal({ isOpen, onClose, onSave }) {
   const [name, setName] = useState('')
@@ -73,7 +74,7 @@ function CreateSubCatModal({ isOpen, onClose, onSave }) {
                 borderColor: 'var(--color-border)',
                 color: 'var(--color-text)',
               }}
-              placeholder="e.g. Coffee, Burgers, Cold Appetizer"
+              placeholder="e.g."
             />
           </div>
           <button
@@ -148,7 +149,7 @@ function CreateAddonModal({ isOpen, onClose, onSave }) {
                 borderColor: 'var(--color-border)',
                 color: 'var(--color-text)',
               }}
-              placeholder="e.g. Extra Cheese, Boba Pearls"
+              placeholder="e.g."
             />
           </div>
 
@@ -266,7 +267,7 @@ function QuickAddOptionModal({ isOpen, group, onClose, onSave }) {
                 borderColor: 'var(--color-border)',
                 color: 'var(--color-text)',
               }}
-              placeholder="e.g. Large, Extra Shot, Oat Milk, 50% Sugar"
+              placeholder="e.g."
             />
           </div>
 
@@ -318,20 +319,26 @@ function QuickAddOptionModal({ isOpen, group, onClose, onSave }) {
   )
 }
 
-const STATION_OPTIONS = ['Kitchen', 'Bar', 'Bakery', 'Grill', 'Salad Bar', 'Dessert Station']
+const STATION_OPTIONS = ['Station', 'Bar', 'Bakery', 'Grill', 'Salad Bar', 'Dessert Station']
 
 export default function MenuitemCreateView({ onClose, onSave, item, categories = [] }) {
   const [outlets, setOutlets] = useState([])
+  const [stations, setStations] = useState([])
   const [formData, setFormData] = useState({
     id: '',
     name: '',
-    outlet_id: '1',
+    outlet_id: null,
+    station_id: '',
     barcode: '',
     category_id: '',
     sub_category: '',
     sku: '',
     price: '',
     cost_price: '',
+    discount_type: 'percentage',
+    discount_value: 0,
+    discount_pct: 0,
+    image_products_id: null,
     image_url: '',
     is_available: true,
     is_featured: false,
@@ -340,7 +347,6 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
     track_stock: true,
     kitchen_station: 'Kitchen',
     prep_time_mins: 15,
-    discount_pct: 0,
     description: '',
     option_group_ids: [],
     sizes: [],
@@ -352,11 +358,63 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
   const [subCatModalOpen, setSubCatModalOpen] = useState(false)
   const [quickAddChoiceGroup, setQuickAddChoiceGroup] = useState(null)
   const [localCategories, setLocalCategories] = useState(categories)
+  const [loadingCategories, setLoadingCategories] = useState(false)
   const [activeAddonCat, setActiveAddonCat] = useState('all')
 
+  // Fetch categories specifically for the selected outlet
+  const fetchCategoriesForOutlet = async (outletId) => {
+    if (!outletId) {
+      setLocalCategories([])
+      return
+    }
+    setLoadingCategories(true)
+    try {
+      const res = await adminApi.getCategories({ outlet_id: String(outletId) })
+      const data = res.data?.data || []
+      setLocalCategories(data)
+    } catch (err) {
+      console.error('Failed to load categories for outlet:', err)
+      setLocalCategories([])
+    } finally {
+      setLoadingCategories(false)
+    }
+  }
+
+  // Fetch stations for the selected outlet
+  const fetchStationsForOutlet = async (outletId) => {
+    try {
+      const res = await adminApi.getStations(outletId ? { outlet_id: String(outletId) } : {})
+      setStations(res.data?.data || [])
+    } catch (err) {
+      console.warn('Failed to load stations:', err)
+      setStations([])
+    }
+  }
+
+  // Handle Outlet change: drop category/sub-category/station and load outlet's categories & stations
+  const handleOutletChange = async (newOutletId) => {
+    const nextOutlet = String(newOutletId || '')
+    // 1. Drop previously selected category, sub-category, and station
+    setFormData((prev) => ({
+      ...prev,
+      outlet_id: nextOutlet || null,
+      category_id: '',
+      sub_category: '',
+      station_id: '',
+    }))
+
+    // 2. Fetch categories & stations for newly selected venue
+    await Promise.all([
+      fetchCategoriesForOutlet(nextOutlet),
+      fetchStationsForOutlet(nextOutlet)
+    ])
+  }
+
   useEffect(() => {
-    setLocalCategories(categories)
-  }, [categories])
+    const targetOutlet = item?.outlet_id ? String(item.outlet_id) : ''
+    fetchCategoriesForOutlet(targetOutlet)
+    fetchStationsForOutlet(targetOutlet)
+  }, [item?.outlet_id])
 
   useEffect(() => {
     axiosClient.get('/outlets').then((res) => setOutlets(res.data?.data || [])).catch(() => {})
@@ -377,13 +435,18 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
       setFormData({
         id: item.id || '',
         name: item.name || item.title || '',
-        outlet_id: item.outlet_id ? String(item.outlet_id) : '1',
+        outlet_id: item.outlet_id ? String(item.outlet_id) : null,
+        station_id: item.station_id ? String(item.station_id) : '',
         barcode: item.barcode || '',
         category_id: item.category_id || '',
         sub_category: item.sub_category || '',
         sku: item.sku || '',
         price: item.price ?? '',
         cost_price: item.cost_price ?? '',
+        discount_type: item.discount_type || 'percentage',
+        discount_value: item.discount_value ?? 0,
+        discount_pct: item.discount_pct ?? 0,
+        image_products_id: item.image_products_id ?? null,
         image_url: item.image_url || '',
         is_available: item.is_available !== false,
         is_featured: item.is_featured || false,
@@ -392,7 +455,6 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
         track_stock: item.track_stock ?? true,
         kitchen_station: item.kitchen_station || 'Kitchen',
         prep_time_mins: item.prep_time_mins ?? 15,
-        discount_pct: item.discount_pct ?? 0,
         description: item.description || '',
         option_group_ids: selectedOptionGroupIDs,
         sizes: Array.isArray(item.sizes) ? item.sizes : [],
@@ -402,13 +464,18 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
       setFormData({
         id: '',
         name: '',
-        outlet_id: '1',
+        outlet_id: null,
+        station_id: '',
         barcode: '',
         category_id: '',
         sub_category: '',
         sku: randomSku,
         price: '',
         cost_price: '',
+        discount_type: 'percentage',
+        discount_value: 0,
+        discount_pct: 0,
+        image_products_id: null,
         image_url: '',
         is_available: true,
         is_featured: false,
@@ -417,7 +484,6 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
         track_stock: true,
         kitchen_station: 'Kitchen',
         prep_time_mins: 15,
-        discount_pct: 0,
         description: '',
         option_group_ids: [],
         sizes: [],
@@ -446,8 +512,12 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
     try {
       const { data } = await adminApi.uploadImage(form, 'products')
       const uploadedUrl = data?.url || data?.path
+      const mediaId = data?.media_id || data?.id || null
       if (uploadedUrl) {
         setField('image_url', uploadedUrl)
+        if (mediaId) {
+          setField('image_products_id', mediaId)
+        }
         toast.success('Image uploaded successfully')
       }
     } catch (err) {
@@ -488,7 +558,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
   const handleCreateAddonGroup = async (addonData) => {
     try {
       const payload = {
-        outlet_id: formData.outlet_id ? Number(formData.outlet_id) : null,
+        outlet_id: formData.outlet_id || null,
         name: addonData.group_name || addonData.name,
         type: addonData.type || 'multiple',
         is_required: false,
@@ -540,17 +610,27 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
     }
 
     const payload = {
-      ...formData,
-      category_id: parseInt(formData.category_id),
-      outlet_id: formData.outlet_id ? parseInt(formData.outlet_id) : 1,
+      name: formData.name.trim(),
+      category_id: formData.category_id,
+      outlet_id: formData.outlet_id || null,
+      station_id: formData.station_id || null,
       barcode: formData.barcode ? formData.barcode.trim() : null,
-      price: parseFloat(formData.price),
+      description: formData.description ? formData.description.trim() : null,
+      price: parseFloat(formData.price) || 0,
       cost_price: parseFloat(formData.cost_price) || 0,
+      discount_type: formData.discount_type || 'percentage',
+      discount_value: parseFloat(formData.discount_value) || 0,
+      discount_pct: parseFloat(formData.discount_pct) || 0,
       stock_quantity: parseInt(formData.stock_quantity) || 0,
       low_stock_threshold: parseInt(formData.low_stock_threshold) || 5,
-      discount_pct: parseFloat(formData.discount_pct) || 0,
+      track_stock: Boolean(formData.track_stock),
+      is_available: formData.is_available !== undefined ? Boolean(formData.is_available) : true,
+      is_featured: Boolean(formData.is_featured),
+      kitchen_station: formData.kitchen_station || 'Kitchen',
       prep_time_mins: parseInt(formData.prep_time_mins) || 15,
-      option_group_ids: formData.option_group_ids
+      image_products_id: formData.image_products_id || null,
+      image_url: formData.image_url || null,
+      option_group_ids: Array.isArray(formData.option_group_ids) ? formData.option_group_ids.filter(Boolean) : []
     }
 
     onSave(payload)
@@ -560,9 +640,29 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
     { id: 'venue', label: 'Venue & Outlet' },
     { id: 'basic', label: 'Basic Info' },
     { id: 'pricing', label: 'Pricing & Variants' },
-    { id: 'kitchen', label: 'Kitchen Settings' },
+    { id: 'Station', label: 'Station Settings' },
     { id: 'addons', label: 'Add-ons' },
   ]
+
+  // Station options for SearchSelection
+  const stationOptions = useMemo(() => {
+    if (!stations || stations.length === 0) {
+      return [
+        { id: '1', value: '1', name: 'Kitchen (KDS)', label: 'Kitchen (KDS)', badge: 'KDS' },
+        { id: '2', value: '2', name: 'Bar Counter', label: 'Bar Counter', badge: 'BAR' },
+        { id: '3', value: '3', name: 'Bakery / Pastry', label: 'Bakery / Pastry', badge: 'BAKERY' },
+        { id: '4', value: '4', name: 'Grill Station', label: 'Grill Station', badge: 'GRILL' },
+      ]
+    }
+    return stations.map((s) => ({
+      id: String(s.id),
+      value: String(s.id),
+      name: s.name,
+      label: s.name,
+      badge: (s.type || 'KDS').toUpperCase(),
+      description: s.ip_address ? `IP: ${s.ip_address}` : 'Prep Station',
+    }))
+  }, [stations])
 
   // Outlet / Venue options with badges and flags for SearchSelection
   const outletOptions = useMemo(() => {
@@ -619,11 +719,11 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
 
     const list = []
     const seen = new Set()
-    const selectedCatId = Number(formData.category_id)
+    const selectedCatId = String(formData.category_id)
 
     // 1. Direct sub-categories in localCategories where parent_id matches selected Main Category
     localCategories.forEach((cat) => {
-      if (cat.parent_id && Number(cat.parent_id) === selectedCatId) {
+      if (cat.parent_id && String(cat.parent_id) === selectedCatId) {
         if (!seen.has(cat.name)) {
           seen.add(cat.name)
           list.push({
@@ -637,7 +737,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
     })
 
     // 2. Sub-categories embedded in the selected category object (e.g. cat.sub_categories)
-    const selectedCatObj = localCategories.find((c) => Number(c.id) === selectedCatId)
+    const selectedCatObj = localCategories.find((c) => String(c.id) === selectedCatId)
     if (selectedCatObj && Array.isArray(selectedCatObj.sub_categories)) {
       selectedCatObj.sub_categories.forEach((sc) => {
         const scName = typeof sc === 'string' ? sc : sc.name
@@ -670,7 +770,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
   const profitMarginPct = sellingPrice > 0 ? ((profit / sellingPrice) * 100).toFixed(1) : '0.0'
 
   return (
-    <div className="max-w-5xl mx-auto w-full pb-10 select-none animate-in fade-in duration-200">
+    <div className=" mx-auto w-full pb-10 select-none animate-in fade-in duration-200">
       {/* Top Action Bar */}
       <div className="flex items-center justify-between mb-6">
         <Button
@@ -752,7 +852,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
               {/* ── TAB 1: Venue & Outlet Selection ──────────────────────────── */}
               <div id="venue" className="space-y-2.5 scroll-mt-6">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                  Venue &amp; Outlet
+                  Venue and Outlet
                 </h3>
                 <div
                   className="rounded-[5px] p-6 sm:p-7 space-y-4"
@@ -770,11 +870,11 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                         options={outletOptions}
                         valueKey="id"
                         labelKey="name"
-                        value={String(formData.outlet_id || '1')}
+                        value={String(formData.outlet_id || '')}
                         autoSelect={false}
-                        onChange={(val) => setField('outlet_id', String(val))}
-                        placeholder="Select Venue / Outlet..."
-                        searchPlaceholder="Search venue (Cafe, SkyBar, Mart, Restaurant)..."
+                        onChange={(val) => handleOutletChange(val)}
+                        placeholder="Select Venue"
+                        searchPlaceholder="..."
                       />
                     </div>
 
@@ -784,7 +884,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                       </label>
                       <input
                         type="text"
-                        placeholder="Scan or type barcode (e.g. 885...)"
+                        placeholder="Scan or type barcode"
                         value={formData.barcode}
                         onChange={(e) => setField('barcode', e.target.value)}
                         className="w-full px-3.5 py-2.5 text-xs rounded-[5px] border outline-none font-mono font-bold transition-all"
@@ -875,7 +975,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                         <input
                           type="text"
                           required
-                          placeholder="e.g. Truffle Mushroom Pasta"
+                          placeholder="e.g."
                           value={formData.name}
                           onChange={(e) => setField('name', e.target.value)}
                           className="w-full px-4 py-2.5 text-xs rounded-[5px] border outline-none font-bold transition-all"
@@ -889,9 +989,17 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                            Category *
-                          </label>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>
+                              Category *
+                            </label>
+                            {loadingCategories && (
+                              <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-[#126973] dark:text-[#F1D8C2] animate-pulse">
+                                <Loader2 size={11} className="animate-spin" />
+                                <span>Loading venue categories...</span>
+                              </span>
+                            )}
+                          </div>
                           <SearchSelection
                             name="category_id"
                             options={mainCategories}
@@ -899,12 +1007,28 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                             labelKey="name"
                             value={formData.category_id}
                             autoSelect={false}
+                            disabled={loadingCategories || !formData.outlet_id}
                             onChange={(val) => {
                               setField('category_id', val)
                               setField('sub_category', '')
                             }}
-                            placeholder="Select Main Category..."
-                            searchPlaceholder="Search category..."
+                            placeholder={
+                              loadingCategories
+                                ? '...'
+                                : !formData.outlet_id
+                                ? '...'
+                                : mainCategories.length === 0
+                                ? '...'
+                                : '...'
+                            }
+                            searchPlaceholder="..."
+                            emptyMessage={
+                              loadingCategories
+                                ? '...'
+                                : !formData.outlet_id
+                                ? '...'
+                                : '...'
+                            }
                           />
                         </div>
 
@@ -913,7 +1037,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                             <label className="block text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>
                               Sub-Category
                             </label>
-                            {formData.category_id && (
+                            {formData.category_id && !loadingCategories && (
                               <button
                                 type="button"
                                 onClick={() => setSubCatModalOpen(true)}
@@ -929,12 +1053,24 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                             options={availableSubCategories}
                             value={formData.sub_category}
                             onChange={(val) => setField('sub_category', val)}
-                            disabled={!formData.category_id}
-                            allowCreate={Boolean(formData.category_id)}
+                            disabled={loadingCategories || !formData.category_id}
+                            allowCreate={Boolean(formData.category_id && !loadingCategories)}
                             onCreate={(newVal) => handleCreateSubCat(newVal)}
-                            placeholder={formData.category_id ? "Select or type Sub-Category..." : "Select Main Category first..."}
-                            searchPlaceholder="Search or add sub-category..."
-                            emptyMessage={formData.category_id ? "No sub-categories found. Type to create one." : "Please select a main category first"}
+                            placeholder={
+                              loadingCategories
+                                ? '...'
+                                : !formData.category_id
+                                ? '...'
+                                : '...'
+                            }
+                            searchPlaceholder="..."
+                            emptyMessage={
+                              loadingCategories
+                                ? '...'  
+                                : !formData.category_id
+                                ? '...'
+                                : '...'
+                            }
                           />
                         </div>
                       </div>
@@ -948,7 +1084,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                     </label>
                     <textarea
                       rows={3}
-                      placeholder="Short appetizing description for customer menu..."
+                      placeholder="..."
                       value={formData.description}
                       onChange={(e) => setField('description', e.target.value)}
                       className="w-full px-4 py-2.5 text-xs rounded-[5px] border outline-none resize-none leading-relaxed"
@@ -973,7 +1109,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                         className="w-4 h-4 rounded-[5px] accent-[#BF4040]"
                       />
                       <span className="text-xs font-bold" style={{ color: 'var(--color-text)' }}>
-                        Available for Ordering
+                        Available
                       </span>
                     </label>
 
@@ -985,7 +1121,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                         className="w-4 h-4 rounded-[5px] accent-[#BF4040]"
                       />
                       <span className="text-xs font-bold" style={{ color: 'var(--color-text)' }}>
-                        Featured Highlight
+                        Featured
                       </span>
                     </label>
                   </div>
@@ -1006,7 +1142,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                        Base Selling Price ($) *
+                        Base Price ($) *
                       </label>
                       <input
                         type="number"
@@ -1045,25 +1181,98 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                      Promotional Discount (%)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="1"
-                      placeholder="0"
-                      value={formData.discount_pct}
-                      onChange={(e) => setField('discount_pct', e.target.value)}
-                      className="w-full px-4 py-2.5 text-xs rounded-[5px] border outline-none font-mono"
-                      style={{
-                        background: 'var(--color-bg)',
-                        borderColor: 'var(--color-border)',
-                        color: 'var(--color-text)',
-                      }}
-                    />
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>
+                        Discount
+                      </label>
+                      <div className="inline-flex rounded-[5px] p-0.5 border" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
+                        <button
+                          type="button"
+                          onClick={() => setField('discount_type', 'percentage')}
+                          className={`px-2.5 py-1 text-[11px] font-bold rounded-[4px] transition-all ${
+                            (formData.discount_type || 'percentage') === 'percentage'
+                              ? 'bg-[#126973] text-white shadow-xs'
+                              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                          }`}
+                        >
+                          % Percentage
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setField('discount_type', 'fixed')}
+                          className={`px-2.5 py-1 text-[11px] font-bold rounded-[4px] transition-all ${
+                            formData.discount_type === 'fixed'
+                              ? 'bg-[#126973] text-white shadow-xs'
+                              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                          }`}
+                        >
+                          $ Fixed Amount
+                        </button>
+                      </div>
+                    </div>
+
+                    {formData.discount_type === 'fixed' ? (
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 font-mono">
+                          $
+                        </span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={formData.discount_value}
+                          onChange={(e) => setField('discount_value', e.target.value)}
+                          className="w-full pl-8 pr-4 py-2.5 text-xs rounded-[5px] border outline-none font-mono font-bold"
+                          style={{
+                            background: 'var(--color-bg)',
+                            borderColor: 'var(--color-border)',
+                            color: 'var(--color-text)',
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="1"
+                          placeholder="0"
+                          value={formData.discount_pct}
+                          onChange={(e) => setField('discount_pct', e.target.value)}
+                          className="w-full pr-8 pl-4 py-2.5 text-xs rounded-[5px] border outline-none font-mono font-bold"
+                          style={{
+                            background: 'var(--color-bg)',
+                            borderColor: 'var(--color-border)',
+                            color: 'var(--color-text)',
+                          }}
+                        />
+                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 font-mono">
+                          %
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Live Effective Price Preview */}
+                    {sellingPrice > 0 && (
+                      <div className="text-[11px] font-medium flex items-center gap-2 pt-1" style={{ color: 'var(--color-muted)' }}>
+                        <span>Effective Price:</span>
+                        <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                          ${(
+                            formData.discount_type === 'fixed'
+                              ? Math.max(0, sellingPrice - (parseFloat(formData.discount_value) || 0))
+                              : sellingPrice * (1 - (parseFloat(formData.discount_pct) || 0) / 100)
+                          ).toFixed(2)}
+                        </span>
+                        {(formData.discount_type === 'fixed' ? parseFloat(formData.discount_value) > 0 : parseFloat(formData.discount_pct) > 0) && (
+                          <span className="line-through text-slate-400 font-mono">
+                            ${sellingPrice.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -1086,7 +1295,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                     </div>
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                        Low Stock Alert At
+                        Low Stock
                       </label>
                       <input
                         type="number"
@@ -1147,7 +1356,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                           <div key={idx} className="flex items-center gap-3">
                             <input
                               type="text"
-                              placeholder="Variant Name (e.g. Large)"
+                              placeholder="(e.g. Large)"
                               value={sz.name}
                               onChange={(e) => {
                                 const newSizes = [...formData.sizes]
@@ -1213,10 +1422,10 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                 </div>
               </div>
 
-              {/* ── TAB 3: Kitchen Settings ───────────────────── */}
-              <div id="kitchen" className="space-y-2.5 scroll-mt-6">
+              {/* ── TAB 3: Station Settings ───────────────────── */}
+              <div id="Station" className="space-y-2.5 scroll-mt-6">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                  Kitchen Settings
+                  Station Settings
                 </h3>
                 <div
                   className="rounded-[5px] p-6 sm:p-7 space-y-6"
@@ -1227,15 +1436,18 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                        Kitchen Station
+                        Station Routing
                       </label>
                       <SearchSelection
-                        name="kitchen_station"
-                        options={STATION_OPTIONS}
-                        value={formData.kitchen_station}
-                        onChange={(val) => setField('kitchen_station', val)}
-                        placeholder="Select Kitchen Station..."
+                        name="station_id"
+                        options={stationOptions}
+                        valueKey="id"
+                        labelKey="name"
+                        value={formData.station_id ? String(formData.station_id) : ''}
+                        onChange={(val) => setField('station_id', val ? String(val) : '')}
+                        placeholder={stations.length === 0 ? "Default Kitchen" : "Select Preparation Station..."}
                         searchPlaceholder="Search station..."
+                        emptyMessage="No stations found for this venue"
                       />
                     </div>
                     <div>

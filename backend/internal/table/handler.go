@@ -3,9 +3,9 @@ package table
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/ws"
 	"github.com/pos-system/backend/pkg/pagination"
 )
@@ -48,7 +48,7 @@ func (h *Handler) ListTables(c *gin.Context) {
 }
 
 func (h *Handler) GetTable(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid table id"})
 		return
@@ -75,7 +75,7 @@ func (h *Handler) CreateTable(c *gin.Context) {
 }
 
 func (h *Handler) UpdateTable(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid table id"})
 		return
@@ -93,7 +93,7 @@ func (h *Handler) UpdateTable(c *gin.Context) {
 }
 
 func (h *Handler) DeleteTable(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid table id"})
 		return
@@ -106,7 +106,7 @@ func (h *Handler) DeleteTable(c *gin.Context) {
 }
 
 func (h *Handler) UpdateTableStatus(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid table id"})
 		return
@@ -129,18 +129,18 @@ func (h *Handler) UpdateTableStatus(c *gin.Context) {
 
 func (h *Handler) OpenSession(c *gin.Context) {
 	var req struct {
-		TableID      uint64  `json:"table_id" binding:"required"`
-		CustomerName *string `json:"customer_name"`
-		GuestCount   int     `json:"guest_count"`
+		TableID      uuid.UUID `json:"table_id" binding:"required"`
+		CustomerName *string   `json:"customer_name"`
+		GuestCount   int       `json:"guest_count"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	var waiterID *uint64
+	var waiterID *uuid.UUID
 	if uidVal, exists := c.Get("user_id"); exists {
-		if uid, ok := uidVal.(uint64); ok {
+		if uid, ok := uidVal.(uuid.UUID); ok {
 			waiterID = &uid
 		}
 	}
@@ -160,9 +160,9 @@ func (h *Handler) OpenSession(c *gin.Context) {
 func (h *Handler) ListSessions(c *gin.Context) {
 	p := pagination.GetPagination(c)
 	status := c.Query("status")
-	var tableID *uint64
-	if tStr := c.Query("table_id"); tStr != "" {
-		if tid, err := strconv.ParseUint(tStr, 10, 64); err == nil {
+	var tableID *uuid.UUID
+	if tStr := c.Query("table_id"); tStr != "" && tStr != "all" {
+		if tid, err := uuid.Parse(tStr); err == nil {
 			tableID = &tid
 		}
 	}
@@ -185,15 +185,15 @@ func (h *Handler) ListActiveSessions(c *gin.Context) {
 }
 
 func (h *Handler) CloseSession(c *gin.Context) {
-	sessionID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	sessionID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid session id"})
 		return
 	}
 
-	var tableID uint64
+	var tableID uuid.UUID
 	if tStr := c.Query("table_id"); tStr != "" {
-		tableID, _ = strconv.ParseUint(tStr, 10, 64)
+		tableID, _ = uuid.Parse(tStr)
 	}
 
 	session, _ := h.svc.GetSessionByID(sessionID)
@@ -212,12 +212,12 @@ func (h *Handler) CloseSession(c *gin.Context) {
 			h.broadcastWS(fmt.Sprintf("table_%s", session.SessionToken), `{"event":"session_closed"}`)
 			h.broadcastWS(fmt.Sprintf("table_%s", session.SessionToken), `{"event":"order_updated"}`)
 		}
-		if session.TableID > 0 {
-			h.broadcastWS(fmt.Sprintf("table_%d", session.TableID), `{"event":"session_closed"}`)
+		if session.TableID != uuid.Nil {
+			h.broadcastWS(fmt.Sprintf("table_%s", session.TableID.String()), `{"event":"session_closed"}`)
 		}
 	}
-	if tableID > 0 {
-		h.broadcastWS(fmt.Sprintf("table_%d", tableID), `{"event":"session_closed"}`)
+	if tableID != uuid.Nil {
+		h.broadcastWS(fmt.Sprintf("table_%s", tableID.String()), `{"event":"session_closed"}`)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "session closed"})

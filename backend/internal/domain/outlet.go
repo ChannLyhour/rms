@@ -3,12 +3,13 @@ package domain
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/enum"
 )
 
 // Outlet represents a distinct department/business unit (Cafe, Bar, Mart, Restaurant)
 type Outlet struct {
-	ID          uint64          `gorm:"primaryKey;autoIncrement" json:"id"`
+	ID          uuid.UUID       `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
 	Name        string          `gorm:"size:100;not null" json:"name"`
 	Code        string          `gorm:"size:50;uniqueIndex;not null" json:"code"` // CAFE, BAR, MART, REST
 	Type        enum.OutletType `gorm:"size:50;not null;default:'dine_in'" json:"type"` // cafe, bar, retail, dine_in
@@ -23,8 +24,8 @@ type Outlet struct {
 
 // Zone represents a physical area or floor within an outlet (e.g. Ground Terrace, Rooftop 45F)
 type Zone struct {
-	ID          uint64    `gorm:"primaryKey;autoIncrement" json:"id"`
-	OutletID    uint64    `gorm:"not null" json:"outlet_id"`
+	ID          uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
+	OutletID    uuid.UUID `gorm:"type:uuid;not null" json:"outlet_id"`
 	Name        string    `gorm:"size:100;not null" json:"name"`
 	FloorNumber int       `gorm:"default:1" json:"floor_number"`
 	CreatedAt   time.Time `json:"created_at"`
@@ -33,8 +34,8 @@ type Zone struct {
 
 // Station represents a KDS station, Barista prep screen, Bar counter, or printer
 type Station struct {
-	ID        uint64    `gorm:"primaryKey;autoIncrement" json:"id"`
-	OutletID  uint64    `gorm:"not null" json:"outlet_id"`
+	ID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
+	OutletID  uuid.UUID `gorm:"type:uuid;not null" json:"outlet_id"`
 	Name      string    `gorm:"size:100;not null" json:"name"`
 	Type      string    `gorm:"size:50;not null;default:'kds'" json:"type"` // kds, printer, cashier
 	IPAddress *string   `gorm:"size:45" json:"ip_address,omitempty"`
@@ -64,30 +65,30 @@ type UpdateOutletRequest struct {
 
 // CreateZoneRequest is the payload for creating a new zone
 type CreateZoneRequest struct {
-	OutletID    uint64 `json:"outlet_id"`
-	Name        string `json:"name" binding:"required"`
-	FloorNumber int    `json:"floor_number"`
+	OutletID    uuid.UUID `json:"outlet_id" binding:"required"`
+	Name        string    `json:"name" binding:"required"`
+	FloorNumber int       `json:"floor_number"`
 }
 
 // UpdateZoneRequest is the payload for updating an existing zone
 type UpdateZoneRequest struct {
-	OutletID    *uint64 `json:"outlet_id"`
-	Name        *string `json:"name"`
-	FloorNumber *int    `json:"floor_number"`
+	OutletID    *uuid.UUID `json:"outlet_id"`
+	Name        *string    `json:"name"`
+	FloorNumber *int       `json:"floor_number"`
 }
 
 // CreateStationRequest is the payload for creating a new station
 type CreateStationRequest struct {
-	OutletID  uint64  `json:"outlet_id"`
-	Name      string  `json:"name" binding:"required"`
-	Type      string  `json:"type" binding:"required"` // kds, printer, cashier
-	IPAddress *string `json:"ip_address"`
+	OutletID  uuid.UUID `json:"outlet_id" binding:"required"`
+	Name      string    `json:"name" binding:"required"`
+	Type      string    `json:"type" binding:"required"` // kds, printer, cashier
+	IPAddress *string   `json:"ip_address"`
 }
 
 // UpdateStationRequest is the payload for updating an existing station
 type UpdateStationRequest struct {
-	OutletID  *uint64 `json:"outlet_id"`
-	Name      *string `json:"name"`
-	Type      *string `json:"type"`
-	IPAddress *string `json:"ip_address"`
+	OutletID  *uuid.UUID `json:"outlet_id"`
+	Name      *string    `json:"name"`
+	Type      *string    `json:"type"`
+	IPAddress *string    `json:"ip_address"`
 }

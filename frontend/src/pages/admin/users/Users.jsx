@@ -381,7 +381,7 @@ export default function Users() {
                   sortDescriptor={sortDescriptor}
                   onSort={handleSort}
                 />
-                
+                <Table.Head id="venues" label="Assigned Venues" />
                 <Table.Head id="status" label="Status" />
                 <Table.Head id="actions" className="text-right">
                   Actions
@@ -420,7 +420,6 @@ export default function Users() {
                       {/* Role Badge */}
                       <Table.Cell>
                         <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-[5px] bg-gray-500/10 text-gray-600 dark:bg-gray-500/20 dark:text-gray-400 border-gray-500/20`}>
-                         
                           {roleConf.label}
                         </span>
                       </Table.Cell>
@@ -433,7 +432,39 @@ export default function Users() {
                         </div>
                       </Table.Cell>
 
-                      
+                      {/* Venues */}
+                      <Table.Cell>
+                        <div className="flex items-center gap-1.5 flex-wrap max-w-xs">
+                          {u.outlets && u.outlets.length > 0 ? (
+                            u.outlets.length === outlets.length && outlets.length > 1 ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#126973]/10 text-[#126973] dark:text-[#F1D8C2] border border-[#126973]/20">
+                                <Building2 size={12} />
+                                <span>All Venues</span>
+                              </span>
+                            ) : (
+                              u.outlets.map((o) => (
+                                <span
+                                  key={o.id}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                                >
+                                  {getOutletIcon(o.type, 12)}
+                                  <span>{o.name}</span>
+                                </span>
+                              ))
+                            )
+                          ) : assignedOutlet ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                              {getOutletIcon(assignedOutlet.type, 12)}
+                              <span>{assignedOutlet.name}</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#126973]/10 text-[#126973] dark:text-[#F1D8C2] border border-[#126973]/20">
+                              <Building2 size={12} />
+                              <span>Global (All)</span>
+                            </span>
+                          )}
+                        </div>
+                      </Table.Cell>
 
                       {/* Status */}
                       <Table.Cell>

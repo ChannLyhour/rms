@@ -4,29 +4,29 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/pkg/pagination"
 	"github.com/pos-system/backend/pkg/qrcode"
 )
 
 type Service interface {
 	ListTables(zone string, status string, p pagination.Params) ([]Table, int64, error)
-	GetTable(id uint64) (*Table, error)
+	GetTable(id uuid.UUID) (*Table, error)
 	CreateTable(t *Table) error
-	UpdateTable(id uint64, t *Table) error
-	DeleteTable(id uint64) error
-	UpdateTableStatus(tableID uint64, status string) error
+	UpdateTable(id uuid.UUID, t *Table) error
+	DeleteTable(id uuid.UUID) error
+	UpdateTableStatus(tableID uuid.UUID, status string) error
 
 	// Sessions
-	OpenSession(tableID uint64, customerName *string, guestCount int, waiterID *uint64) (*TableSession, string, error)
-	GetSessionByID(id uint64) (*TableSession, error)
+	OpenSession(tableID uuid.UUID, customerName *string, guestCount int, waiterID *uuid.UUID) (*TableSession, string, error)
+	GetSessionByID(id uuid.UUID) (*TableSession, error)
 	GetSessionByToken(token string) (*TableSession, error)
-	ListSessions(tableID *uint64, status string, p pagination.Params) ([]TableSession, int64, error)
+	ListSessions(tableID *uuid.UUID, status string, p pagination.Params) ([]TableSession, int64, error)
 	ListActiveSessions() ([]TableSession, error)
-	CloseSession(sessionID, tableID uint64) error
+	CloseSession(sessionID, tableID uuid.UUID) error
 }
 
 type service struct {
@@ -42,7 +42,7 @@ func (s *service) ListTables(zone string, status string, p pagination.Params) ([
 	return s.repo.ListTables(zone, status, p)
 }
 
-func (s *service) GetTable(id uint64) (*Table, error) {
+func (s *service) GetTable(id uuid.UUID) (*Table, error) {
 	return s.repo.GetTableByID(id)
 }
 
@@ -51,19 +51,19 @@ func (s *service) CreateTable(t *Table) error {
 	return s.repo.CreateTable(t)
 }
 
-func (s *service) UpdateTable(id uint64, t *Table) error {
+func (s *service) UpdateTable(id uuid.UUID, t *Table) error {
 	return s.repo.UpdateTable(id, t)
 }
 
-func (s *service) DeleteTable(id uint64) error {
+func (s *service) DeleteTable(id uuid.UUID) error {
 	return s.repo.DeleteTable(id)
 }
 
-func (s *service) UpdateTableStatus(tableID uint64, status string) error {
+func (s *service) UpdateTableStatus(tableID uuid.UUID, status string) error {
 	return s.repo.UpdateTableStatus(tableID, status)
 }
 
-func (s *service) OpenSession(tableID uint64, customerName *string, guestCount int, waiterID *uint64) (*TableSession, string, error) {
+func (s *service) OpenSession(tableID uuid.UUID, customerName *string, guestCount int, waiterID *uuid.UUID) (*TableSession, string, error) {
 	_, err := s.repo.GetTableByID(tableID)
 	if err != nil {
 		return nil, "", errors.New("table not found")
@@ -105,7 +105,7 @@ func (s *service) OpenSession(tableID uint64, customerName *string, guestCount i
 	return session, qrBase64, nil
 }
 
-func (s *service) GetSessionByID(id uint64) (*TableSession, error) {
+func (s *service) GetSessionByID(id uuid.UUID) (*TableSession, error) {
 	return s.repo.GetSessionByID(id)
 }
 
@@ -119,8 +119,8 @@ func (s *service) GetSessionByToken(token string) (*TableSession, error) {
 		return sess, nil
 	}
 
-	// 2. Try by table ID if token is numeric (e.g. "8")
-	if tid, errConv := strconv.ParseUint(token, 10, 64); errConv == nil && tid > 0 {
+	// 2. Try by table ID if token is a UUID
+	if tid, errConv := uuid.Parse(token); errConv == nil && tid != uuid.Nil {
 		activeSess, errAct := s.repo.GetActiveSessionByTableID(tid)
 		if errAct == nil && activeSess != nil {
 			return activeSess, nil
@@ -146,7 +146,7 @@ func (s *service) GetSessionByToken(token string) (*TableSession, error) {
 			cleanTblNum = strings.TrimPrefix(cleanTblNum, "table#")
 			cleanTblNum = strings.TrimPrefix(cleanTblNum, "#")
 
-			if cleanTblNum == cleanToken || strconv.FormatUint(tbl.ID, 10) == cleanToken {
+			if cleanTblNum == cleanToken || tbl.ID.String() == cleanToken {
 				activeSess, errAct := s.repo.GetActiveSessionByTableID(tbl.ID)
 				if errAct == nil && activeSess != nil {
 					return activeSess, nil
@@ -159,7 +159,7 @@ func (s *service) GetSessionByToken(token string) (*TableSession, error) {
 	return nil, errors.New("invalid or expired session token")
 }
 
-func (s *service) ListSessions(tableID *uint64, status string, p pagination.Params) ([]TableSession, int64, error) {
+func (s *service) ListSessions(tableID *uuid.UUID, status string, p pagination.Params) ([]TableSession, int64, error) {
 	return s.repo.ListSessions(tableID, status, p)
 }
 
@@ -167,8 +167,8 @@ func (s *service) ListActiveSessions() ([]TableSession, error) {
 	return s.repo.ListActiveSessions()
 }
 
-func (s *service) CloseSession(sessionID, tableID uint64) error {
-	if tableID == 0 {
+func (s *service) CloseSession(sessionID, tableID uuid.UUID) error {
+	if tableID == uuid.Nil {
 		sess, err := s.repo.GetSessionByID(sessionID)
 		if err == nil && sess != nil {
 			tableID = sess.TableID
@@ -177,7 +177,7 @@ func (s *service) CloseSession(sessionID, tableID uint64) error {
 	if err := s.repo.CloseSession(sessionID); err != nil {
 		return err
 	}
-	if tableID > 0 {
+	if tableID != uuid.Nil {
 		_ = s.repo.UpdateTableStatus(tableID, "available")
 	}
 	return nil

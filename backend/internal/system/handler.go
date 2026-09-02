@@ -2,9 +2,9 @@ package system
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/pkg/pagination"
 )
 
@@ -48,9 +48,9 @@ func (h *Handler) SetSetting(c *gin.Context) {
 		return
 	}
 
-	var userID *uint64
+	var userID *uuid.UUID
 	if uidVal, exists := c.Get("user_id"); exists {
-		if uid, ok := uidVal.(uint64); ok {
+		if uid, ok := uidVal.(uuid.UUID); ok {
 			userID = &uid
 		}
 	}
@@ -76,9 +76,9 @@ func (h *Handler) DeleteSetting(c *gin.Context) {
 
 func (h *Handler) ListLogs(c *gin.Context) {
 	p := pagination.GetPagination(c)
-	var orderID *uint64
-	if oStr := c.Query("order_id"); oStr != "" {
-		if oid, err := strconv.ParseUint(oStr, 10, 64); err == nil {
+	var orderID *uuid.UUID
+	if oStr := c.Query("order_id"); oStr != "" && oStr != "all" {
+		if oid, err := uuid.Parse(oStr); err == nil {
 			orderID = &oid
 		}
 	}

@@ -2,9 +2,9 @@ package inventory
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/pkg/pagination"
 )
 
@@ -31,7 +31,7 @@ func (h *Handler) ListSuppliers(c *gin.Context) {
 }
 
 func (h *Handler) GetSupplier(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid supplier id"})
 		return
@@ -58,7 +58,7 @@ func (h *Handler) CreateSupplier(c *gin.Context) {
 }
 
 func (h *Handler) UpdateSupplier(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid supplier id"})
 		return
@@ -76,7 +76,7 @@ func (h *Handler) UpdateSupplier(c *gin.Context) {
 }
 
 func (h *Handler) DeleteSupplier(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid supplier id"})
 		return
@@ -104,7 +104,7 @@ func (h *Handler) ListIngredients(c *gin.Context) {
 }
 
 func (h *Handler) GetIngredient(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ingredient id"})
 		return
@@ -131,7 +131,7 @@ func (h *Handler) CreateIngredient(c *gin.Context) {
 }
 
 func (h *Handler) UpdateIngredient(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ingredient id"})
 		return
@@ -149,7 +149,7 @@ func (h *Handler) UpdateIngredient(c *gin.Context) {
 }
 
 func (h *Handler) DeleteIngredient(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ingredient id"})
 		return
@@ -165,9 +165,9 @@ func (h *Handler) DeleteIngredient(c *gin.Context) {
 
 func (h *Handler) ListRecipes(c *gin.Context) {
 	p := pagination.GetPagination(c)
-	var productID *uint64
-	if pidStr := c.Query("product_id"); pidStr != "" {
-		if pid, err := strconv.ParseUint(pidStr, 10, 64); err == nil {
+	var productID *uuid.UUID
+	if pidStr := c.Query("product_id"); pidStr != "" && pidStr != "all" {
+		if pid, err := uuid.Parse(pidStr); err == nil {
 			productID = &pid
 		}
 	}
@@ -194,7 +194,7 @@ func (h *Handler) CreateRecipe(c *gin.Context) {
 }
 
 func (h *Handler) DeleteRecipe(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid recipe id"})
 		return
@@ -211,9 +211,9 @@ func (h *Handler) DeleteRecipe(c *gin.Context) {
 func (h *Handler) ListPurchaseOrders(c *gin.Context) {
 	p := pagination.GetPagination(c)
 	status := c.Query("status")
-	var supplierID *uint64
-	if sidStr := c.Query("supplier_id"); sidStr != "" {
-		if sid, err := strconv.ParseUint(sidStr, 10, 64); err == nil {
+	var supplierID *uuid.UUID
+	if sidStr := c.Query("supplier_id"); sidStr != "" && sidStr != "all" {
+		if sid, err := uuid.Parse(sidStr); err == nil {
 			supplierID = &sid
 		}
 	}
@@ -227,7 +227,7 @@ func (h *Handler) ListPurchaseOrders(c *gin.Context) {
 }
 
 func (h *Handler) GetPurchaseOrder(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid purchase order id"})
 		return
@@ -254,7 +254,7 @@ func (h *Handler) CreatePurchaseOrder(c *gin.Context) {
 }
 
 func (h *Handler) UpdatePurchaseOrderStatus(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid purchase order id"})
 		return
@@ -274,7 +274,7 @@ func (h *Handler) UpdatePurchaseOrderStatus(c *gin.Context) {
 }
 
 func (h *Handler) DeletePurchaseOrder(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid purchase order id"})
 		return
@@ -290,9 +290,9 @@ func (h *Handler) DeletePurchaseOrder(c *gin.Context) {
 
 func (h *Handler) ListIngredientStockLogs(c *gin.Context) {
 	p := pagination.GetPagination(c)
-	var ingID *uint64
-	if idStr := c.Query("ingredient_id"); idStr != "" {
-		if id, err := strconv.ParseUint(idStr, 10, 64); err == nil {
+	var ingID *uuid.UUID
+	if idStr := c.Query("ingredient_id"); idStr != "" && idStr != "all" {
+		if id, err := uuid.Parse(idStr); err == nil {
 			ingID = &id
 		}
 	}
@@ -307,9 +307,9 @@ func (h *Handler) ListIngredientStockLogs(c *gin.Context) {
 
 func (h *Handler) ListProductStockLogs(c *gin.Context) {
 	p := pagination.GetPagination(c)
-	var pID *uint64
-	if idStr := c.Query("product_id"); idStr != "" {
-		if id, err := strconv.ParseUint(idStr, 10, 64); err == nil {
+	var pID *uuid.UUID
+	if idStr := c.Query("product_id"); idStr != "" && idStr != "all" {
+		if id, err := uuid.Parse(idStr); err == nil {
 			pID = &id
 		}
 	}

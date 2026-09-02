@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/products"
 	"github.com/pos-system/backend/internal/system"
 	"github.com/pos-system/backend/internal/table"
@@ -53,9 +54,9 @@ func (h *Handler) CreatePOSOrder(c *gin.Context) {
 		return
 	}
 
-	var cashierID *uint64
+	var cashierID *uuid.UUID
 	if uidVal, exists := c.Get("user_id"); exists {
-		if uid, ok := uidVal.(uint64); ok {
+		if uid, ok := uidVal.(uuid.UUID); ok {
 			cashierID = &uid
 		}
 	}
@@ -75,8 +76,8 @@ func (h *Handler) CreatePOSOrder(c *gin.Context) {
 	h.broadcastWS("cashier", `{"event":"new_order"}`)
 	if order.TableSession != nil && order.TableSession.SessionToken != "" {
 		h.broadcastWS(fmt.Sprintf("table_%s", order.TableSession.SessionToken), `{"event":"order_updated"}`)
-	} else if req.TableSessionID > 0 {
-		if session, sErr := h.tableSvc.GetSessionByID(req.TableSessionID); sErr == nil && session != nil && session.SessionToken != "" {
+	} else if req.TableSessionID != nil && *req.TableSessionID != uuid.Nil {
+		if session, sErr := h.tableSvc.GetSessionByID(*req.TableSessionID); sErr == nil && session != nil && session.SessionToken != "" {
 			h.broadcastWS(fmt.Sprintf("table_%s", session.SessionToken), `{"event":"order_updated"}`)
 		}
 	}
@@ -90,7 +91,7 @@ func (h *Handler) GetOrdersBySession(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session_id query parameter is required"})
 		return
 	}
-	sessionID, err := strconv.ParseUint(sessionIDStr, 10, 64)
+	sessionID, err := uuid.Parse(sessionIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid session_id"})
 		return
@@ -110,9 +111,9 @@ func (h *Handler) ListOrders(c *gin.Context) {
 	status := c.Query("status")
 	orderType := c.Query("order_type")
 
-	var sessionID *uint64
-	if sStr := c.Query("session_id"); sStr != "" {
-		if sid, err := strconv.ParseUint(sStr, 10, 64); err == nil {
+	var sessionID *uuid.UUID
+	if sStr := c.Query("session_id"); sStr != "" && sStr != "all" {
+		if sid, err := uuid.Parse(sStr); err == nil {
 			sessionID = &sid
 		}
 	}
@@ -126,7 +127,7 @@ func (h *Handler) ListOrders(c *gin.Context) {
 }
 
 func (h *Handler) GetOrderByID(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid order id"})
 		return
@@ -140,7 +141,7 @@ func (h *Handler) GetOrderByID(c *gin.Context) {
 }
 
 func (h *Handler) UpdatePOSOrderStatus(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid order id"})
 		return
@@ -154,10 +155,10 @@ func (h *Handler) UpdatePOSOrderStatus(c *gin.Context) {
 		return
 	}
 
-	var acceptedBy *uint64
+	var acceptedBy *uuid.UUID
 	var acceptedRole *string
 	if uidVal, exists := c.Get("user_id"); exists {
-		if uid, ok := uidVal.(uint64); ok && uid > 0 {
+		if uid, ok := uidVal.(uuid.UUID); ok && uid != uuid.Nil {
 			acceptedBy = &uid
 		}
 	}
@@ -195,7 +196,7 @@ func (h *Handler) ListKitchenOrders(c *gin.Context) {
 }
 
 func (h *Handler) UpdateKitchenOrderStatus(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid order id"})
 		return
@@ -234,9 +235,9 @@ func (h *Handler) ProcessPayment(c *gin.Context) {
 		return
 	}
 
-	var cashierID *uint64
+	var cashierID *uuid.UUID
 	if uidVal, exists := c.Get("user_id"); exists {
-		if uid, ok := uidVal.(uint64); ok {
+		if uid, ok := uidVal.(uuid.UUID); ok {
 			cashierID = &uid
 		}
 	}
@@ -249,8 +250,8 @@ func (h *Handler) ProcessPayment(c *gin.Context) {
 
 	h.broadcastWS("cashier", `{"event":"order_updated"}`)
 	h.broadcastWS("kitchen", `{"event":"order_updated"}`)
-	if req.TableSessionID > 0 {
-		if session, sErr := h.tableSvc.GetSessionByID(req.TableSessionID); sErr == nil && session != nil && session.SessionToken != "" {
+	if req.TableSessionID != nil && *req.TableSessionID != uuid.Nil {
+		if session, sErr := h.tableSvc.GetSessionByID(*req.TableSessionID); sErr == nil && session != nil && session.SessionToken != "" {
 			h.broadcastWS(fmt.Sprintf("table_%s", session.SessionToken), `{"event":"order_updated"}`)
 		}
 	}
@@ -272,7 +273,7 @@ func (h *Handler) ListPayments(c *gin.Context) {
 }
 
 func (h *Handler) GetPaymentByID(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payment id"})
 		return
@@ -338,7 +339,7 @@ func (h *Handler) PlaceCustomerOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	req.TableSessionID = session.ID
+	req.TableSessionID = &session.ID
 
 	order, err := h.svc.CreateOrder(&req, "qr_scan", nil)
 	if err != nil {
@@ -445,12 +446,12 @@ func (h *Handler) CallCashier(c *gin.Context) {
 	if req.ServiceType == "bill" {
 		newStatus = "bill_requested"
 	}
-	if session.TableID > 0 {
+	if session.TableID != uuid.Nil {
 		_ = h.tableSvc.UpdateTableStatus(session.TableID, newStatus)
 	}
 
-	msg := fmt.Sprintf(`{"event":"call_cashier","table_number":"%s","table_id":%d,"service_type":"%s","title":"%s","time":"%s"}`,
-		tableNum, session.TableID, req.ServiceType, title, time.Now().Format("15:04:05"))
+	msg := fmt.Sprintf(`{"event":"call_cashier","table_number":"%s","table_id":"%s","service_type":"%s","title":"%s","time":"%s"}`,
+		tableNum, session.TableID.String(), req.ServiceType, title, time.Now().Format("15:04:05"))
 
 	h.broadcastWS("cashier", msg)
 	h.broadcastWS("kitchen", msg)
@@ -481,7 +482,7 @@ func (h *Handler) PayCustomerTicket(c *gin.Context) {
 	}
 
 	order, err := h.svc.GetOrderByID(req.OrderID)
-	if err != nil || order == nil || order.TableSessionID != session.ID {
+	if err != nil || order == nil || (order.TableSessionID != nil && *order.TableSessionID != session.ID) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "order ticket not found for this table"})
 		return
 	}
@@ -497,9 +498,9 @@ func (h *Handler) PayCustomerTicket(c *gin.Context) {
 	}
 
 	// Real-time broadcasts to Table, Cashier, and Kitchen
-	h.broadcastWS(fmt.Sprintf("table_%s", token), fmt.Sprintf(`{"event":"order_updated","order_id":%d,"payment_status":"paid"}`, req.OrderID))
-	h.broadcastWS("cashier", fmt.Sprintf(`{"event":"order_updated","order_id":%d,"payment_status":"paid"}`, req.OrderID))
-	h.broadcastWS("kitchen", fmt.Sprintf(`{"event":"order_updated","order_id":%d,"payment_status":"paid"}`, req.OrderID))
+	h.broadcastWS(fmt.Sprintf("table_%s", token), fmt.Sprintf(`{"event":"order_updated","order_id":"%s","payment_status":"paid"}`, req.OrderID.String()))
+	h.broadcastWS("cashier", fmt.Sprintf(`{"event":"order_updated","order_id":"%s","payment_status":"paid"}`, req.OrderID.String()))
+	h.broadcastWS("kitchen", fmt.Sprintf(`{"event":"order_updated","order_id":"%s","payment_status":"paid"}`, req.OrderID.String()))
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":        "ticket payment registered successfully",

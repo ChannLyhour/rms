@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/domain"
 	"gorm.io/gorm"
 )
@@ -26,7 +27,7 @@ func (r *UserRepository) FindByUsername(username string) (*domain.User, error) {
 }
 
 // FindByID returns a user by primary key
-func (r *UserRepository) FindByID(id uint64) (*domain.User, error) {
+func (r *UserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 	var user domain.User
 	err := r.db.Preload("Role").First(&user, id).Error
 	return &user, err
@@ -54,6 +55,6 @@ func (r *UserRepository) Update(user *domain.User) error {
 }
 
 // Delete soft-deactivates a user
-func (r *UserRepository) Delete(id uint64) error {
+func (r *UserRepository) Delete(id uuid.UUID) error {
 	return r.db.Model(&domain.User{}).Where("id = ?", id).Update("is_active", false).Error
 }

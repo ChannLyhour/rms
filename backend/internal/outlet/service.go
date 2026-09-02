@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/domain"
 	"github.com/pos-system/backend/internal/enum"
 )
@@ -19,26 +20,26 @@ var (
 type Service interface {
 	// Outlets
 	GetAllOutlets(ctx context.Context, search string, onlyActive bool) ([]domain.Outlet, error)
-	GetOutletByID(ctx context.Context, id uint64) (*domain.Outlet, error)
+	GetOutletByID(ctx context.Context, id uuid.UUID) (*domain.Outlet, error)
 	CreateOutlet(ctx context.Context, req *domain.CreateOutletRequest) (*domain.Outlet, error)
-	UpdateOutlet(ctx context.Context, id uint64, req *domain.UpdateOutletRequest) (*domain.Outlet, error)
-	DeleteOutlet(ctx context.Context, id uint64) error
+	UpdateOutlet(ctx context.Context, id uuid.UUID, req *domain.UpdateOutletRequest) (*domain.Outlet, error)
+	DeleteOutlet(ctx context.Context, id uuid.UUID) error
 
 	// Zones
-	GetAllZones(ctx context.Context, outletID *uint64, search string) ([]domain.Zone, error)
-	GetZonesByOutlet(ctx context.Context, outletID uint64) ([]domain.Zone, error)
-	GetZoneByID(ctx context.Context, id uint64) (*domain.Zone, error)
+	GetAllZones(ctx context.Context, outletID *uuid.UUID, search string) ([]domain.Zone, error)
+	GetZonesByOutlet(ctx context.Context, outletID uuid.UUID) ([]domain.Zone, error)
+	GetZoneByID(ctx context.Context, id uuid.UUID) (*domain.Zone, error)
 	CreateZone(ctx context.Context, req *domain.CreateZoneRequest) (*domain.Zone, error)
-	UpdateZone(ctx context.Context, id uint64, req *domain.UpdateZoneRequest) (*domain.Zone, error)
-	DeleteZone(ctx context.Context, id uint64) error
+	UpdateZone(ctx context.Context, id uuid.UUID, req *domain.UpdateZoneRequest) (*domain.Zone, error)
+	DeleteZone(ctx context.Context, id uuid.UUID) error
 
 	// Stations
-	GetAllStations(ctx context.Context, outletID *uint64, search string) ([]domain.Station, error)
-	GetStationsByOutlet(ctx context.Context, outletID uint64) ([]domain.Station, error)
-	GetStationByID(ctx context.Context, id uint64) (*domain.Station, error)
+	GetAllStations(ctx context.Context, outletID *uuid.UUID, search string) ([]domain.Station, error)
+	GetStationsByOutlet(ctx context.Context, outletID uuid.UUID) ([]domain.Station, error)
+	GetStationByID(ctx context.Context, id uuid.UUID) (*domain.Station, error)
 	CreateStation(ctx context.Context, req *domain.CreateStationRequest) (*domain.Station, error)
-	UpdateStation(ctx context.Context, id uint64, req *domain.UpdateStationRequest) (*domain.Station, error)
-	DeleteStation(ctx context.Context, id uint64) error
+	UpdateStation(ctx context.Context, id uuid.UUID, req *domain.UpdateStationRequest) (*domain.Station, error)
+	DeleteStation(ctx context.Context, id uuid.UUID) error
 }
 
 type service struct {
@@ -55,7 +56,7 @@ func (s *service) GetAllOutlets(ctx context.Context, search string, onlyActive b
 	return s.repo.FindAll(ctx, search, onlyActive)
 }
 
-func (s *service) GetOutletByID(ctx context.Context, id uint64) (*domain.Outlet, error) {
+func (s *service) GetOutletByID(ctx context.Context, id uuid.UUID) (*domain.Outlet, error) {
 	outlet, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -90,7 +91,7 @@ func (s *service) CreateOutlet(ctx context.Context, req *domain.CreateOutletRequ
 	return outlet, nil
 }
 
-func (s *service) UpdateOutlet(ctx context.Context, id uint64, req *domain.UpdateOutletRequest) (*domain.Outlet, error) {
+func (s *service) UpdateOutlet(ctx context.Context, id uuid.UUID, req *domain.UpdateOutletRequest) (*domain.Outlet, error) {
 	outlet, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -131,7 +132,7 @@ func (s *service) UpdateOutlet(ctx context.Context, id uint64, req *domain.Updat
 	return outlet, nil
 }
 
-func (s *service) DeleteOutlet(ctx context.Context, id uint64) error {
+func (s *service) DeleteOutlet(ctx context.Context, id uuid.UUID) error {
 	outlet, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return err
@@ -144,15 +145,15 @@ func (s *service) DeleteOutlet(ctx context.Context, id uint64) error {
 
 // ── Zones ──────────────────────────────────────────────────────────
 
-func (s *service) GetAllZones(ctx context.Context, outletID *uint64, search string) ([]domain.Zone, error) {
+func (s *service) GetAllZones(ctx context.Context, outletID *uuid.UUID, search string) ([]domain.Zone, error) {
 	return s.repo.FindAllZones(ctx, outletID, search)
 }
 
-func (s *service) GetZonesByOutlet(ctx context.Context, outletID uint64) ([]domain.Zone, error) {
+func (s *service) GetZonesByOutlet(ctx context.Context, outletID uuid.UUID) ([]domain.Zone, error) {
 	return s.repo.FindZonesByOutletID(ctx, outletID)
 }
 
-func (s *service) GetZoneByID(ctx context.Context, id uint64) (*domain.Zone, error) {
+func (s *service) GetZoneByID(ctx context.Context, id uuid.UUID) (*domain.Zone, error) {
 	zone, err := s.repo.FindZoneByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -181,7 +182,7 @@ func (s *service) CreateZone(ctx context.Context, req *domain.CreateZoneRequest)
 	return zone, nil
 }
 
-func (s *service) UpdateZone(ctx context.Context, id uint64, req *domain.UpdateZoneRequest) (*domain.Zone, error) {
+func (s *service) UpdateZone(ctx context.Context, id uuid.UUID, req *domain.UpdateZoneRequest) (*domain.Zone, error) {
 	zone, err := s.repo.FindZoneByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -190,7 +191,7 @@ func (s *service) UpdateZone(ctx context.Context, id uint64, req *domain.UpdateZ
 		return nil, ErrZoneNotFound
 	}
 
-	if req.OutletID != nil && *req.OutletID > 0 {
+	if req.OutletID != nil && *req.OutletID != uuid.Nil {
 		zone.OutletID = *req.OutletID
 	}
 	if req.Name != nil {
@@ -206,7 +207,7 @@ func (s *service) UpdateZone(ctx context.Context, id uint64, req *domain.UpdateZ
 	return zone, nil
 }
 
-func (s *service) DeleteZone(ctx context.Context, id uint64) error {
+func (s *service) DeleteZone(ctx context.Context, id uuid.UUID) error {
 	zone, err := s.repo.FindZoneByID(ctx, id)
 	if err != nil {
 		return err
@@ -219,15 +220,15 @@ func (s *service) DeleteZone(ctx context.Context, id uint64) error {
 
 // ── Stations ───────────────────────────────────────────────────────
 
-func (s *service) GetAllStations(ctx context.Context, outletID *uint64, search string) ([]domain.Station, error) {
+func (s *service) GetAllStations(ctx context.Context, outletID *uuid.UUID, search string) ([]domain.Station, error) {
 	return s.repo.FindAllStations(ctx, outletID, search)
 }
 
-func (s *service) GetStationsByOutlet(ctx context.Context, outletID uint64) ([]domain.Station, error) {
+func (s *service) GetStationsByOutlet(ctx context.Context, outletID uuid.UUID) ([]domain.Station, error) {
 	return s.repo.FindStationsByOutletID(ctx, outletID)
 }
 
-func (s *service) GetStationByID(ctx context.Context, id uint64) (*domain.Station, error) {
+func (s *service) GetStationByID(ctx context.Context, id uuid.UUID) (*domain.Station, error) {
 	station, err := s.repo.FindStationByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -257,7 +258,7 @@ func (s *service) CreateStation(ctx context.Context, req *domain.CreateStationRe
 	return station, nil
 }
 
-func (s *service) UpdateStation(ctx context.Context, id uint64, req *domain.UpdateStationRequest) (*domain.Station, error) {
+func (s *service) UpdateStation(ctx context.Context, id uuid.UUID, req *domain.UpdateStationRequest) (*domain.Station, error) {
 	station, err := s.repo.FindStationByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -266,7 +267,7 @@ func (s *service) UpdateStation(ctx context.Context, id uint64, req *domain.Upda
 		return nil, ErrStationNotFound
 	}
 
-	if req.OutletID != nil && *req.OutletID > 0 {
+	if req.OutletID != nil && *req.OutletID != uuid.Nil {
 		station.OutletID = *req.OutletID
 	}
 	if req.Name != nil {
@@ -285,7 +286,7 @@ func (s *service) UpdateStation(ctx context.Context, id uint64, req *domain.Upda
 	return station, nil
 }
 
-func (s *service) DeleteStation(ctx context.Context, id uint64) error {
+func (s *service) DeleteStation(ctx context.Context, id uuid.UUID) error {
 	station, err := s.repo.FindStationByID(ctx, id)
 	if err != nil {
 		return err

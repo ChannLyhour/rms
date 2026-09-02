@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/enum"
 	"github.com/pos-system/backend/internal/products"
 	"github.com/pos-system/backend/internal/system"
@@ -13,21 +14,21 @@ import (
 )
 
 type Service interface {
-	CreateOrder(req *CreateOrderRequest, orderType string, createdBy *uint64) (*Order, error)
-	GetOrderByID(id uint64) (*Order, error)
-	GetOrdersBySession(sessionID uint64) ([]Order, error)
-	ListOrders(status string, orderType string, sessionID *uint64, from, to *time.Time, p pagination.Params) ([]Order, int64, error)
+	CreateOrder(req *CreateOrderRequest, orderType string, createdBy *uuid.UUID) (*Order, error)
+	GetOrderByID(id uuid.UUID) (*Order, error)
+	GetOrdersBySession(sessionID uuid.UUID) ([]Order, error)
+	ListOrders(status string, orderType string, sessionID *uuid.UUID, from, to *time.Time, p pagination.Params) ([]Order, int64, error)
 	ListKitchenOrders() ([]Order, error)
-	UpdateOrderStatus(orderID uint64, status string) error
-	UpdateOrderStatusWithAccepter(orderID uint64, status string, acceptedBy *uint64, acceptedRole *string) error
-	UpdateOrderItemStatus(itemID uint64, status string) error
-	UpdateOrderPaymentStatus(orderID uint64, status string) error
-	UpdateOrderPaymentInfo(orderID uint64, status string, method *string) error
+	UpdateOrderStatus(orderID uuid.UUID, status string) error
+	UpdateOrderStatusWithAccepter(orderID uuid.UUID, status string, acceptedBy *uuid.UUID, acceptedRole *string) error
+	UpdateOrderItemStatus(itemID uuid.UUID, status string) error
+	UpdateOrderPaymentStatus(orderID uuid.UUID, status string) error
+	UpdateOrderPaymentInfo(orderID uuid.UUID, status string, method *string) error
 
 	// Payments
-	ProcessPayment(req *ProcessPaymentRequest, cashierID *uint64) (*Payment, error)
+	ProcessPayment(req *ProcessPaymentRequest, cashierID *uuid.UUID) (*Payment, error)
 	ListPayments(method string, status string, p pagination.Params) ([]Payment, int64, error)
-	GetPaymentByID(id uint64) (*Payment, error)
+	GetPaymentByID(id uuid.UUID) (*Payment, error)
 
 	// Reports
 	GetSalesSummary(from, to time.Time) (*SalesSummaryResponse, error)
@@ -61,7 +62,7 @@ func (s *service) getEffectiveTaxRate() float64 {
 	return s.taxRate
 }
 
-func (s *service) CreateOrder(req *CreateOrderRequest, orderType string, createdBy *uint64) (*Order, error) {
+func (s *service) CreateOrder(req *CreateOrderRequest, orderType string, createdBy *uuid.UUID) (*Order, error) {
 	if len(req.Items) == 0 {
 		return nil, errors.New("order must contain at least one item")
 	}
@@ -72,7 +73,7 @@ func (s *service) CreateOrder(req *CreateOrderRequest, orderType string, created
 	for _, itemReq := range req.Items {
 		prod, err := s.productRepo.GetProductByID(itemReq.ProductID)
 		if err != nil {
-			return nil, fmt.Errorf("product id %d not found", itemReq.ProductID)
+			return nil, fmt.Errorf("product id %s not found", itemReq.ProductID)
 		}
 
 		unitPrice := prod.Price
@@ -126,6 +127,7 @@ func (s *service) CreateOrder(req *CreateOrderRequest, orderType string, created
 	}
 
 	order := &Order{
+		OutletID:       req.OutletID,
 		TableSessionID: req.TableSessionID,
 		OrderNumber:    orderNumber,
 		OrderType:      enum.OrderType(orderType),
@@ -146,15 +148,15 @@ func (s *service) CreateOrder(req *CreateOrderRequest, orderType string, created
 	return s.repo.GetOrderByID(order.ID)
 }
 
-func (s *service) GetOrderByID(id uint64) (*Order, error) {
+func (s *service) GetOrderByID(id uuid.UUID) (*Order, error) {
 	return s.repo.GetOrderByID(id)
 }
 
-func (s *service) GetOrdersBySession(sessionID uint64) ([]Order, error) {
+func (s *service) GetOrdersBySession(sessionID uuid.UUID) ([]Order, error) {
 	return s.repo.GetOrdersBySession(sessionID)
 }
 
-func (s *service) ListOrders(status string, orderType string, sessionID *uint64, from, to *time.Time, p pagination.Params) ([]Order, int64, error) {
+func (s *service) ListOrders(status string, orderType string, sessionID *uuid.UUID, from, to *time.Time, p pagination.Params) ([]Order, int64, error) {
 	return s.repo.ListOrders(status, orderType, sessionID, from, to, p)
 }
 
@@ -162,11 +164,11 @@ func (s *service) ListKitchenOrders() ([]Order, error) {
 	return s.repo.ListKitchenOrders()
 }
 
-func (s *service) UpdateOrderStatus(orderID uint64, status string) error {
+func (s *service) UpdateOrderStatus(orderID uuid.UUID, status string) error {
 	return s.UpdateOrderStatusWithAccepter(orderID, status, nil, nil)
 }
 
-func (s *service) UpdateOrderStatusWithAccepter(orderID uint64, status string, acceptedBy *uint64, acceptedRole *string) error {
+func (s *service) UpdateOrderStatusWithAccepter(orderID uuid.UUID, status string, acceptedBy *uuid.UUID, acceptedRole *string) error {
 	if err := s.repo.UpdateOrderStatusWithAccepter(orderID, status, acceptedBy, acceptedRole); err != nil {
 		return err
 	}
@@ -192,25 +194,26 @@ func (s *service) UpdateOrderStatusWithAccepter(orderID uint64, status string, a
 	return nil
 }
 
-func (s *service) UpdateOrderItemStatus(itemID uint64, status string) error {
+func (s *service) UpdateOrderItemStatus(itemID uuid.UUID, status string) error {
 	return s.repo.UpdateOrderItemStatus(itemID, status)
 }
 
-func (s *service) UpdateOrderPaymentStatus(orderID uint64, status string) error {
+func (s *service) UpdateOrderPaymentStatus(orderID uuid.UUID, status string) error {
 	return s.repo.UpdateOrderPaymentStatus(orderID, status)
 }
 
-func (s *service) UpdateOrderPaymentInfo(orderID uint64, status string, method *string) error {
+func (s *service) UpdateOrderPaymentInfo(orderID uuid.UUID, status string, method *string) error {
 	return s.repo.UpdateOrderPaymentInfo(orderID, status, method)
 }
 
-func (s *service) ProcessPayment(req *ProcessPaymentRequest, cashierID *uint64) (*Payment, error) {
+func (s *service) ProcessPayment(req *ProcessPaymentRequest, cashierID *uuid.UUID) (*Payment, error) {
 	var changeGiven float64
 	if req.AmountReceived > req.AmountPaid {
 		changeGiven = req.AmountReceived - req.AmountPaid
 	}
 
 	p := &Payment{
+		OrderID:        req.OrderID,
 		TableSessionID: req.TableSessionID,
 		CashierID:      cashierID,
 		PaymentMethod:  enum.PaymentMethod(req.PaymentMethod),
@@ -233,7 +236,7 @@ func (s *service) ListPayments(method string, status string, p pagination.Params
 	return s.repo.ListPayments(method, status, p)
 }
 
-func (s *service) GetPaymentByID(id uint64) (*Payment, error) {
+func (s *service) GetPaymentByID(id uuid.UUID) (*Payment, error) {
 	return s.repo.GetPaymentByID(id)
 }
 

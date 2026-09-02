@@ -3,26 +3,27 @@ package table
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/pkg/pagination"
 	"gorm.io/gorm"
 )
 
 type Repository interface {
 	ListTables(zone string, status string, p pagination.Params) ([]Table, int64, error)
-	GetTableByID(id uint64) (*Table, error)
+	GetTableByID(id uuid.UUID) (*Table, error)
 	CreateTable(t *Table) error
-	UpdateTable(id uint64, t *Table) error
-	DeleteTable(id uint64) error
-	UpdateTableStatus(tableID uint64, status string) error
+	UpdateTable(id uuid.UUID, t *Table) error
+	DeleteTable(id uuid.UUID) error
+	UpdateTableStatus(tableID uuid.UUID, status string) error
 
 	// Sessions
 	CreateSession(session *TableSession) error
-	GetSessionByID(id uint64) (*TableSession, error)
+	GetSessionByID(id uuid.UUID) (*TableSession, error)
 	GetSessionByToken(token string) (*TableSession, error)
-	GetActiveSessionByTableID(tableID uint64) (*TableSession, error)
-	ListSessions(tableID *uint64, status string, p pagination.Params) ([]TableSession, int64, error)
+	GetActiveSessionByTableID(tableID uuid.UUID) (*TableSession, error)
+	ListSessions(tableID *uuid.UUID, status string, p pagination.Params) ([]TableSession, int64, error)
 	ListActiveSessions() ([]TableSession, error)
-	CloseSession(id uint64) error
+	CloseSession(id uuid.UUID) error
 }
 
 type repository struct {
@@ -37,9 +38,9 @@ func (r *repository) ListTables(zone string, status string, p pagination.Params)
 	var tables []Table
 	var total int64
 
-	q := r.db.Model(&Table{})
+	q := r.db.Model(&Table{}).Preload("Outlet").Preload("Zone")
 	if zone != "" && zone != "All" {
-		q = q.Where("floor_zone = ?", zone)
+		q = q.Where("zone_id = ?", zone)
 	}
 	if status != "" && status != "all" {
 		q = q.Where("status = ?", status)
@@ -53,9 +54,9 @@ func (r *repository) ListTables(zone string, status string, p pagination.Params)
 	return tables, total, err
 }
 
-func (r *repository) GetTableByID(id uint64) (*Table, error) {
+func (r *repository) GetTableByID(id uuid.UUID) (*Table, error) {
 	var t Table
-	err := r.db.First(&t, id).Error
+	err := r.db.Preload("Outlet").Preload("Zone").First(&t, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -66,15 +67,15 @@ func (r *repository) CreateTable(t *Table) error {
 	return r.db.Create(t).Error
 }
 
-func (r *repository) UpdateTable(id uint64, t *Table) error {
+func (r *repository) UpdateTable(id uuid.UUID, t *Table) error {
 	return r.db.Model(&Table{}).Where("id = ?", id).Updates(t).Error
 }
 
-func (r *repository) DeleteTable(id uint64) error {
+func (r *repository) DeleteTable(id uuid.UUID) error {
 	return r.db.Delete(&Table{}, id).Error
 }
 
-func (r *repository) UpdateTableStatus(tableID uint64, status string) error {
+func (r *repository) UpdateTableStatus(tableID uuid.UUID, status string) error {
 	return r.db.Model(&Table{}).Where("id = ?", tableID).Update("status", status).Error
 }
 
@@ -82,7 +83,7 @@ func (r *repository) CreateSession(session *TableSession) error {
 	return r.db.Create(session).Error
 }
 
-func (r *repository) GetSessionByID(id uint64) (*TableSession, error) {
+func (r *repository) GetSessionByID(id uuid.UUID) (*TableSession, error) {
 	var s TableSession
 	err := r.db.Preload("Table").First(&s, id).Error
 	if err != nil {
@@ -100,7 +101,7 @@ func (r *repository) GetSessionByToken(token string) (*TableSession, error) {
 	return &s, nil
 }
 
-func (r *repository) GetActiveSessionByTableID(tableID uint64) (*TableSession, error) {
+func (r *repository) GetActiveSessionByTableID(tableID uuid.UUID) (*TableSession, error) {
 	var s TableSession
 	err := r.db.Preload("Table").
 		Where("table_id = ? AND status = 'active'", tableID).
@@ -111,12 +112,12 @@ func (r *repository) GetActiveSessionByTableID(tableID uint64) (*TableSession, e
 	return &s, nil
 }
 
-func (r *repository) ListSessions(tableID *uint64, status string, p pagination.Params) ([]TableSession, int64, error) {
+func (r *repository) ListSessions(tableID *uuid.UUID, status string, p pagination.Params) ([]TableSession, int64, error) {
 	var sessions []TableSession
 	var total int64
 
 	q := r.db.Model(&TableSession{}).Preload("Table")
-	if tableID != nil && *tableID > 0 {
+	if tableID != nil && *tableID != uuid.Nil {
 		q = q.Where("table_id = ?", *tableID)
 	}
 	if status != "" {
@@ -141,10 +142,10 @@ func (r *repository) ListActiveSessions() ([]TableSession, error) {
 	return sessions, err
 }
 
-func (r *repository) CloseSession(id uint64) error {
+func (r *repository) CloseSession(id uuid.UUID) error {
 	now := time.Now()
 	var sess TableSession
-	if err := r.db.First(&sess, id).Error; err == nil && sess.TableID > 0 {
+	if err := r.db.First(&sess, id).Error; err == nil && sess.TableID != uuid.Nil {
 		_ = r.db.Model(&Table{}).Where("id = ?", sess.TableID).Update("status", "available").Error
 	}
 	return r.db.Model(&TableSession{}).

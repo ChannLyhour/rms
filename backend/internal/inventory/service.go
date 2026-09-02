@@ -1,6 +1,7 @@
 package inventory
 
 import (
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/pkg/pagination"
 )
 
@@ -18,7 +19,7 @@ func (s *Service) ListSuppliers(search string, p pagination.Params) ([]Supplier,
 	return s.repo.ListSuppliers(search, p)
 }
 
-func (s *Service) GetSupplier(id uint64) (*Supplier, error) {
+func (s *Service) GetSupplier(id uuid.UUID) (*Supplier, error) {
 	return s.repo.GetSupplierByID(id)
 }
 
@@ -26,11 +27,11 @@ func (s *Service) CreateSupplier(sup *Supplier) error {
 	return s.repo.CreateSupplier(sup)
 }
 
-func (s *Service) UpdateSupplier(id uint64, sup *Supplier) error {
+func (s *Service) UpdateSupplier(id uuid.UUID, sup *Supplier) error {
 	return s.repo.UpdateSupplier(id, sup)
 }
 
-func (s *Service) DeleteSupplier(id uint64) error {
+func (s *Service) DeleteSupplier(id uuid.UUID) error {
 	return s.repo.DeleteSupplier(id)
 }
 
@@ -40,7 +41,7 @@ func (s *Service) ListIngredients(search string, lowStock bool, p pagination.Par
 	return s.repo.ListIngredients(search, lowStock, p)
 }
 
-func (s *Service) GetIngredient(id uint64) (*Ingredient, error) {
+func (s *Service) GetIngredient(id uuid.UUID) (*Ingredient, error) {
 	return s.repo.GetIngredientByID(id)
 }
 
@@ -48,21 +49,21 @@ func (s *Service) CreateIngredient(ing *Ingredient) error {
 	return s.repo.CreateIngredient(ing)
 }
 
-func (s *Service) UpdateIngredient(id uint64, ing *Ingredient) error {
+func (s *Service) UpdateIngredient(id uuid.UUID, ing *Ingredient) error {
 	return s.repo.UpdateIngredient(id, ing)
 }
 
-func (s *Service) DeleteIngredient(id uint64) error {
+func (s *Service) DeleteIngredient(id uuid.UUID) error {
 	return s.repo.DeleteIngredient(id)
 }
 
 // ── Recipes ──────────────────────────────────────────────────────
 
-func (s *Service) ListRecipes(productID *uint64, p pagination.Params) ([]Recipe, int64, error) {
+func (s *Service) ListRecipes(productID *uuid.UUID, p pagination.Params) ([]Recipe, int64, error) {
 	return s.repo.ListRecipes(productID, p)
 }
 
-func (s *Service) GetRecipe(id uint64) (*Recipe, error) {
+func (s *Service) GetRecipe(id uuid.UUID) (*Recipe, error) {
 	return s.repo.GetRecipeByID(id)
 }
 
@@ -70,21 +71,21 @@ func (s *Service) CreateRecipe(rec *Recipe) error {
 	return s.repo.CreateRecipe(rec)
 }
 
-func (s *Service) UpdateRecipe(id uint64, rec *Recipe) error {
+func (s *Service) UpdateRecipe(id uuid.UUID, rec *Recipe) error {
 	return s.repo.UpdateRecipe(id, rec)
 }
 
-func (s *Service) DeleteRecipe(id uint64) error {
+func (s *Service) DeleteRecipe(id uuid.UUID) error {
 	return s.repo.DeleteRecipe(id)
 }
 
 // ── Purchase Orders ──────────────────────────────────────────────
 
-func (s *Service) ListPurchaseOrders(supplierID *uint64, status string, p pagination.Params) ([]PurchaseOrder, int64, error) {
+func (s *Service) ListPurchaseOrders(supplierID *uuid.UUID, status string, p pagination.Params) ([]PurchaseOrder, int64, error) {
 	return s.repo.ListPurchaseOrders(supplierID, status, p)
 }
 
-func (s *Service) GetPurchaseOrder(id uint64) (*PurchaseOrder, error) {
+func (s *Service) GetPurchaseOrder(id uuid.UUID) (*PurchaseOrder, error) {
 	return s.repo.GetPurchaseOrderByID(id)
 }
 
@@ -92,17 +93,17 @@ func (s *Service) CreatePurchaseOrder(po *PurchaseOrder) error {
 	return s.repo.CreatePurchaseOrder(po)
 }
 
-func (s *Service) UpdatePurchaseOrderStatus(id uint64, status string) error {
+func (s *Service) UpdatePurchaseOrderStatus(id uuid.UUID, status string) error {
 	return s.repo.UpdatePurchaseOrderStatus(id, status)
 }
 
-func (s *Service) DeletePurchaseOrder(id uint64) error {
+func (s *Service) DeletePurchaseOrder(id uuid.UUID) error {
 	return s.repo.DeletePurchaseOrder(id)
 }
 
 // ── Stock Logs & Movements ───────────────────────────────────────
 
-func (s *Service) ListIngredientStockLogs(ingredientID *uint64, p pagination.Params) ([]IngredientStockLog, int64, error) {
+func (s *Service) ListIngredientStockLogs(ingredientID *uuid.UUID, p pagination.Params) ([]IngredientStockLog, int64, error) {
 	return s.repo.ListIngredientStockLogs(ingredientID, p)
 }
 
@@ -110,7 +111,7 @@ func (s *Service) CreateIngredientStockLog(log *IngredientStockLog) error {
 	return s.repo.CreateIngredientStockLog(log)
 }
 
-func (s *Service) ListProductStockLogs(productID *uint64, p pagination.Params) ([]ProductStockLog, int64, error) {
+func (s *Service) ListProductStockLogs(productID *uuid.UUID, p pagination.Params) ([]ProductStockLog, int64, error) {
 	return s.repo.ListProductStockLogs(productID, p)
 }
 

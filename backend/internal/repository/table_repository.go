@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/domain"
 	"gorm.io/gorm"
 )
@@ -23,7 +24,7 @@ func (r *TableRepository) ListTables() ([]domain.Table, error) {
 }
 
 // FindTableByID returns a single table
-func (r *TableRepository) FindTableByID(id uint64) (*domain.Table, error) {
+func (r *TableRepository) FindTableByID(id uuid.UUID) (*domain.Table, error) {
 	var table domain.Table
 	err := r.db.First(&table, id).Error
 	return &table, err
@@ -40,7 +41,7 @@ func (r *TableRepository) UpdateTable(t *domain.Table) error {
 }
 
 // UpdateTableStatus updates only the status field of a table
-func (r *TableRepository) UpdateTableStatus(tableID uint64, status string) error {
+func (r *TableRepository) UpdateTableStatus(tableID uuid.UUID, status string) error {
 	return r.db.Model(&domain.Table{}).Where("id = ?", tableID).Update("status", status).Error
 }
 
@@ -59,7 +60,7 @@ func (r *TableRepository) FindSessionByToken(token string) (*domain.TableSession
 }
 
 // FindActiveSessionByTableID returns the open session for a table
-func (r *TableRepository) FindActiveSessionByTableID(tableID uint64) (*domain.TableSession, error) {
+func (r *TableRepository) FindActiveSessionByTableID(tableID uuid.UUID) (*domain.TableSession, error) {
 	var session domain.TableSession
 	err := r.db.Where("table_id = ? AND status = 'active'", tableID).First(&session).Error
 	return &session, err
@@ -74,9 +75,9 @@ func (r *TableRepository) ListActiveSessions() ([]domain.TableSession, error) {
 }
 
 // CloseSession marks a session as closed
-func (r *TableRepository) CloseSession(sessionID uint64) error {
+func (r *TableRepository) CloseSession(sessionID uuid.UUID) error {
 	var sess domain.TableSession
-	if err := r.db.First(&sess, sessionID).Error; err == nil && sess.TableID > 0 {
+	if err := r.db.First(&sess, sessionID).Error; err == nil && sess.TableID != uuid.Nil {
 		_ = r.db.Model(&domain.Table{}).Where("id = ?", sess.TableID).Update("status", "available").Error
 	}
 	return r.db.Model(&domain.TableSession{}).Where("id = ?", sessionID).

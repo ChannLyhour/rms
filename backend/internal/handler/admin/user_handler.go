@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/domain"
 	"github.com/pos-system/backend/internal/repository"
 	"golang.org/x/crypto/bcrypt"
@@ -82,7 +83,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 // UpdateUser godoc
 // PUT /api/v1/admin/users/:id
 func (h *UserHandler) UpdateUser(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
 		return
@@ -129,7 +130,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 // DeleteUser godoc
 // DELETE /api/v1/admin/users/:id
 func (h *UserHandler) DeleteUser(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
 		return
@@ -140,5 +141,5 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "user deactivated"})
+	c.JSON(http.StatusOK, gin.H{"message": "user deleted"})
 }

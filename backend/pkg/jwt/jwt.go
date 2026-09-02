@@ -5,19 +5,20 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 // Claims holds the JWT payload
 type Claims struct {
-	UserID   uint64   `json:"user_id"`
-	Username string   `json:"username"`
-	RoleName string   `json:"role_name"`
-	Perms    []string `json:"perms"`
+	UserID   uuid.UUID `json:"user_id"`
+	Username string    `json:"username"`
+	RoleName string    `json:"role_name"`
+	Perms    []string  `json:"perms"`
 	jwt.RegisteredClaims
 }
 
 // GenerateToken creates a signed JWT for the given user
-func GenerateToken(secret string, expiresInHours int, userID uint64, username, roleName string, perms []string) (string, error) {
+func GenerateToken(secret string, expiresInHours int, userID uuid.UUID, username, roleName string, perms []string) (string, error) {
 	claims := &Claims{
 		UserID:   userID,
 		Username: username,

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/user"
 	"github.com/pos-system/backend/pkg/jwt"
 	"github.com/pos-system/backend/pkg/utils"
@@ -12,7 +13,7 @@ import (
 type Service interface {
 	Login(req *LoginRequest) (*LoginResponse, error)
 	ValidateToken(tokenStr string) (*jwt.Claims, error)
-	GetProfile(userID uint64) (*user.User, error)
+	GetProfile(userID uuid.UUID) (*user.User, error)
 }
 
 type service struct {
@@ -69,7 +70,7 @@ func (s *service) ValidateToken(tokenStr string) (*jwt.Claims, error) {
 	return jwt.ParseToken(tokenStr, s.jwtSecret)
 }
 
-func (s *service) GetProfile(userID uint64) (*user.User, error) {
+func (s *service) GetProfile(userID uuid.UUID) (*user.User, error) {
 	usr, err := s.userRepo.FindByID(userID)
 	if err != nil {
 		return nil, err
@@ -77,4 +78,3 @@ func (s *service) GetProfile(userID uint64) (*user.User, error) {
 	usr.Password = ""
 	return usr, nil
 }
-

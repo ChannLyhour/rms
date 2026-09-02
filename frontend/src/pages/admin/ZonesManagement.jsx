@@ -165,7 +165,7 @@ export default function ZonesManagement() {
     try {
       if (editingZoneId) {
         await axiosClient.put(`/zones/${editingZoneId}`, {
-          outlet_id: Number(formData.outlet_id),
+          outlet_id: formData.outlet_id,
           name: formData.name,
           floor_number: Number(formData.floor_number) || 1,
         })

@@ -2,9 +2,9 @@ package user
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/pkg/pagination"
 )
 
@@ -21,9 +21,9 @@ func NewHandler(svc Service) *Handler {
 func (h *Handler) ListUsers(c *gin.Context) {
 	p := pagination.GetPagination(c)
 	search := c.Query("search")
-	var roleID *uint64
-	if rStr := c.Query("role_id"); rStr != "" {
-		if rid, err := strconv.ParseUint(rStr, 10, 64); err == nil {
+	var roleID *uuid.UUID
+	if rStr := c.Query("role_id"); rStr != "" && rStr != "all" {
+		if rid, err := uuid.Parse(rStr); err == nil {
 			roleID = &rid
 		}
 	}
@@ -37,7 +37,7 @@ func (h *Handler) ListUsers(c *gin.Context) {
 }
 
 func (h *Handler) GetUser(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
 		return
@@ -57,9 +57,9 @@ func (h *Handler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	var creatorID *uint64
+	var creatorID *uuid.UUID
 	if uidVal, exists := c.Get("user_id"); exists {
-		if uid, ok := uidVal.(uint64); ok {
+		if uid, ok := uidVal.(uuid.UUID); ok {
 			creatorID = &uid
 		}
 	}
@@ -74,7 +74,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 }
 
 func (h *Handler) UpdateUser(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
 		return
@@ -96,7 +96,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 }
 
 func (h *Handler) DeleteUser(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
 		return
@@ -123,7 +123,7 @@ func (h *Handler) ListRoles(c *gin.Context) {
 }
 
 func (h *Handler) GetRole(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid role id"})
 		return
@@ -150,7 +150,7 @@ func (h *Handler) CreateRole(c *gin.Context) {
 }
 
 func (h *Handler) UpdateRole(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid role id"})
 		return
@@ -168,7 +168,7 @@ func (h *Handler) UpdateRole(c *gin.Context) {
 }
 
 func (h *Handler) DeleteRole(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid role id"})
 		return
@@ -192,8 +192,8 @@ func (h *Handler) ListPermissions(c *gin.Context) {
 
 func (h *Handler) AssignPermission(c *gin.Context) {
 	var req struct {
-		RoleID       uint64 `json:"role_id" binding:"required"`
-		PermissionID uint64 `json:"permission_id" binding:"required"`
+		RoleID       uuid.UUID `json:"role_id" binding:"required"`
+		PermissionID uuid.UUID `json:"permission_id" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -208,8 +208,8 @@ func (h *Handler) AssignPermission(c *gin.Context) {
 
 func (h *Handler) RevokePermission(c *gin.Context) {
 	var req struct {
-		RoleID       uint64 `json:"role_id" binding:"required"`
-		PermissionID uint64 `json:"permission_id" binding:"required"`
+		RoleID       uuid.UUID `json:"role_id" binding:"required"`
+		PermissionID uuid.UUID `json:"permission_id" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

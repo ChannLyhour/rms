@@ -19,7 +19,13 @@ import {
   UserCheck,
   BadgePercent,
   Ban,
-  Wallet
+  Wallet,
+  Coffee,
+  Wine,
+  ShoppingCart,
+  Utensils,
+  CheckSquare,
+  Square
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axiosClient from '../../../api/axiosClient'
@@ -46,6 +52,7 @@ export default function UsersCreateView({ user, onClose, onSave }) {
     confirm_password: '',
     role_id: 2,
     outlet_id: '',
+    outlet_ids: [],
     is_active: true,
     can_discount: false,
     can_void: false,
@@ -74,6 +81,12 @@ export default function UsersCreateView({ user, onClose, onSave }) {
 
   useEffect(() => {
     if (user) {
+      const assignedIds = (user.outlets && user.outlets.length > 0)
+        ? user.outlets.map((o) => String(o.id))
+        : user.outlet_id
+        ? [String(user.outlet_id)]
+        : []
+
       setFormData({
         id: user.id || '',
         name: user.name || '',
@@ -83,8 +96,9 @@ export default function UsersCreateView({ user, onClose, onSave }) {
         image_url: user.image_url || '',
         password: '',
         confirm_password: '',
-        role_id: user.role_id || user.role?.id || 2,
+        role_id: user.role_id || user.role?.id || '',
         outlet_id: user.outlet_id ? String(user.outlet_id) : '',
+        outlet_ids: assignedIds,
         is_active: user.is_active !== undefined ? Boolean(user.is_active) : true,
         can_discount: Boolean(user.can_discount),
         can_void: Boolean(user.can_void),
@@ -215,8 +229,9 @@ export default function UsersCreateView({ user, onClose, onSave }) {
       email: formData.email.trim() || undefined,
       phone: formData.phone.trim() || undefined,
       image_url: formData.image_url ? formData.image_url.trim() : undefined,
-      role_id: Number(formData.role_id),
-      outlet_id: formData.outlet_id ? Number(formData.outlet_id) : null,
+      role_id: formData.role_id,
+      outlet_id: formData.outlet_ids.length > 0 ? formData.outlet_ids[0] : (formData.outlet_id || null),
+      outlet_ids: formData.outlet_ids,
       is_active: Boolean(formData.is_active),
     }
 
@@ -491,7 +506,7 @@ export default function UsersCreateView({ user, onClose, onSave }) {
                       labelKey="name"
                       value={formData.role_id}
                       autoSelect={false}
-                      onChange={(val) => setField('role_id', Number(val))}
+                      onChange={(val) => setField('role_id', val)}
                       placeholder="Select System Role..."
                       searchPlaceholder="Search roles (Admin, Cashier, Kitchen)..."
                     />
@@ -499,17 +514,12 @@ export default function UsersCreateView({ user, onClose, onSave }) {
 
                   {/* Role Presets Cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                    {[
-                      { id: 1, title: '🛡️ Administrator', desc: 'Full backend access, reports, user control & menu settings.' },
-                      { id: 2, title: '💳 Cashier Terminal', desc: 'POS order creation, checkout billing, table management & receipts.' },
-                      { id: 3, title: '🍳 Kitchen Display', desc: 'Real-time KDS food prep screen, ticket routing & order bump.' },
-                      { id: 4, title: '🤵 Waiter / Runner', desc: 'Mobile table ordering, guest assistance & order service.' },
-                    ].map((card) => {
-                      const isSelected = Number(formData.role_id) === card.id
+                    {roles.map((r) => {
+                      const isSelected = String(formData.role_id) === String(r.id)
                       return (
                         <div
-                          key={card.id}
-                          onClick={() => setField('role_id', card.id)}
+                          key={r.id}
+                          onClick={() => setField('role_id', r.id)}
                           className={`p-3.5 rounded-[5px] border cursor-pointer transition-all ${
                             isSelected
                               ? 'border-[#126973] bg-[#126973]/10 ring-1 ring-[#126973]'
@@ -521,12 +531,12 @@ export default function UsersCreateView({ user, onClose, onSave }) {
                         >
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-xs" style={{ color: 'var(--color-text)' }}>
-                              {card.title}
+                              {r.display_name || r.name}
                             </span>
                             {isSelected && <Check size={14} className="text-[#126973] dark:text-[#F1D8C2]" />}
                           </div>
                           <p className="text-[11px] mt-1 leading-snug" style={{ color: 'var(--color-muted)' }}>
-                            {card.desc}
+                            {r.description || `Role for ${r.name}`}
                           </p>
                         </div>
                       )
@@ -537,34 +547,144 @@ export default function UsersCreateView({ user, onClose, onSave }) {
 
               {/* ── TAB 3: Venue & Outlets ──────────────────────────── */}
               <div id="venue" className="space-y-2.5 scroll-mt-6">
-                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                  Venue &amp; Outlets
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                    Venue &amp; Outlets Assignment
+                  </h3>
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#126973]/10 dark:bg-[#126973]/25 text-[#126973] dark:text-[#F1D8C2] border border-[#126973]/20 dark:border-[#F1D8C2]/30">
+                    {formData.outlet_ids.length === 0 || formData.outlet_ids.length === outlets.length
+                      ? 'Global / All Venues'
+                      : `${formData.outlet_ids.length} of ${outlets.length} Selected`}
+                  </span>
+                </div>
+
                 <div
-                  className="rounded-[5px] p-6 sm:p-7 space-y-4"
+                  className="rounded-[5px] p-6 sm:p-7 space-y-5"
                   style={{
                     background: 'var(--color-surface)',
                   }}
                 >
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                      Assigned Venue / Location Scope
-                    </label>
-                    <SearchSelection
-                      name="outlet_id"
-                      options={outletOptions}
-                      valueKey="id"
-                      labelKey="name"
-                      value={String(formData.outlet_id || '')}
-                      autoSelect={false}
-                      onChange={(val) => setField('outlet_id', String(val))}
-                      placeholder="Select Venue Assignment..."
-                      searchPlaceholder="Search venue (Cafe, SkyBar, Mart, Restaurant)..."
-                    />
-                    <p className="text-[11px] mt-1.5" style={{ color: 'var(--color-muted)' }}>
-                      Assigning a specific venue restricts this staff member&apos;s POS and KDS operations to that venue.
+                  {/* Quick Select Buttons */}
+                  <div className="flex items-center justify-between flex-wrap gap-2 pb-1 border-b border-[var(--color-border)]">
+                    <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                      Select one or multiple venues this staff member is authorized to access:
                     </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const allIds = outlets.map((o) => Number(o.id))
+                          setFormData((prev) => ({
+                            ...prev,
+                            outlet_ids: allIds,
+                            outlet_id: allIds[0] ? String(allIds[0]) : '',
+                          }))
+                        }}
+                        className="px-2.5 py-1 text-[11px] font-semibold rounded-[5px] border border-[#126973]/30 text-[#126973] dark:text-[#F1D8C2] hover:bg-[#126973]/10 transition-colors cursor-pointer"
+                      >
+                        Select All
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            outlet_ids: [],
+                            outlet_id: '',
+                          }))
+                        }}
+                        className="px-2.5 py-1 text-[11px] font-semibold rounded-[5px] border border-slate-300 dark:border-slate-700 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                      >
+                        Clear (Global HQ)
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Outlets Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                    {outlets.map((o) => {
+                      const numId = Number(o.id)
+                      const isSelected =
+                        formData.outlet_ids.includes(numId) ||
+                        (formData.outlet_ids.length === 0 && (!formData.outlet_id || String(formData.outlet_id) === ''))
+
+                      const toggleThis = () => {
+                        setFormData((prev) => {
+                          const current = [...prev.outlet_ids]
+                          const idx = current.indexOf(numId)
+                          let updated = []
+                          if (idx > -1) {
+                            updated = current.filter((id) => id !== numId)
+                          } else {
+                            updated = [...current, numId]
+                          }
+                          return {
+                            ...prev,
+                            outlet_ids: updated,
+                            outlet_id: updated.length > 0 ? String(updated[0]) : '',
+                          }
+                        })
+                      }
+
+                      return (
+                        <div
+                          key={o.id}
+                          onClick={toggleThis}
+                          className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start justify-between gap-3 ${
+                            isSelected
+                              ? 'border-[#126973] dark:border-[#F1D8C2] bg-[#126973]/10 dark:bg-[#126973]/20 ring-1 ring-[#126973]/40 shadow-xs'
+                              : 'border-[var(--color-border)] hover:bg-black/5 dark:hover:bg-white/5 opacity-80 hover:opacity-100'
+                          }`}
+                          style={{
+                            background: isSelected ? undefined : 'var(--color-bg)',
+                          }}
+                        >
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div
+                              className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border ${
+                                isSelected
+                                  ? 'bg-[#126973] text-white border-transparent shadow-2xs'
+                                  : 'bg-[#126973]/10 dark:bg-[#126973]/25 border-[#126973]/20 dark:border-[#F1D8C2]/30'
+                              }`}
+                            >
+                              {o.type === 'cafe' && <Coffee size={18} className={isSelected ? 'text-white' : 'text-amber-600 dark:text-amber-400'} />}
+                              {o.type === 'bar' && <Wine size={18} className={isSelected ? 'text-white' : 'text-purple-600 dark:text-purple-400'} />}
+                              {o.type === 'retail' && <ShoppingCart size={18} className={isSelected ? 'text-white' : 'text-emerald-600 dark:text-emerald-400'} />}
+                              {o.type !== 'cafe' && o.type !== 'bar' && o.type !== 'retail' && (
+                                <Utensils size={18} className={isSelected ? 'text-white' : 'text-[#126973] dark:text-[#F1D8C2]'} />
+                              )}
+                            </div>
+
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-xs truncate" style={{ color: 'var(--color-text)' }}>
+                                  {o.name}
+                                </span>
+                                <span className="text-[9.5px] font-mono uppercase font-bold px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                  {o.code || o.type}
+                                </span>
+                              </div>
+                              <p className="text-[11px] mt-0.5 leading-snug line-clamp-1" style={{ color: 'var(--color-muted)' }}>
+                                {o.description || (o.has_tables ? 'Table Dining Service' : 'Direct Pay Outlet')}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="shrink-0 mt-0.5">
+                            {isSelected ? (
+                              <CheckSquare size={18} className="text-[#126973] dark:text-[#F1D8C2]" />
+                            ) : (
+                              <Square size={18} className="text-slate-400 dark:text-slate-600" />
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  <p className="text-[11.5px] text-slate-500 dark:text-slate-400 leading-relaxed pt-1">
+                    💡 <strong>Tip:</strong> If no specific venues are selected, this account operates with <em>Global HQ Scope</em> and will be permitted to switch between all available SKYPARK venues.
+                  </p>
                 </div>
               </div>
 

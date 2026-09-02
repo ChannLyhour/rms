@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/domain"
 	"gorm.io/gorm"
 )
@@ -38,10 +39,10 @@ func (r *ProductRepository) UpdateCategory(cat *domain.Category) error {
 // --- Products ---
 
 // ListProducts returns all products, optionally filtered by category
-func (r *ProductRepository) ListProducts(categoryID uint64, onlyAvailable bool) ([]domain.Product, error) {
+func (r *ProductRepository) ListProducts(categoryID uuid.UUID, onlyAvailable bool) ([]domain.Product, error) {
 	var products []domain.Product
 	q := r.db.Preload("Category").Preload("OptionGroups.Values")
-	if categoryID > 0 {
+	if categoryID != uuid.Nil {
 		q = q.Where("category_id = ?", categoryID)
 	}
 	if onlyAvailable {
@@ -52,7 +53,7 @@ func (r *ProductRepository) ListProducts(categoryID uint64, onlyAvailable bool) 
 }
 
 // FindProductByID returns a single product with option groups
-func (r *ProductRepository) FindProductByID(id uint64) (*domain.Product, error) {
+func (r *ProductRepository) FindProductByID(id uuid.UUID) (*domain.Product, error) {
 	var product domain.Product
 	err := r.db.Preload("Category").Preload("OptionGroups.Values").First(&product, id).Error
 	return &product, err
@@ -69,7 +70,7 @@ func (r *ProductRepository) UpdateProduct(p *domain.Product) error {
 }
 
 // DeleteProduct soft-deletes by marking unavailable
-func (r *ProductRepository) DeleteProduct(id uint64) error {
+func (r *ProductRepository) DeleteProduct(id uuid.UUID) error {
 	return r.db.Model(&domain.Product{}).Where("id = ?", id).Update("is_available", false).Error
 }
 
@@ -88,7 +89,7 @@ func (r *ProductRepository) CreateOptionGroup(g *domain.OptionGroup) error {
 }
 
 // AssignOptionGroupsToProduct links option groups to a product
-func (r *ProductRepository) AssignOptionGroupsToProduct(productID uint64, groupIDs []uint64) error {
+func (r *ProductRepository) AssignOptionGroupsToProduct(productID uuid.UUID, groupIDs []uuid.UUID) error {
 	product := domain.Product{}
 	product.ID = productID
 	var groups []domain.OptionGroup

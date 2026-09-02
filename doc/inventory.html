@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="km" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SKYPARK RMS — Enterprise Inventory & Stock Management Guide</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            skypark: {
+              primary: '#126973',
+              primaryDark: '#0a4249',
+              primaryLight: '#258a97',
+              gold: '#F1D8C2',
+              goldDark: '#c5824c',
+              goldLight: '#faf6f2',
+              dark: '#072328',
+              darker: '#041012',
+              black: '#020202',
+              white: '#F8F7F4',
+              surface: '#0b1c1e',
+              card: '#0f262a',
+              border: 'rgba(18, 105, 115, 0.25)',
+            }
+          },
+          fontFamily: {
+            khmer: ['"Kantumruy Pro"', 'sans-serif'],
+            sans: ['"Plus Jakarta Sans"', '"Kantumruy Pro"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Kantumruy Pro', 'Plus Jakarta Sans', sans-serif;
+      background-color: #041012;
+      color: #F8F7F4;
+    }
+    
+    .slide-card {
+      background: linear-gradient(145deg, rgba(15, 38, 42, 0.85), rgba(7, 35, 40, 0.95));
+      border: 1px solid rgba(18, 105, 115, 0.3);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 30px rgba(18, 105, 115, 0.15);
+    }
+
+    .glow-teal {
+      box-shadow: 0 0 25px rgba(18, 105, 115, 0.4);
+    }
+
+    .glow-gold {
+      box-shadow: 0 0 25px rgba(241, 216, 194, 0.25);
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(4, 16, 18, 0.5);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(18, 105, 115, 0.5);
+      border-radius: 9999px;
+    }
+
+    /* Print styling */
+    @media print {
+      body { background: white !important; color: black !important; }
+      .no-print { display: none !important; }
+      .slide-container { page-break-after: always; display: block !important; }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col justify-between selection:bg-[#126973] selection:text-[#F1D8C2]">
+
+  <!-- ── Top Header & Controls ── -->
+  <header class="no-print sticky top-0 z-50 border-b border-[#126973]/30 bg-[#041012]/80 backdrop-blur-md px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-[#126973]/20 border border-[#126973]/40 flex items-center justify-center text-[#F1D8C2] font-bold text-sm shadow-xs">
+        <i data-lucide="package-search" class="w-5 h-5 text-[#F1D8C2]"></i>
+      </div>
+      <div>
+        <h1 class="text-sm font-extrabold tracking-wide text-[#F8F7F4] flex items-center gap-2">
+          <span>SKYPARK RMS</span>
+          <span class="text-[10px] uppercase px-2 py-0.5 rounded-md bg-[#126973]/30 text-[#F1D8C2] border border-[#126973]/40 font-mono">
+            INVENTORY BLUEPRINT
+          </span>
+        </h1>
+        <p class="text-[11px] text-slate-400">ឯកសារបទបង្ហាញស្តីពីការគ្រប់គ្រងស្តុក និងចរន្តនាំចេញ-ចូល</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2">
+      <!-- Mode View Toggle -->
+      <button id="viewToggleBtn" onclick="toggleViewMode()" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[#126973]/40 bg-[#126973]/15 hover:bg-[#126973]/30 text-[#F1D8C2] transition-all flex items-center gap-1.5 cursor-pointer">
+        <i data-lucide="layout-list" class="w-4 h-4"></i>
+        <span id="viewModeText">Scroll Mode</span>
+      </button>
+
+      <!-- Print / Export -->
+      <button onclick="window.print()" class="p-2 rounded-lg border border-[#126973]/30 hover:bg-[#126973]/20 text-slate-300 hover:text-white transition-all cursor-pointer" title="Print Slide Deck">
+        <i data-lucide="printer" class="w-4 h-4"></i>
+      </button>
+
+      <!-- Fullscreen -->
+      <button onclick="toggleFullScreen()" class="p-2 rounded-lg border border-[#126973]/30 hover:bg-[#126973]/20 text-slate-300 hover:text-white transition-all cursor-pointer" title="Fullscreen">
+        <i data-lucide="maximize" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Main Slide Deck Canvas ── -->
+  <main class="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 flex items-center justify-center">
+
+    <!-- ── SLIDE 1: Title & System Vision ── -->
+    <section id="slide-1" class="slide-container w-full max-w-5xl transition-all duration-300">
+      <div class="slide-card rounded-3xl p-8 sm:p-12 relative overflow-hidden">
+        <div class="absolute -top-24 -right-24 w-96 h-96 bg-[#126973]/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-[#F1D8C2]/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 space-y-8">
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#126973]/25 border border-[#126973]/50 text-[#F1D8C2] text-xs font-semibold">
+            <i data-lucide="sparkles" class="w-4 h-4 text-[#F1D8C2]"></i>
+            <span>SKYPARK RESTAURANT MANAGEMENT SYSTEM (RMS)</span>
+          </div>
+
+          <div class="space-y-4">
+            <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+              ប្រព័ន្ធគ្រប់គ្រងស្តុក & វត្ថុធាតុដើម <br />
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#126973] via-[#45aab7] to-[#F1D8C2]">
+                Enterprise Inventory Architecture
+              </span>
+            </h2>
+            <p class="text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed">
+              ការណែនាំលម្អិតអំពីរចនាសម្ព័ន្ធគ្រប់គ្រងស្តុកគ្រឿងផ្សំ, រូបមន្តមុខម្ហូប (Recipe BOM), ចរន្តនាំចូល-នាំចេញ (Inbound/Outbound), និងការគណនាថ្លៃដើមអាហារ (Food Costing & COGS)។
+            </p>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4">
+            <div class="p-4 rounded-2xl bg-[#072328]/70 border border-[#126973]/30 space-y-1">
+              <span class="text-2xl font-bold text-[#F1D8C2]">100%</span>
+              <p class="text-xs font-semibold text-slate-300">Auto POS Deduction</p>
+              <p class="text-[11px] text-slate-400">កាត់ស្តុកស្វ័យប្រវត្តិតាម Recipe</p>
+            </div>
+            <div class="p-4 rounded-2xl bg-[#072328]/70 border border-[#126973]/30 space-y-1">
+              <span class="text-2xl font-bold text-emerald-400">0%</span>
+              <p class="text-xs font-semibold text-slate-300">Zero Stockout</p>
+              <p class="text-[11px] text-slate-400">ប្រព័ន្ធដាស់តឿន Low-Stock</p>
+            </div>
+            <div class="p-4 rounded-2xl bg-[#072328]/70 border border-[#126973]/30 space-y-1">
+              <span class="text-2xl font-bold text-[#126973] text-[#45aab7]">Multi-Venue</span>
+              <p class="text-xs font-semibold text-slate-300">Inter-Outlet</p>
+              <p class="text-[11px] text-slate-400">ផ្ទេរស្តុក Cafe, Bar, Mart, Rest</p>
+            </div>
+            <div class="p-4 rounded-2xl bg-[#072328]/70 border border-[#126973]/30 space-y-1">
+              <span class="text-2xl font-bold text-amber-400">Real-Time</span>
+              <p class="text-xs font-semibold text-slate-300">Audit Logs</p>
+              <p class="text-[11px] text-slate-400">កត់ត្រារាល់ចលនាចេញចូល</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 2: Core Formula & Fundamental Equation ── -->
+    <section id="slide-2" class="slide-container w-full max-w-5xl transition-all duration-300 hidden">
+      <div class="slide-card rounded-3xl p-8 sm:p-12 relative">
+        <div class="space-y-8">
+          <div class="flex items-center justify-between border-b border-[#126973]/30 pb-4">
+            <div>
+              <span class="text-xs font-mono uppercase text-[#F1D8C2] font-semibold tracking-wider">Pillar 01</span>
+              <h3 class="text-2xl font-bold text-white">រូបមន្តស្នូលនៃការគ្រប់គ្រងស្តុក (Core Inventory Formula)</h3>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-[#126973]/20 border border-[#126973]/40 text-xs text-[#F1D8C2]">
+              FUNDAMENTAL LAW
+            </span>
+          </div>
+
+          <!-- Formula Hero Banner -->
+          <div class="p-6 rounded-2xl bg-gradient-to-r from-[#126973]/25 via-[#072328] to-[#126973]/20 border border-[#126973]/40 text-center space-y-3">
+            <p class="text-xs uppercase tracking-widest text-[#F1D8C2] font-bold">សមីការសមតុល្យស្តុកជាក់ស្តែង (Stock Balance Equation)</p>
+            <div class="text-xl sm:text-3xl font-extrabold text-white flex items-center justify-center flex-wrap gap-2">
+              <span class="px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700">ស្តុកនៅសល់ចុងគ្រា</span>
+              <span class="text-[#F1D8C2]">=</span>
+              <span class="px-3 py-1.5 rounded-xl bg-[#072328] border border-[#126973]/50 text-slate-200">ស្តុកដើមគ្រា</span>
+              <span class="text-emerald-400 font-bold">+</span>
+              <span class="px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">នាំចូលសរុប (IN)</span>
+              <span class="text-rose-400 font-bold">-</span>
+              <span class="px-3 py-1.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300">នាំចេញសរុប (OUT)</span>
+            </div>
+            <p class="text-xs font-mono text-slate-400">Ending Inventory = Beginning Inventory + Total Purchases/Transfers In - Total Sales/Wastage Out</p>
+          </div>
+
+          <!-- 3 Pillars Breakdown -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="p-5 rounded-2xl bg-[#072328]/60 border border-[#126973]/30 space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <i data-lucide="arrow-down-left" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-base font-bold text-white">១. ការនាំចូល (Stock In)</h4>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                រាល់ទំនិញ ឬគ្រឿងផ្សំដែលបានទិញពីអ្នកផ្គត់ផ្គង់ ($PO$), ទទួលផ្ទេរពីឃ្លាំងកណ្តាល, ឬការកែតម្រូវឡើងនៅពេលរាប់ស្តុកលើស។
+              </p>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-[#072328]/60 border border-[#126973]/30 space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                <i data-lucide="arrow-up-right" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-base font-bold text-white">២. ការនាំចេញ (Stock Out)</h4>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                កាត់ស្តុកស្វ័យប្រវត្តិតាមការលក់ POS ($Recipe$), ការខូចខាត/ផុតកំណត់ ($Waste$), ការផ្ទេរទៅសាខាផ្សេង, និងបាយបុគ្គលិក។
+              </p>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-[#072328]/60 border border-[#126973]/30 space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-[#126973]/30 text-[#F1D8C2] flex items-center justify-center">
+                <i data-lucide="scale" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-base font-bold text-white">៣. ការផ្ទៀងផ្ទាត់ (Stock Audit)</h4>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                ការចុះរាប់ស្តុកជាក់ស្តែង ($Physical\ Count$) ប្រៀបធៀបជាមួយចំនួនលើកុំព្យូទ័រ ដើម្បីរកឱ្យឃើញភាពខុសគ្នា ($Variance$) និងទប់ស្កាត់ការលួច។
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 3: Inbound Operations (Stock In) ── -->
+    <section id="slide-3" class="slide-container w-full max-w-5xl transition-all duration-300 hidden">
+      <div class="slide-card rounded-3xl p-8 sm:p-12 relative">
+        <div class="space-y-8">
+          <div class="flex items-center justify-between border-b border-[#126973]/30 pb-4">
+            <div>
+              <span class="text-xs font-mono uppercase text-emerald-400 font-semibold tracking-wider">Inbound Logistics</span>
+              <h3 class="text-2xl font-bold text-white">ដំណើរការនៃការនាំចូលស្តុក (Stock In Operations)</h3>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-xs text-emerald-300">
+              📥 INBOUND STREAM
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- Inbound 1: PO & Supplier Receiving -->
+            <div class="p-5 rounded-2xl bg-[#072328]/80 border border-emerald-500/20 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">1</div>
+                  <h4 class="text-sm font-bold text-white">ទិញចូលពី Supplier (Purchase Orders)</h4>
+                </div>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">PO ➔ GRN</span>
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                បង្កើតប័ណ្ណកម្ម៉ង់ទិញ ($PO$) ទៅកាន់ក្រុមហ៊ុនផ្គត់ផ្គង់។ ពេលទំនិញដឹកមកដល់ បុគ្គលិកឃ្លាំងពិនិត្យគុណភាព ចំនួនជាក់ស្តែង និងកាលបរិច្ឆេទផុតកំណត់ រួចចុច <strong>Confirm Received</strong> ដើម្បីបញ្ចូលស្តុក។
+              </p>
+              <div class="text-[11px] text-slate-400 bg-black/40 p-2.5 rounded-lg border border-slate-800">
+                ✨ <strong>លទ្ធផល៖</strong> ស្តុកគ្រឿងផ្សំកើនឡើង + កត់ត្រាតម្លៃទិញ ($Unit\ Cost$) ចូលក្នុង COGS។
+              </div>
+            </div>
+
+            <!-- Inbound 2: Transfer In -->
+            <div class="p-5 rounded-2xl bg-[#072328]/80 border border-emerald-500/20 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">2</div>
+                  <h4 class="text-sm font-bold text-white">ទទួលផ្ទេរពីសាខា/ឃ្លាំងកណ្តាល (Transfer In)</h4>
+                </div>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">TRANSFER</span>
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                សាខា (ឧ. SkyBar) ទទួលគ្រឿងផ្សំ ឬភេសជ្ជៈដែលផ្ទេរមកពីឃ្លាំងកណ្តាល (Central Store) ឬខ្ចីពីសាខាផ្សេង (Cafe) តាមរយៈលេខប័ណ្ណ Transfer Code។
+              </p>
+              <div class="text-[11px] text-slate-400 bg-black/40 p-2.5 rounded-lg border border-slate-800">
+                ✨ <strong>លទ្ធផល៖</strong> មិនបាច់ចេញថ្លៃទិញថ្មីឡើយ គ្រាន់តែកត់ត្រាផ្ទេរទីតាំងស្តុក។
+              </div>
+            </div>
+
+            <!-- Inbound 3: Positive Adjustment -->
+            <div class="p-5 rounded-2xl bg-[#072328]/80 border border-emerald-500/20 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">3</div>
+                  <h4 class="text-sm font-bold text-white">កែតម្រូវស្តុកឡើង (Positive Adjustment)</h4>
+                </div>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">AUDIT +</span>
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                ពេលធ្វើ Stock Audit ចុងសប្តាហ៍ ហើយរកឃើញថាចំនួនជាក់ស្តែងមានច្រើនជាងតួលេខលើប្រព័ន្ធ (ដោយសារកត់ត្រាខ្វះ ឬរកឃើញទំនិញដែលភ្លេចកត់)។
+              </p>
+            </div>
+
+            <!-- Inbound 4: Order Return / Void -->
+            <div class="p-5 rounded-2xl bg-[#072328]/80 border border-emerald-500/20 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">4</div>
+                  <h4 class="text-sm font-bold text-white">បង្វិលចូលស្តុកវិញ (Return to Stock)</h4>
+                </div>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">RETURN</span>
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                ករណីភ្ញៀវសុំលុប Order ($Void\ Order$) មុនពេលចង្ក្រានចាប់ផ្តើមចម្អិន ឬទំនិញលក់រាយ (កំប៉ុង/ដប) ដែលភ្ញៀវមិនទាន់គាស់ត្រូវបានដាក់ចូលស្តុកវិញ។
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 4: Outbound Operations (Stock Out) ── -->
+    <section id="slide-4" class="slide-container w-full max-w-5xl transition-all duration-300 hidden">
+      <div class="slide-card rounded-3xl p-8 sm:p-12 relative">
+        <div class="space-y-8">
+          <div class="flex items-center justify-between border-b border-[#126973]/30 pb-4">
+            <div>
+              <span class="text-xs font-mono uppercase text-rose-400 font-semibold tracking-wider">Outbound Logistics</span>
+              <h3 class="text-2xl font-bold text-white">ដំណើរការនៃការនាំចេញស្តុក (Stock Out Operations)</h3>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-rose-500/20 border border-rose-500/40 text-xs text-rose-300">
+              📤 OUTBOUND STREAM
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- Outbound 1: POS Sales -->
+            <div class="p-5 rounded-2xl bg-[#072328]/80 border border-rose-500/20 space-y-3">
+              <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-sm font-bold text-white">១. លក់ចេញតាម POS (Sales)</h4>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                ជាចរន្តនាំចេញធំបំផុត! រាល់ពេល Order ត្រូវបាន Paid/Completed ប្រព័ន្ធនឹងកាត់ស្តុកគ្រឿងផ្សំស្វ័យប្រវត្តិតាមរូបមន្ត ($Recipe / BOM$) ដោយមិនបាច់បុគ្គលិកកត់ដោយដៃឡើយ។
+              </p>
+            </div>
+
+            <!-- Outbound 2: Wastage & Spoilage -->
+            <div class="p-5 rounded-2xl bg-[#072328]/80 border border-rose-500/20 space-y-3">
+              <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                <i data-lucide="trash-2" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-sm font-bold text-white">២. ខូចខាត & ផុតកំណត់ (Waste)</h4>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                កត់ត្រាបន្លែរលួយ, សាច់ខូច, ទឹកដោះគោជូរ, ឬចុងភៅចម្អិនខុស ($Kitchen\ Error$)។ ប្រព័ន្ធគណនាជាទឹកប្រាក់ខាតបង់ ($Cost\ Loss$) ភ្លាមៗ។
+              </p>
+            </div>
+
+            <!-- Outbound 3: Transfer Out -->
+            <div class="p-5 rounded-2xl bg-[#072328]/80 border border-rose-500/20 space-y-3">
+              <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                <i data-lucide="truck" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-sm font-bold text-white">៣. ផ្ទេរទៅសាខា (Transfer Out)</h4>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                កាត់ស្តុកចេញពី Outlet ដើម (ឧ. Cafe) ពេលដែលផ្ទេរគ្រឿងផ្សំទៅកាន់ Outlet គោលដៅ (ឧ. Restaurant ឬ Bar)។
+              </p>
+            </div>
+
+            <!-- Outbound 4: Internal Consumption -->
+            <div class="p-5 rounded-2xl bg-[#072328]/80 border border-rose-500/20 space-y-3">
+              <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                <i data-lucide="utensils" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-sm font-bold text-white">៤. ប្រើប្រាស់ផ្ទៃក្នុង (Staff Meal)</h4>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                គ្រឿងផ្សំដែលយកមកចម្អិនជាបាយបុគ្គលិកប្រចាំថ្ងៃ ឬការភ្លក្សម្ហូបថ្មី ($R\&D / Tasting$) ដែលមិនមែនជាការលក់ចេញ។
+              </p>
+            </div>
+
+            <!-- Outbound 5: Return to Vendor -->
+            <div class="p-5 rounded-2xl bg-[#072328]/80 border border-rose-500/20 space-y-3">
+              <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                <i data-lucide="undo-2" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-sm font-bold text-white">៥. បង្វិលទៅ Supplier</h4>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                ទំនិញដែលបានទិញចូលហើយ ប៉ុន្តែពិនិត្យឃើញខូចគុណភាព ឬជិតផុតកំណត់ ត្រូវបញ្ជូនត្រឡប់ទៅក្រុមហ៊ុនដើមវិញ។
+              </p>
+            </div>
+
+            <!-- Outbound 6: Negative Adjustment -->
+            <div class="p-5 rounded-2xl bg-[#072328]/80 border border-rose-500/20 space-y-3">
+              <div class="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                <i data-lucide="file-minus" class="w-5 h-5"></i>
+              </div>
+              <h4 class="text-sm font-bold text-white">៦. កែតម្រូវស្តុកចុះ (Audit -)</h4>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                ពេលរាប់ស្តុកជាក់ស្តែងឃើញបាត់បង់ដោយគ្មានមូលហេតុ ($Shrinkage / Unaccounted Loss$)។
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 5: Recipe & Bill of Materials (BOM) ── -->
+    <section id="slide-5" class="slide-container w-full max-w-5xl transition-all duration-300 hidden">
+      <div class="slide-card rounded-3xl p-8 sm:p-12 relative">
+        <div class="space-y-8">
+          <div class="flex items-center justify-between border-b border-[#126973]/30 pb-4">
+            <div>
+              <span class="text-xs font-mono uppercase text-[#F1D8C2] font-semibold tracking-wider">Recipe Intelligence</span>
+              <h3 class="text-2xl font-bold text-white">ការគ្រប់គ្រងរូបមន្ត & កាត់ស្តុក (Recipe BOM System)</h3>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-[#126973]/20 border border-[#126973]/40 text-xs text-[#F1D8C2]">
+              AUTO-DEDUCTION ENGINE
+            </span>
+          </div>
+
+          <!-- Recipe Example Card -->
+          <div class="p-6 rounded-2xl bg-[#072328]/90 border border-[#126973]/40 space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-[#126973]/30 border border-[#126973]/40 flex items-center justify-center text-2xl">
+                  ☕
+                </div>
+                <div>
+                  <h4 class="text-lg font-bold text-white">Iced Spanish Latte</h4>
+                  <p class="text-xs text-[#F1D8C2] font-mono">CATEGORY: CAFE · SELLING PRICE: $3.50</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="text-xs font-semibold text-slate-400">Total Recipe Cost:</span>
+                <p class="text-lg font-bold text-emerald-400">$0.82 <span class="text-xs text-slate-400 font-normal">($23.4% Food Cost)</span></p>
+              </div>
+            </div>
+
+            <!-- Table of Ingredients in Recipe -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-left">
+                <thead class="text-[11px] uppercase bg-black/40 text-slate-400 border-y border-slate-800">
+                  <tr>
+                    <th class="py-2.5 px-3">គ្រឿងផ្សំ (Ingredient)</th>
+                    <th class="py-2.5 px-3">បរិមាណប្រើ (Qty)</th>
+                    <th class="py-2.5 px-3">ថ្លៃដើម/ឯកតា (Unit Cost)</th>
+                    <th class="py-2.5 px-3 text-right">ថ្លៃដើមសរុប (Subtotal)</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 font-mono">
+                  <tr>
+                    <td class="py-2.5 px-3 font-sans font-semibold text-white">Espresso Coffee Beans</td>
+                    <td class="py-2.5 px-3 text-slate-300">18.000 g</td>
+                    <td class="py-2.5 px-3 text-slate-400">$0.018 / g</td>
+                    <td class="py-2.5 px-3 text-right text-emerald-400 font-bold">$0.324</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2.5 px-3 font-sans font-semibold text-white">Fresh Milk</td>
+                    <td class="py-2.5 px-3 text-slate-300">120.000 ml</td>
+                    <td class="py-2.5 px-3 text-slate-400">$0.002 / ml</td>
+                    <td class="py-2.5 px-3 text-right text-emerald-400 font-bold">$0.240</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2.5 px-3 font-sans font-semibold text-white">Condensed Milk</td>
+                    <td class="py-2.5 px-3 text-slate-300">25.000 ml</td>
+                    <td class="py-2.5 px-3 text-slate-400">$0.004 / ml</td>
+                    <td class="py-2.5 px-3 text-right text-emerald-400 font-bold">$0.100</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2.5 px-3 font-sans font-semibold text-white">Plastic Cup 16oz + Straw</td>
+                    <td class="py-2.5 px-3 text-slate-300">1.000 pcs</td>
+                    <td class="py-2.5 px-3 text-slate-400">$0.150 / pcs</td>
+                    <td class="py-2.5 px-3 text-right text-emerald-400 font-bold">$0.150</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="p-3 rounded-xl bg-[#126973]/15 border border-[#126973]/30 flex items-center justify-between text-xs">
+              <span class="text-slate-300">💡 នៅពេល POS លក់ Spanish Latte <strong>១ កែវ</strong>៖</span>
+              <span class="text-[#F1D8C2] font-semibold">ប្រព័ន្ធកាត់ស្តុកគ្រាប់កាហ្វេ 18g, ទឹកដោះគោ 120ml, និងកែវ 1pcs ភ្លាមៗ!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 6: Multi-Outlet Architecture ── -->
+    <section id="slide-6" class="slide-container w-full max-w-5xl transition-all duration-300 hidden">
+      <div class="slide-card rounded-3xl p-8 sm:p-12 relative">
+        <div class="space-y-8">
+          <div class="flex items-center justify-between border-b border-[#126973]/30 pb-4">
+            <div>
+              <span class="text-xs font-mono uppercase text-[#F1D8C2] font-semibold tracking-wider">Multi-Venue Logistics</span>
+              <h3 class="text-2xl font-bold text-white">ការគ្រប់គ្រងស្តុកឆ្លងសាខា (Multi-Outlet Inventory)</h3>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-[#126973]/20 border border-[#126973]/40 text-xs text-[#F1D8C2]">
+              SKYPARK NETWORK
+            </span>
+          </div>
+
+          <!-- Network Diagram Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Central -->
+            <div class="md:col-span-4 p-5 rounded-2xl bg-gradient-to-r from-[#072328] via-[#126973]/30 to-[#072328] border border-[#126973]/50 text-center space-y-2">
+              <div class="inline-flex p-2 rounded-xl bg-[#126973] text-white">
+                <i data-lucide="warehouse" class="w-6 h-6"></i>
+              </div>
+              <h4 class="text-base font-bold text-white">🏢 SKYPARK Central Warehouse & Kitchen</h4>
+              <p class="text-xs text-slate-300 max-w-xl mx-auto">
+                ឃ្លាំងស្តុកកណ្តាលទទួលទំនិញដុំធំពី Supplier ក្នុងតម្លៃបោះដុំ (Bulk Purchasing) រួចបែងចែកទៅតាម Outlets នីមួយៗ។
+              </p>
+            </div>
+
+            <!-- Outlets -->
+            <div class="p-4 rounded-2xl bg-[#072328]/70 border border-[#126973]/30 space-y-2 text-center">
+              <span class="text-2xl">☕</span>
+              <h5 class="text-sm font-bold text-white">SKYPARK Cafe</h5>
+              <p class="text-[11px] text-slate-400">ស្តុកកាហ្វេ, ទឹកដោះគោ, នំខេក, ស៊ីរ៉ូ</p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-[#072328]/70 border border-[#126973]/30 space-y-2 text-center">
+              <span class="text-2xl">🍸</span>
+              <h5 class="text-sm font-bold text-white">SkyBar & Lounge</h5>
+              <p class="text-[11px] text-slate-400">ស្តុកស្រា, ស្រាបៀរ, កែវ, Cocktail Mixers</p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-[#072328]/70 border border-[#126973]/30 space-y-2 text-center">
+              <span class="text-2xl">🛒</span>
+              <h5 class="text-sm font-bold text-white">SKYPARK Mart</h5>
+              <p class="text-[11px] text-slate-400">ស្តុកទំនិញវេចខ្ចប់, ភេសជ្ជៈកំប៉ុង, គ្រឿងទេស</p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-[#072328]/70 border border-[#126973]/30 space-y-2 text-center">
+              <span class="text-2xl">🍽️</span>
+              <h5 class="text-sm font-bold text-white">Grand Restaurant</h5>
+              <p class="text-[11px] text-slate-400">ស្តុកសាច់ស្រស់, បន្លែ, គ្រឿងទេសចម្អិន</p>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-[#072328]/60 border border-slate-800 space-y-2">
+            <h5 class="text-xs font-bold text-[#F1D8C2] uppercase tracking-wider">🌟 គុណសម្បត្តិនៃ Multi-Outlet Transfer៖</h5>
+            <ul class="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
+              <li><strong>Inter-Outlet Borrowing:</strong> ពេល SkyBar ខ្វះក្រូចឆ្មារ អាចខ្ចីពី Cafe ដោយគ្រាន់តែធ្វើប័ណ្ណផ្ទេរលើប្រព័ន្ធ។</li>
+              <li><strong>Isolated Stock Visibility:</strong> បុគ្គលិក Cafe មើលឃើញតែស្តុក Cafe ចំណែក Admin មើលឃើញស្តុកគ្រប់ Venues ទាំងអស់។</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 7: Summary & Executive Checklist ── -->
+    <section id="slide-7" class="slide-container w-full max-w-5xl transition-all duration-300 hidden">
+      <div class="slide-card rounded-3xl p-8 sm:p-12 relative">
+        <div class="space-y-8">
+          <div class="flex items-center justify-between border-b border-[#126973]/30 pb-4">
+            <div>
+              <span class="text-xs font-mono uppercase text-[#F1D8C2] font-semibold tracking-wider">Executive Summary</span>
+              <h3 class="text-2xl font-bold text-white">សង្ខេប & តារាងត្រួតពិនិត្យ (Inventory System Checklist)</h3>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-xs text-emerald-300">
+              COMPLETE
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="space-y-3">
+              <h4 class="text-sm font-bold text-[#F1D8C2] flex items-center gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+                <span>មុខងារសំខាន់ៗដែលត្រូវមានក្នុង RMS</span>
+              </h4>
+              <div class="space-y-2 text-xs">
+                <div class="p-3 rounded-xl bg-black/30 border border-slate-800 flex items-center justify-between">
+                  <span class="text-slate-300">1. Recipe BOM & Auto Deduct</span>
+                  <span class="text-emerald-400 font-bold">✓ រួចរាល់</span>
+                </div>
+                <div class="p-3 rounded-xl bg-black/30 border border-slate-800 flex items-center justify-between">
+                  <span class="text-slate-300">2. Supplier & Purchase Order (PO)</span>
+                  <span class="text-emerald-400 font-bold">✓ រួចរាល់</span>
+                </div>
+                <div class="p-3 rounded-xl bg-black/30 border border-slate-800 flex items-center justify-between">
+                  <span class="text-slate-300">3. Stock In / Stock Out Movement Logs</span>
+                  <span class="text-emerald-400 font-bold">✓ រួចរាល់</span>
+                </div>
+                <div class="p-3 rounded-xl bg-black/30 border border-slate-800 flex items-center justify-between">
+                  <span class="text-slate-300">4. Wastage & Spoilage Loss Tracking</span>
+                  <span class="text-emerald-400 font-bold">✓ រួចរាល់</span>
+                </div>
+                <div class="p-3 rounded-xl bg-black/30 border border-slate-800 flex items-center justify-between">
+                  <span class="text-slate-300">5. Multi-Venue Transfer (Cafe/Bar/Mart)</span>
+                  <span class="text-emerald-400 font-bold">✓ រួចរាល់</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <h4 class="text-sm font-bold text-[#F1D8C2] flex items-center gap-2">
+                <i data-lucide="trending-up" class="w-4 h-4 text-[#F1D8C2]"></i>
+                <span>ផលប្រយោជន៍ហិរញ្ញវត្ថុសម្រាប់អាជីវកម្ម</span>
+              </h4>
+              <div class="p-4 rounded-2xl bg-gradient-to-br from-[#126973]/20 to-[#072328] border border-[#126973]/30 space-y-3">
+                <p class="text-xs text-slate-300 leading-relaxed">
+                  ✅ <strong>កាត់បន្ថយការខាតបង់ពី ១៥% មកនៅក្រោម ៣%៖</strong> តាមដានទំនិញផុតកំណត់ និងការខ្ជះខ្ជាយបានទាន់ពេល។
+                </p>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                  ✅ <strong>ដឹងច្បាស់ពីប្រាក់ចំណេញសុទ្ធ ($Net\ Margin$)៖</strong> គណនាថ្លៃដើមម្ហូប និងភេសជ្ជៈនីមួយៗបានយ៉ាងសុក្រឹត។
+                </p>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                  ✅ <strong>ទប់ស្កាត់ការលួច និងដាច់ស្តុក៖</strong> មានរបាយការណ៍សវនកម្ម (Audit Reports) ច្បាស់លាស់រៀងរាល់ថ្ងៃ។
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Slide Navigation Bottom Bar ── -->
+  <footer class="no-print sticky bottom-0 z-50 border-t border-[#126973]/30 bg-[#041012]/90 backdrop-blur-md px-6 py-3">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <!-- Slide Counter -->
+      <div class="flex items-center gap-3">
+        <span id="slideCounter" class="text-xs font-mono font-bold text-[#F1D8C2] bg-[#126973]/20 px-2.5 py-1 rounded-md border border-[#126973]/40">
+          Slide 1 / 7
+        </span>
+        <span id="slideTitleSmall" class="text-xs text-slate-400 hidden sm:inline-block truncate max-w-xs">
+          Title & Overview
+        </span>
+      </div>
+
+      <!-- Slide Dots / Progress Indicator -->
+      <div class="flex items-center gap-1.5" id="slideDots">
+        <!-- Generated by JS -->
+      </div>
+
+      <!-- Prev / Next Navigation Buttons -->
+      <div class="flex items-center gap-2">
+        <button id="prevBtn" onclick="prevSlide()" class="px-3 py-1.5 rounded-lg border border-[#126973]/40 bg-[#126973]/10 hover:bg-[#126973]/30 text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
+          <i data-lucide="chevron-left" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Previous</span>
+        </button>
+
+        <button id="nextBtn" onclick="nextSlide()" class="px-4 py-1.5 rounded-lg bg-[#126973] hover:bg-[#258a97] text-white text-xs font-bold transition-all flex items-center gap-1 shadow-sm cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed">
+          <span class="hidden sm:inline">Next</span>
+          <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ── Interactive Slide Engine Script ── -->
+  <script>
+    lucide.createIcons();
+
+    const TOTAL_SLIDES = 7;
+    let currentSlide = 1;
+    let isScrollMode = false;
+
+    const slideTitles = [
+      "Overview & Architecture",
+      "Core Inventory Formula",
+      "Stock In Operations",
+      "Stock Out Operations",
+      "Recipe & BOM Deduction",
+      "Multi-Outlet Network",
+      "Executive Summary & Checklist"
+    ];
+
+    function initDots() {
+      const dotsContainer = document.getElementById('slideDots');
+      dotsContainer.innerHTML = '';
+      for (let i = 1; i <= TOTAL_SLIDES; i++) {
+        const dot = document.createElement('button');
+        dot.className = `w-2.5 h-2.5 rounded-full transition-all cursor-pointer ${i === currentSlide ? 'bg-[#F1D8C2] w-6' : 'bg-[#126973]/40 hover:bg-[#126973]'}`;
+        dot.onclick = () => goToSlide(i);
+        dotsContainer.appendChild(dot);
+      }
+    }
+
+    function showSlide(slideNum) {
+      if (isScrollMode) return;
+      currentSlide = slideNum;
+
+      for (let i = 1; i <= TOTAL_SLIDES; i++) {
+        const slide = document.getElementById(`slide-${i}`);
+        if (slide) {
+          if (i === currentSlide) {
+            slide.classList.remove('hidden');
+            slide.classList.add('animate-in', 'fade-in', 'zoom-in-95', 'duration-200');
+          } else {
+            slide.classList.add('hidden');
+          }
+        }
+      }
+
+      // Update counters & states
+      document.getElementById('slideCounter').innerText = `Slide ${currentSlide} / ${TOTAL_SLIDES}`;
+      document.getElementById('slideTitleSmall').innerText = slideTitles[currentSlide - 1];
+      document.getElementById('prevBtn').disabled = currentSlide === 1;
+      document.getElementById('nextBtn').disabled = currentSlide === TOTAL_SLIDES;
+
+      initDots();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function nextSlide() {
+      if (currentSlide < TOTAL_SLIDES) {
+        showSlide(currentSlide + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        showSlide(currentSlide - 1);
+      }
+    }
+
+    function goToSlide(num) {
+      showSlide(num);
+    }
+
+    function toggleViewMode() {
+      isScrollMode = !isScrollMode;
+      const text = document.getElementById('viewModeText');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const dots = document.getElementById('slideDots');
+
+      if (isScrollMode) {
+        text.innerText = 'Slide Mode';
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+        dots.style.display = 'none';
+        // Show all slides
+        for (let i = 1; i <= TOTAL_SLIDES; i++) {
+          const s = document.getElementById(`slide-${i}`);
+          if (s) {
+            s.classList.remove('hidden');
+            s.classList.add('mb-10');
+          }
+        }
+        document.getElementById('slideCounter').innerText = 'All Slides (Scroll View)';
+      } else {
+        text.innerText = 'Scroll Mode';
+        prevBtn.style.display = 'flex';
+        nextBtn.style.display = 'flex';
+        dots.style.display = 'flex';
+        for (let i = 1; i <= TOTAL_SLIDES; i++) {
+          const s = document.getElementById(`slide-${i}`);
+          if (s) s.classList.remove('mb-10');
+        }
+        showSlide(currentSlide);
+      }
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+    }
+
+    // Keyboard Shortcuts (Arrow Left/Right, Space)
+    document.addEventListener('keydown', (e) => {
+      if (isScrollMode) return;
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevSlide();
+      }
+    });
+
+    // Initialize
+    showSlide(1);
+  </script>
+</body>
+</html>

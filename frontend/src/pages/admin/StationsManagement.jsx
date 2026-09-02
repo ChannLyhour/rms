@@ -171,7 +171,7 @@ export default function StationsManagement() {
     try {
       if (editingStationId) {
         await axiosClient.put(`/stations/${editingStationId}`, {
-          outlet_id: Number(formData.outlet_id),
+          outlet_id: formData.outlet_id,
           name: formData.name,
           type: formData.type,
           ip_address: formData.ip_address || null,

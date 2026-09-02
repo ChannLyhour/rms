@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -43,7 +44,7 @@ func (h *Handler) Me(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
-	uid, ok := uidVal.(uint64)
+	uid, ok := uidVal.(uuid.UUID)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user id"})
 		return
@@ -58,9 +59,7 @@ func (h *Handler) Me(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"user":        u,
 		"user_id":     u.ID,
-		"username":    u.Username,
-		"role":        u.Role.Name,
-		"permissions": c.MustGet("permissions"),
+		"role":        c.GetString("role"),
+		"permissions": c.GetStringSlice("permissions"),
 	})
 }
-

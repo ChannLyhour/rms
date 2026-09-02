@@ -2,9 +2,9 @@ package kitchen
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/middleware"
 	"github.com/pos-system/backend/internal/service"
 )
@@ -33,7 +33,7 @@ func (h *KDSHandler) ListKitchenOrders(c *gin.Context) {
 // UpdateOrderStatus godoc
 // PATCH /api/v1/kitchen/orders/:id/status
 func (h *KDSHandler) UpdateOrderStatus(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid order id"})
 		return
@@ -48,7 +48,7 @@ func (h *KDSHandler) UpdateOrderStatus(c *gin.Context) {
 	}
 
 	claims := middleware.GetClaims(c)
-	var userID *uint64
+	var userID *uuid.UUID
 	if claims != nil {
 		uid := claims.UserID
 		userID = &uid

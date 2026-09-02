@@ -2,9 +2,9 @@ package outlet
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pos-system/backend/internal/domain"
 )
 
@@ -72,7 +72,7 @@ func (h *Handler) GetAllOutlets(c *gin.Context) {
 }
 
 func (h *Handler) GetOutletByID(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid outlet ID"})
 		return
@@ -108,7 +108,7 @@ func (h *Handler) CreateOutlet(c *gin.Context) {
 }
 
 func (h *Handler) UpdateOutlet(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid outlet ID"})
 		return
@@ -134,7 +134,7 @@ func (h *Handler) UpdateOutlet(c *gin.Context) {
 }
 
 func (h *Handler) DeleteOutlet(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid outlet ID"})
 		return
@@ -155,9 +155,9 @@ func (h *Handler) DeleteOutlet(c *gin.Context) {
 // ── Zones Handlers ─────────────────────────────────────────────────
 
 func (h *Handler) GetAllZones(c *gin.Context) {
-	var outletIDPtr *uint64
-	if outletIDStr := c.Query("outlet_id"); outletIDStr != "" {
-		if id, err := strconv.ParseUint(outletIDStr, 10, 64); err == nil {
+	var outletIDPtr *uuid.UUID
+	if outletIDStr := c.Query("outlet_id"); outletIDStr != "" && outletIDStr != "all" {
+		if id, err := uuid.Parse(outletIDStr); err == nil {
 			outletIDPtr = &id
 		}
 	}
@@ -172,7 +172,7 @@ func (h *Handler) GetAllZones(c *gin.Context) {
 }
 
 func (h *Handler) GetZonesByOutlet(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid outlet ID"})
 		return
@@ -187,7 +187,7 @@ func (h *Handler) GetZonesByOutlet(c *gin.Context) {
 }
 
 func (h *Handler) GetZoneByID(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid zone ID"})
 		return
@@ -206,7 +206,7 @@ func (h *Handler) GetZoneByID(c *gin.Context) {
 }
 
 func (h *Handler) CreateZoneForOutlet(c *gin.Context) {
-	outletID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	outletID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid outlet ID"})
 		return
@@ -234,7 +234,7 @@ func (h *Handler) CreateZone(c *gin.Context) {
 		return
 	}
 
-	if req.OutletID == 0 {
+	if req.OutletID == uuid.Nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "outlet_id is required"})
 		return
 	}
@@ -248,7 +248,7 @@ func (h *Handler) CreateZone(c *gin.Context) {
 }
 
 func (h *Handler) UpdateZone(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid zone ID"})
 		return
@@ -273,7 +273,7 @@ func (h *Handler) UpdateZone(c *gin.Context) {
 }
 
 func (h *Handler) DeleteZone(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid zone ID"})
 		return
@@ -293,9 +293,9 @@ func (h *Handler) DeleteZone(c *gin.Context) {
 // ── Stations Handlers ──────────────────────────────────────────────
 
 func (h *Handler) GetAllStations(c *gin.Context) {
-	var outletIDPtr *uint64
-	if outletIDStr := c.Query("outlet_id"); outletIDStr != "" {
-		if id, err := strconv.ParseUint(outletIDStr, 10, 64); err == nil {
+	var outletIDPtr *uuid.UUID
+	if outletIDStr := c.Query("outlet_id"); outletIDStr != "" && outletIDStr != "all" {
+		if id, err := uuid.Parse(outletIDStr); err == nil {
 			outletIDPtr = &id
 		}
 	}
@@ -310,7 +310,7 @@ func (h *Handler) GetAllStations(c *gin.Context) {
 }
 
 func (h *Handler) GetStationsByOutlet(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid outlet ID"})
 		return
@@ -325,7 +325,7 @@ func (h *Handler) GetStationsByOutlet(c *gin.Context) {
 }
 
 func (h *Handler) GetStationByID(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid station ID"})
 		return
@@ -344,7 +344,7 @@ func (h *Handler) GetStationByID(c *gin.Context) {
 }
 
 func (h *Handler) CreateStationForOutlet(c *gin.Context) {
-	outletID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	outletID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid outlet ID"})
 		return
@@ -372,7 +372,7 @@ func (h *Handler) CreateStation(c *gin.Context) {
 		return
 	}
 
-	if req.OutletID == 0 {
+	if req.OutletID == uuid.Nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "outlet_id is required"})
 		return
 	}
@@ -386,7 +386,7 @@ func (h *Handler) CreateStation(c *gin.Context) {
 }
 
 func (h *Handler) UpdateStation(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid station ID"})
 		return
@@ -411,7 +411,7 @@ func (h *Handler) UpdateStation(c *gin.Context) {
 }
 
 func (h *Handler) DeleteStation(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid station ID"})
 		return

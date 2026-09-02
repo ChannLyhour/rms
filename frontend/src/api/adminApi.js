@@ -20,13 +20,25 @@ export const adminApi = {
   revokePermission: (roleId, permissionId) => client.delete('/admin/roles/permissions', { data: { role_id: roleId, permission_id: permissionId } }),
 
   // Categories
-  getCategories: () => client.get('/admin/categories'),
+  getCategories: (params) => {
+    if (typeof params === 'object' && params !== null) {
+      return client.get('/admin/categories', { params })
+    }
+    const query = params ? `?outlet_id=${params}` : ''
+    return client.get(`/admin/categories${query}`)
+  },
   createCategory: (data) => client.post('/admin/categories', data),
   updateCategory: (id, data) => client.put(`/admin/categories/${id}`, data),
   deleteCategory: (id) => client.delete(`/admin/categories/${id}`),
 
   // Products
-  getProducts: (categoryId) => client.get(`/admin/products${categoryId ? `?category_id=${categoryId}` : ''}`),
+  getProducts: (params) => {
+    if (typeof params === 'object' && params !== null) {
+      return client.get('/admin/products', { params })
+    }
+    const query = params ? `?category_id=${params}` : ''
+    return client.get(`/admin/products${query}`)
+  },
   createProduct: (data) => client.post('/admin/products', data),
   updateProduct: (id, data) => client.put(`/admin/products/${id}`, data),
   deleteProduct: (id) => client.delete(`/admin/products/${id}`),
@@ -50,17 +62,47 @@ export const adminApi = {
   getTables: () => client.get('/cashier/tables'),
   getSessions: () => client.get('/cashier/sessions'),
 
+  // Stations
+  getStations: (params) => {
+    if (typeof params === 'object' && params !== null) {
+      return client.get('/admin/stations', { params })
+    }
+    const query = params ? `?outlet_id=${params}` : ''
+    return client.get(`/admin/stations${query}`)
+  },
+
   // Orders
   getOrders: (params) => client.get('/admin/orders', { params }),
   getOrderById: (id) => client.get(`/admin/orders/${id}`),
   updateOrderStatus: (id, status) => client.patch(`/admin/orders/${id}/status`, { status }),
 
-  // Inventory & Supplies
+  // Inventory & Supplies CRUD
   getIngredients: (params) => client.get('/admin/ingredients', { params }),
+  getIngredient: (id) => client.get(`/admin/ingredients/${id}`),
+  createIngredient: (data) => client.post('/admin/ingredients', data),
+  updateIngredient: (id, data) => client.put(`/admin/ingredients/${id}`, data),
+  deleteIngredient: (id) => client.delete(`/admin/ingredients/${id}`),
+
   getSuppliers: (params) => client.get('/admin/suppliers', { params }),
+  getSupplier: (id) => client.get(`/admin/suppliers/${id}`),
+  createSupplier: (data) => client.post('/admin/suppliers', data),
+  updateSupplier: (id, data) => client.put(`/admin/suppliers/${id}`, data),
+  deleteSupplier: (id) => client.delete(`/admin/suppliers/${id}`),
+
   getRecipes: (params) => client.get('/admin/recipes', { params }),
+  createRecipe: (data) => client.post('/admin/recipes', data),
+  deleteRecipe: (id) => client.delete(`/admin/recipes/${id}`),
+
   getPurchaseOrders: (params) => client.get('/admin/purchase-orders', { params }),
-  getStockLogs: () => client.get('/admin/stock-logs/ingredients'),
+  getPurchaseOrder: (id) => client.get(`/admin/purchase-orders/${id}`),
+  createPurchaseOrder: (data) => client.post('/admin/purchase-orders', data),
+  updatePurchaseOrderStatus: (id, status) => client.patch(`/admin/purchase-orders/${id}/status`, { status }),
+  deletePurchaseOrder: (id) => client.delete(`/admin/purchase-orders/${id}`),
+
+  getStockLogs: (params) => client.get('/admin/stock-logs/ingredients', { params }),
+  getProductStockLogs: (params) => client.get('/admin/stock-logs/products', { params }),
+  getStockWastes: (params) => client.get('/admin/stock-wastes', { params }),
+  createStockWaste: (data) => client.post('/admin/stock-wastes', data),
 
   // System Settings
   getSettings: () => client.get('/admin/settings'),
