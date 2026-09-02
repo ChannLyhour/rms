@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="km" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SKYPARK RMS — Restaurant Inventory Accounting & Costing Valuation Slide Deck</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            skypark: {
+              primary: '#126973',
+              primaryDark: '#0a4249',
+              primaryLight: '#258a97',
+              gold: '#F1D8C2',
+              goldDark: '#c5824c',
+              goldLight: '#faf6f2',
+              dark: '#072328',
+              darker: '#041012',
+              black: '#020202',
+              white: '#F8F7F4',
+              surface: '#0b1c1e',
+              card: '#0f262a',
+              border: 'rgba(18, 105, 115, 0.25)',
+            }
+          },
+          fontFamily: {
+            khmer: ['"Kantumruy Pro"', 'sans-serif'],
+            sans: ['"Plus Jakarta Sans"', '"Kantumruy Pro"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Kantumruy Pro', 'Plus Jakarta Sans', sans-serif;
+      background-color: #041012;
+      color: #F8F7F4;
+    }
+    
+    .slide-card {
+      background: linear-gradient(145deg, rgba(15, 38, 42, 0.90), rgba(7, 35, 40, 0.98));
+      border: 1px solid rgba(18, 105, 115, 0.35);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 35px rgba(18, 105, 115, 0.2);
+    }
+
+    .glow-teal {
+      box-shadow: 0 0 30px rgba(18, 105, 115, 0.45);
+    }
+
+    .glow-gold {
+      box-shadow: 0 0 30px rgba(241, 216, 194, 0.25);
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(4, 16, 18, 0.5);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(18, 105, 115, 0.5);
+      border-radius: 9999px;
+    }
+
+    /* Print styling */
+    @media print {
+      body { background: white !important; color: black !important; }
+      .no-print { display: none !important; }
+      .slide-container { page-break-after: always; display: block !important; }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col justify-between selection:bg-[#126973] selection:text-[#F1D8C2]">
+
+  <!-- ── Top Header & Controls ── -->
+  <header class="no-print sticky top-0 z-50 border-b border-[#126973]/30 bg-[#041012]/85 backdrop-blur-md px-6 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-[#126973]/25 border border-[#126973]/40 flex items-center justify-center text-[#F1D8C2] font-bold text-sm shadow-xs">
+        <i data-lucide="calculator" class="w-5 h-5 text-[#F1D8C2]"></i>
+      </div>
+      <div>
+        <h1 class="text-sm font-extrabold tracking-wide text-[#F8F7F4] flex items-center gap-2">
+          <span>SKYPARK RMS</span>
+          <span class="text-[10px] uppercase px-2 py-0.5 rounded-md bg-[#126973]/30 text-[#F1D8C2] border border-[#126973]/40 font-mono">
+            FINANCIAL ACCOUNTING
+          </span>
+        </h1>
+        <p class="text-[11px] text-slate-400">ឯកសារបទបង្ហាញស្តីពី គណនេយ្យស្តុក និងការគ្រប់គ្រងថ្លៃដើម (Costing Valuation)</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-2">
+      <!-- Mode View Toggle -->
+      <button id="viewToggleBtn" onclick="toggleViewMode()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-[#126973]/40 bg-[#126973]/15 hover:bg-[#126973]/30 text-[#F1D8C2] transition-all flex items-center gap-1.5 cursor-pointer">
+        <i data-lucide="layout-list" class="w-4 h-4"></i>
+        <span id="viewModeText">Scroll Mode</span>
+      </button>
+
+      <!-- Print / Export -->
+      <button onclick="window.print()" class="p-2 rounded-lg border border-[#126973]/30 hover:bg-[#126973]/20 text-slate-300 hover:text-white transition-all cursor-pointer" title="Print Slide Deck">
+        <i data-lucide="printer" class="w-4 h-4"></i>
+      </button>
+
+      <!-- Fullscreen -->
+      <button onclick="toggleFullScreen()" class="p-2 rounded-lg border border-[#126973]/30 hover:bg-[#126973]/20 text-slate-300 hover:text-white transition-all cursor-pointer" title="Fullscreen">
+        <i data-lucide="maximize" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Main Slide Deck Canvas ── -->
+  <main class="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 flex items-center justify-center">
+
+    <!-- ── SLIDE 1: Title & System Vision ── -->
+    <section id="slide-1" class="slide-container w-full max-w-5xl transition-all duration-300">
+      <div class="slide-card rounded-3xl p-8 sm:p-12 relative overflow-hidden">
+        <div class="absolute -top-24 -right-24 w-96 h-96 bg-[#126973]/25 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-[#F1D8C2]/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 space-y-8">
+          <div class="flex items-center justify-between">
+            <span className="inline-flex" class="px-3.5 py-1 rounded-full text-xs font-mono font-bold bg-[#126973]/20 border border-[#126973]/50 text-[#F1D8C2]">
+              MODULE 04 · COSTING & INVENTORY VALUATION
+            </span>
+            <span class="text-xs font-mono text-slate-400">SKYPARK RESTAURANT OS</span>
+          </div>
+
+          <div class="space-y-4">
+            <h2 class="text-3xl sm:text-5xl font-black text-white leading-tight tracking-tight">
+              គណនេយ្យស្តុក និងការគ្រប់គ្រងថ្លៃដើម <br />
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#126973] via-[#258a97] to-[#F1D8C2]">
+                Inventory Accounting & Cost Per Unit Valuation
+              </span>
+            </h2>
+            <p class="text-sm sm:text-base text-slate-300 max-w-3xl leading-relaxed">
+              ស្វែងយល់ស៊ីជម្រៅអំពីរបៀបគណនាថ្លៃដើមទំនិញពេលតម្លៃទីផ្សារប្រែប្រួលឡើងចុះ (Cost Fluctuation), ការគណនាថ្លៃដើមមធ្យម Weighted Average Cost (WAC), ការកាត់ស្តុកតាមរូបមន្តមុខម្ហូប (Recipe BOM), និងការគ្រប់គ្រងប្រាក់ចំណេញដុល (Gross Profit Margin) ក្នុងភោជនីយដ្ឋាន។
+            </p>
+          </div>
+
+          <!-- Feature Badges Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-[#126973]/30">
+            <div class="p-3.5 rounded-xl bg-[#041012]/60 border border-[#126973]/25 space-y-1">
+              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Core Costing</span>
+              <p class="text-xs font-bold text-[#F1D8C2]">Weighted Average Cost</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-[#041012]/60 border border-[#126973]/25 space-y-1">
+              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">POS Automation</span>
+              <p class="text-xs font-bold text-[#F1D8C2]">BOM Portion Deduction</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-[#041012]/60 border border-[#126973]/25 space-y-1">
+              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Loss Audit</span>
+              <p class="text-xs font-bold text-[#F1D8C2]">Waste & Spoilage Write-Off</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-[#041012]/60 border border-[#126973]/25 space-y-1">
+              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Asset Valuation</span>
+              <p class="text-xs font-bold text-[#F1D8C2]">Real-Time Balance Sheet</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 2: The Price Fluctuation Problem ── -->
+    <section id="slide-2" class="slide-container w-full max-w-5xl hidden transition-all duration-300">
+      <div class="slide-card rounded-3xl p-8 sm:p-12 relative overflow-hidden space-y-8">
+        <div class="flex items-center justify-between border-b border-[#126973]/30 pb-4">
+          <div>
+            <span class="text-xs font-mono font-bold text-[#F1D8C2] uppercase tracking-wider">PROBLEM STATEMENT</span>
+            <h3 class="text-2xl font-black text-white mt-1">បញ្ហាប្រឈម៖ នៅពេលតម្លៃទិញទំនិញឡើងថ្លៃ ($10 ➔ $12)</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <i data-lucide="trending-up" class="w-5 h-5"></i>
+          </div>
+        </div>
+
+        <!-- Scenario Comparison -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="p-6 rounded-2xl bg-[#041012]/70 border border-emerald-500/30 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                ដំណាក់កាលទី ១ (ខែទី ១)
+              </span>
+              <span class="text-xs font-mono text-slate-400">Batch #001</span>
+            </div>
+            <h4 class="text-base font-bold text-white">ទិញចូលស្តុកលើកដំបូង</h4>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              ភោជនីយដ្ឋានទិញសាច់គោ **Australian Wagyu** ចំនួន **10 kg** ក្នុងតម្លៃ **$10.00 / kg**។
+            </p>
+            <div class="p-3 rounded-xl bg-[#072328] font-mono text-xs space-y-1">
+              <div class="flex justify-between"><span>បរិមាណទិញ៖</span><span class="font-bold text-white">10 kg</span></div>
+              <div class="flex justify-between"><span>តម្លៃទិញ៖</span><span class="font-bold text-emerald-400">$10.00 / kg</span></div>
+              <div class="flex justify-between border-t border-slate-700 pt-1"><span>ទឹកប្រាក់សរុប៖</span><span class="font-extrabold text-[#F1D8C2]">$100.00</span></div>
+            </div>
+          </div>
+
+          <div class="p-6 rounded-2xl bg-[#041012]/70 border border-rose-500/30 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                ដំណាក់កាលទី ២ (ខែទី ២)
+              </span>
+              <span class="text-xs font-mono text-slate-400">Batch #002</span>
+            </div>
+            <h4 class="text-base font-bold text-white">តម្លៃទីផ្សារឡើងថ្លៃ ($12/kg)</h4>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              សាច់គោចាស់នៅសល់ **5 kg** ($50)។ ពេលនេះអ្នកផ្គត់ផ្គង់តម្លើងថ្លៃដល់ **$12.00 / kg** ហើយយើងទិញថែម **15 kg**។
+            </p>
+            <div class="p-3 rounded-xl bg-[#072328] font-mono text-xs space-y-1">
+              <div class="flex justify-between"><span>ស្តុកចាស់សល់៖</span><span class="font-bold text-slate-300">5 kg @ $10 ($50)</span></div>
+              <div class="flex justify-between"><span>ស្តុកថ្មីទិញថែម៖</span><span class="font-bold text-rose-400">15 kg @ $12 ($180)</span></div>
+              <div class="flex justify-between border-t border-slate-700 pt-1"><span>សាច់គោសរុបក្នុងទូ៖</span><span class="font-extrabold text-[#F1D8C2]">20 kg ($230)</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Question Box -->
+        <div class="p-4 rounded-xl bg-[#126973]/15 border border-[#126973]/40 flex items-start gap-3">
+          <i data-lucide="help-circle" class="w-5 h-5 text-[#F1D8C2] shrink-0 mt-0.5"></i>
+          <div>
+            <p class="text-xs font-bold text-[#F1D8C2]">សំណួរគន្លឹះ៖ តើប្រព័ន្ធគួរតែកំណត់ Cost Per Unit ប៉ុន្មាន ($10, $12, ឬ តម្លៃអ្វីផ្សេង)?</p>
+            <p class="text-[11px] text-slate-300 mt-1">
+              បើយក $10 នឹងធ្វើឱ្យខាតថ្លៃដើមដោយមិនដឹងខ្លួន។ បើយក $12 នឹងធ្វើឱ្យថ្លៃដើមម្ហូបលោតឡើងខ្ពស់ខុសពីការពិត។ ដំណោះស្រាយស្តង់ដារអន្តរជាតិគឺ <b>Weighted Average Cost (WAC)</b>!
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 3: Weighted Average Cost (WAC) ── -->
+    <section id="slide-3" class="slide-container w-full max-w-5xl hidden transition-all duration-300">
+      <div class="slide-card rounded-3xl p-8 sm:p-12 relative overflow-hidden space-y-8">
+        <div class="flex items-center justify-between border-b border-[#126973]/30 pb-4">
+          <div>
+            <span class="text-xs font-mono font-bold text-[#F1D8C2] uppercase tracking-wider">INDUSTRY GOLD STANDARD</span>
+            <h3 class="text-2xl font-black text-white mt-1">ដំណោះស្រាយ៖ រូបមន្ត Weighted Average Cost (WAC)</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-[#126973]/20 border border-[#126973]/40 flex items-center justify-center text-[#F1D8C2]">
+            <i data-lucide="scale" class="w-5 h-5"></i>
+          </div>
+        </div>
+
+        <!-- Mathematical Formula Box -->
+        <div class="p-6 rounded-2xl bg-gradient-to-r from-[#0a4249]/60 to-[#041012] border border-[#126973]/40 text-center space-y-3">
+          <span class="text-[11px] uppercase font-bold tracking-widest text-[#F1D8C2]">WAC INVENTORY VALUATION FORMULA</span>
+          <div class="text-lg sm:text-2xl font-mono font-extrabold text-white">
+            $$\text{New Cost/Unit} = \frac{(\text{Old Qty} \times \text{Old Cost}) + (\text{New PO Qty} \times \text{New PO Cost})}{\text{Total Combined Quantity}}$$
+          </div>
+          <p class="text-xs text-slate-300 max-w-xl mx-auto">
+            យកតម្លៃទឹកប្រាក់ស្តុកចាស់សរុប បូកទឹកប្រាក់ទិញថ្មីសរុប រួចចែកនឹងចំនួនគីឡូសរុបទាំងអស់។
+          </p>
+        </div>
+
+        <!-- Step-by-Step Calculation -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl bg-[#041012]/60 border border-[#126973]/25 space-y-2">
+            <div class="flex items-center gap-2 text-xs font-bold text-slate-300">
+              <span class="w-5 h-5 rounded-full bg-[#126973]/30 flex items-center justify-center text-[10px] font-mono text-[#F1D8C2]">1</span>
+              <span>គណនាទឹកប្រាក់ចាស់</span>
+            </div>
+            <p class="text-xs font-mono font-bold text-white">5 kg × $10 = <span class="text-emerald-400">$50.00</span></p>
+            <p class="text-[11px] text-slate-400">ទំនិញនៅសល់ក្នុងស្តុកបច្ចុប្បន្ន</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-[#041012]/60 border border-[#126973]/25 space-y-2">
+            <div class="flex items-center gap-2 text-xs font-bold text-slate-300">
+              <span class="w-5 h-5 rounded-full bg-[#126973]/30 flex items-center justify-center text-[10px] font-mono text-[#F1D8C2]">2</span>
+              <span>គណនាទឹកប្រាក់ថ្មី</span>
+            </div>
+            <p class="text-xs font-mono font-bold text-white">15 kg × $12 = <span class="text-rose-400">$180.00</span></p>
+            <p class="text-[11px] text-slate-400">ទំនិញទើបនឹង Receive ពី PO ថ្មី</p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-[#041012]/60 border border-[#126973]/50 space-y-2 bg-[#126973]/10">
+            <div class="flex items-center gap-2 text-xs font-bold text-[#F1D8C2]">
+              <span class="w-5 h-5 rounded-full bg-[#126973] flex items-center justify-center text-[10px] font-mono text-white">3</span>
+              <span>តម្លៃមធ្យមថ្មីក្នុងប្រព័ន្ធ</span>
+            </div>
+            <p class="text-xs font-mono font-extrabold text-[#F1D8C2]">($50 + $180) / 20 = <span class="text-base text-emerald-400">$11.50/kg</span></p>
+            <p class="text-[11px] text-slate-300">តម្លៃច្បាស់លាស់សម្រាប់កាត់ស្តុក POS</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 4: Costing Method Comparison Matrix ── -->
+    <section id="slide-4" class="slide-container w-full max-w-5xl hidden transition-all duration-300">
+      <div class="slide-card rounded-3xl p-8 sm:p-12 relative overflow-hidden space-y-8">
+        <div class="flex items-center justify-between border-b border-[#126973]/30 pb-4">
+          <div>
+            <span class="text-xs font-mono font-bold text-[#F1D8C2] uppercase tracking-wider">COMPARATIVE ANALYSIS</span>
+            <h3 class="text-2xl font-black text-white mt-1">ប្រៀបធៀបវិធីសាស្រ្តគណនាថ្លៃដើមទាំង ៣ (Costing Methods)</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-[#126973]/20 border border-[#126973]/40 flex items-center justify-center text-[#F1D8C2]">
+            <i data-lucide="table" class="w-5 h-5"></i>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border border-[#126973]/30 rounded-xl overflow-hidden">
+            <thead class="bg-[#072328] text-slate-300 uppercase tracking-wider font-mono text-[11px] border-b border-[#126973]/30">
+              <tr>
+                <th class="p-3.5">វិធីសាស្រ្ត (Method)</th>
+                <th class="p-3.5">របៀបដំណើរការ (Mechanism)</th>
+                <th class="p-3.5">គុណសម្បត្តិ (Pros)</th>
+                <th class="p-3.5">គុណវិបត្តិ (Cons)</th>
+                <th class="p-3.5">ការអនុវត្ត (F&B Suitability)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#126973]/20 text-slate-200">
+              <tr class="bg-[#126973]/10">
+                <td class="p-3.5 font-bold text-[#F1D8C2]">
+                  <div class="flex items-center gap-1.5">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+                    <span>Weighted Average Cost (WAC)</span>
+                  </div>
+                </td>
+                <td class="p-3.5">គណនាតម្លៃមធ្យមរាល់ពេល Receive ទំនិញពី PO ថ្មី</td>
+                <td class="p-3.5 text-emerald-400">ថ្លៃដើមមានលំនឹង ឆ្លុះបញ្ចាំងពីតម្លៃពិត មិនប្រែប្រួលគំហុក</td>
+                <td class="p-3.5 text-slate-400">ត្រូវការប្រព័ន្ធ POS/RMS គណនា auto ពេល PO Receive</td>
+                <td class="p-3.5 font-bold text-emerald-400">⭐⭐⭐⭐⭐ ស្តង់ដារភោជនីយដ្ឋានទូទៅ</td>
+              </tr>
+              <tr>
+                <td class="p-3.5 font-bold text-white">Last Purchase Price (LPP)</td>
+                <td class="p-3.5">យកតាមតម្លៃនៃវិក្កយបត្រទិញចុងក្រោយបង្អស់ ($12)</td>
+                <td class="p-3.5 text-slate-300">ងាយស្រួលយល់ ដឹងពីតម្លៃទីផ្សារបច្ចុប្បន្ន (Replacement Cost)</td>
+                <td class="p-3.5 text-rose-400">ធ្វើឱ្យតម្លៃស្តុកចាស់ឡើងថ្លៃលើសការពិត</td>
+                <td class="p-3.5 text-slate-400">⭐⭐⭐ សមស្របសម្រាប់ Quick Estimate</td>
+              </tr>
+              <tr>
+                <td class="p-3.5 font-bold text-white">FIFO (First-In, First-Out)</td>
+                <td class="p-3.5">សាច់ 5kg ចាស់លក់អស់សិន ទើបចាប់ផ្តើមកាត់ 15kg ថ្មី</td>
+                <td class="p-3.5 text-slate-300">សុក្រឹត្យតាម Batch និមួយៗ</td>
+                <td class="p-3.5 text-rose-400">ស្មុគស្មាញខ្លាំង ត្រូវការតាមដាន Lot/Batch ID រាល់ដុំសាច់</td>
+                <td class="p-3.5 text-slate-400">⭐⭐ សមស្របសម្រាប់ឃ្លាំងវេជ្ជសាស្ត្រ/ស្រាថ្លៃ</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 5: End-to-End Financial Loop ── -->
+    <section id="slide-5" class="slide-container w-full max-w-5xl hidden transition-all duration-300">
+      <div class="slide-card rounded-3xl p-8 sm:p-12 relative overflow-hidden space-y-8">
+        <div class="flex items-center justify-between border-b border-[#126973]/30 pb-4">
+          <div>
+            <span class="text-xs font-mono font-bold text-[#F1D8C2] uppercase tracking-wider">INTEGRATED DATA FLOW</span>
+            <h3 class="text-2xl font-black text-white mt-1">ចរន្តហិរញ្ញវត្ថុពី Purchase Order ដល់ POS Orders</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-[#126973]/20 border border-[#126973]/40 flex items-center justify-center text-[#F1D8C2]">
+            <i data-lucide="git-merge" class="w-5 h-5"></i>
+          </div>
+        </div>
+
+        <!-- 4-Step Diagram Flow -->
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div class="p-4 rounded-xl bg-[#041012]/70 border border-[#126973]/30 space-y-2 relative">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-[#126973]/30 text-[#F1D8C2] font-bold">STEP 01</span>
+            <h4 class="text-xs font-bold text-white flex items-center gap-1.5 mt-1">
+              <i data-lucide="truck" class="w-4 h-4 text-[#F1D8C2]"></i>
+              <span>Purchase Order</span>
+            </h4>
+            <p class="text-[11px] text-slate-300">
+              អ្នកគ្រប់គ្រងបង្កើត PO ទិញសាច់ 15kg ក្នុងតម្លៃ $12/kg ពី Supplier។
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-[#041012]/70 border border-emerald-500/30 space-y-2">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">STEP 02</span>
+            <h4 class="text-xs font-bold text-white flex items-center gap-1.5 mt-1">
+              <i data-lucide="check-square" class="w-4 h-4 text-emerald-400"></i>
+              <span>PO Received (Stock In)</span>
+            </h4>
+            <p class="text-[11px] text-slate-300">
+              ចុច "Receive" ➔ ស្តុកកើនឡើង 20kg + ប្រព័ន្ធគណនា WAC New Cost = <b>$11.50/kg</b>។
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-[#041012]/70 border border-blue-500/30 space-y-2">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">STEP 03</span>
+            <h4 class="text-xs font-bold text-white flex items-center gap-1.5 mt-1">
+              <i data-lucide="chef-hat" class="w-4 h-4 text-blue-400"></i>
+              <span>Recipe BOM Cost</span>
+            </h4>
+            <p class="text-[11px] text-slate-300">
+              Steak 1 ចានប្រើ 0.25kg Wagyu ➔ Portion Cost ថ្មី = 0.25 × $11.50 = <b>$2.875</b>។
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-[#041012]/70 border border-amber-500/30 space-y-2">
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">STEP 04</span>
+            <h4 class="text-xs font-bold text-white flex items-center gap-1.5 mt-1">
+              <i data-lucide="dollar-sign" class="w-4 h-4 text-amber-400"></i>
+              <span>POS Sale & Profit</span>
+            </h4>
+            <p class="text-[11px] text-slate-300">
+              លក់ Steak តម្លៃ $12.00 ➔ ប្រព័ន្ធកត់ត្រា COGS = $2.88 ➔ <b>Gross Profit = $9.12 (76%)</b>។
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 6: Recipe BOM & Food Cost Margin ── -->
+    <section id="slide-6" class="slide-container w-full max-w-5xl hidden transition-all duration-300">
+      <div class="slide-card rounded-3xl p-8 sm:p-12 relative overflow-hidden space-y-8">
+        <div class="flex items-center justify-between border-b border-[#126973]/30 pb-4">
+          <div>
+            <span class="text-xs font-mono font-bold text-[#F1D8C2] uppercase tracking-wider">PROFITABILITY CONTROL</span>
+            <h3 class="text-2xl font-black text-white mt-1">រូបមន្តម្ហូប (Recipe BOM) និងការគ្រប់គ្រង Food Cost %</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-[#126973]/20 border border-[#126973]/40 flex items-center justify-center text-[#F1D8C2]">
+            <i data-lucide="pie-chart" class="w-5 h-5"></i>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div class="p-5 rounded-2xl bg-[#041012]/70 border border-emerald-500/30 space-y-2">
+            <span class="text-emerald-400 text-xs font-bold uppercase tracking-wider block">Ideal Food Cost (28% - 32%)</span>
+            <p class="text-2xl font-mono font-extrabold text-emerald-400">28.5%</p>
+            <p class="text-[11px] text-slate-300">
+              កម្រិតស្តង់ដារដែលធានាបាននូវប្រាក់ចំណេញខ្ពស់បំផុតសម្រាប់ភោជនីយដ្ឋាន (High Margin Zone)។
+            </p>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-[#041012]/70 border border-amber-500/30 space-y-2">
+            <span class="text-amber-400 text-xs font-bold uppercase tracking-wider block">Warning Zone (33% - 38%)</span>
+            <p class="text-2xl font-mono font-extrabold text-amber-400">35.0%</p>
+            <p class="text-[11px] text-slate-300">
+              ពេលគ្រឿងផ្សំឡើងថ្លៃ ប្រព័ន្ធនឹងជូនដំណឹង Alert ឱ្យអ្នកគ្រប់គ្រងពិនិត្យមើល portion ឬចរចាតម្លៃទិញ។
+            </p>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-[#041012]/70 border border-rose-500/30 space-y-2">
+            <span class="text-rose-400 text-xs font-bold uppercase tracking-wider block">Danger Zone (&gt; 40%)</span>
+            <p class="text-2xl font-mono font-extrabold text-rose-400">42.0%</p>
+            <p class="text-[11px] text-slate-300">
+              មុខម្ហូបលក់មិនចំណេញ (Loss Making) ត្រូវកែសម្រួលរូបមន្ត ឬតម្លើងថ្លៃលក់នៅលើ Menu POS ជាបន្ទាន់។
+            </p>
+          </div>
+        </div>
+
+        <!-- Recipe Math Breakdown -->
+        <div class="p-4 rounded-xl bg-[#072328] border border-[#126973]/30 font-mono text-xs space-y-2">
+          <div class="flex justify-between items-center text-slate-300">
+            <span>Dish: Australian Ribeye Steak (Menu Price: $14.00)</span>
+            <span class="text-[#F1D8C2] font-bold">Total COGS: $3.99 (28.5% Food Cost)</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-[11px] text-slate-400 pt-2 border-t border-slate-700">
+            <div>🥩 Wagyu Beef (0.25 kg): $2.88</div>
+            <div>🧈 French Butter (0.03 kg): $0.45</div>
+            <div>🌿 Rosemary & Garlic: $0.66</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 7: Waste & Spoilage Write-Off Accounting ── -->
+    <section id="slide-7" class="slide-container w-full max-w-5xl hidden transition-all duration-300">
+      <div class="slide-card rounded-3xl p-8 sm:p-12 relative overflow-hidden space-y-8">
+        <div class="flex items-center justify-between border-b border-[#126973]/30 pb-4">
+          <div>
+            <span class="text-xs font-mono font-bold text-[#F1D8C2] uppercase tracking-wider">LOSS ACCOUNTING</span>
+            <h3 class="text-2xl font-black text-white mt-1">ការកត់ត្រាទំនិញខូចខាត និងកាត់កងការខាតបង់ (Waste & Spoilage)</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400">
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="p-5 rounded-2xl bg-[#041012]/70 border border-rose-500/30 space-y-3">
+            <h4 class="text-xs font-bold text-rose-400 uppercase tracking-wider">មូលហេតុកាត់កងស្តុក (Wastage Types)</h4>
+            <div class="space-y-2 text-xs text-slate-200">
+              <div class="flex items-center justify-between p-2 rounded-lg bg-[#072328]">
+                <span>🥩 ខូចគុណភាព / ផុតកំណត់ (Spoiled / Expired)</span>
+                <span class="font-mono text-rose-400 font-bold">Write-Off Loss</span>
+              </div>
+              <div class="flex items-center justify-between p-2 rounded-lg bg-[#072328]">
+                <span>📦 ខូចខាតពេលដឹកជញ្ជូន (Damaged in Transit)</span>
+                <span class="font-mono text-rose-400 font-bold">Supplier Claim</span>
+              </div>
+              <div class="flex items-center justify-between p-2 rounded-lg bg-[#072328]">
+                <span>🍳 ផ្ទះបាយធ្វើខុស / ឆេះ (Kitchen Mistake)</span>
+                <span class="font-mono text-rose-400 font-bold">COGS Variance</span>
+              </div>
+              <div class="flex items-center justify-between p-2 rounded-lg bg-[#072328]">
+                <span>👨‍🍳 អាហារបុគ្គលិក / ភ្លក់ (Staff Meal / Tasting)</span>
+                <span class="font-mono text-blue-400 font-bold">Internal Expense</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-[#041012]/70 border border-[#126973]/30 space-y-3">
+            <h4 class="text-xs font-bold text-[#F1D8C2] uppercase tracking-wider">ផលប៉ះពាល់លើគណនេយ្យ (Financial Impact)</h4>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              នៅពេលកត់ត្រា Waste ក្នុងផ្ទាំង <b>WasteCreateModal</b>៖
+            </p>
+            <ul class="text-xs text-slate-300 space-y-2 list-disc pl-4">
+              <li><b>កាត់ស្តុកភ្លាមៗ៖</b> ចំនួន On-Hand ធ្លាក់ចុះត្រឹមត្រូវតាមទូជាក់ស្តែង។</li>
+              <li><b>កត់ត្រាការខាតបង់៖</b> គុណនឹង WAC Cost Per Unit ($) ដើម្បីដឹងពីទំហំទឹកប្រាក់ខាតបង់ប្រចាំខែ ($USD)។</li>
+              <li><b>មិនលាយឡំជាមួយ COGS លក់៖</b> ជួយឱ្យម្ចាស់ភោជនីយដ្ឋានដឹងច្បាស់ថា ម្ហូបលក់ចំណេញប៉ុន្មាន និងផ្ទះបាយធ្វើខាតអស់ប៉ុន្មាន។</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SLIDE 8: Executive Summary & Best Practices ── -->
+    <section id="slide-8" class="slide-container w-full max-w-5xl hidden transition-all duration-300">
+      <div class="slide-card rounded-3xl p-8 sm:p-12 relative overflow-hidden space-y-8">
+        <div class="flex items-center justify-between border-b border-[#126973]/30 pb-4">
+          <div>
+            <span class="text-xs font-mono font-bold text-[#F1D8C2] uppercase tracking-wider">EXECUTIVE SUMMARY</span>
+            <h3 class="text-2xl font-black text-white mt-1">សេចក្តីសង្ខេប និងវិធានការអនុវត្តល្អបំផុត (Best Practices)</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-[#126973]/20 border border-[#126973]/40 flex items-center justify-center text-[#F1D8C2]">
+            <i data-lucide="award" class="w-5 h-5"></i>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div class="p-5 rounded-2xl bg-[#041012]/70 border border-[#126973]/30 space-y-2">
+            <div class="flex items-center gap-2 text-xs font-bold text-[#F1D8C2]">
+              <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
+              <span>១. ប្រើ Weighted Average Cost (WAC)</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              រាល់ការកុម្ម៉ង់ទិញថ្មីដែលមានតម្លៃប្រែប្រួល ($10 ➔ $12) ប្រព័ន្ធនឹងគណនាតម្លៃមធ្យមថ្មីដោយស្វ័យប្រវត្តិកាលណា PO ត្រូវបាន Receive។
+            </p>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-[#041012]/70 border border-[#126973]/30 space-y-2">
+            <div class="flex items-center gap-2 text-xs font-bold text-[#F1D8C2]">
+              <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
+              <span>២. ភ្ជាប់រូបមន្តម្ហូបឱ្យបានគ្រប់មុខ (100% BOM)</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              ភ្ជាប់មុខម្ហូបទៅនឹងគ្រឿងផ្សំ ដើម្បីឱ្យ POS លក់កាត់ស្តុក auto និងដឹងពី Food Cost % ពិតប្រាកដរាល់ពេលមានការបញ្ជាទិញ។
+            </p>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-[#041012]/70 border border-[#126973]/30 space-y-2">
+            <div class="flex items-center gap-2 text-xs font-bold text-[#F1D8C2]">
+              <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
+              <span>៣. កត់ត្រាទំនិញខូចខាតប្រចាំថ្ងៃ (Daily Waste Log)</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              មិនត្រូវទុកឱ្យទំនិញខូចបាត់បង់ដោយគ្មានការកត់ត្រាឡើយ។ ការកត់ត្រាជួយគ្រប់គ្រងថ្លៃដើមផ្ទះបាយមិនឱ្យហៀរហូរ។
+            </p>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-[#041012]/70 border border-[#126973]/30 space-y-2">
+            <div class="flex items-center gap-2 text-xs font-bold text-[#F1D8C2]">
+              <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
+              <span>៤. ពិនិត្យ Asset Valuation ប្រចាំខែ</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              ផ្ទៀងផ្ទាត់តម្លៃស្តុកសរុប (Total Valuation = Stock × Cost) ដើម្បីដឹងពីតម្លៃទ្រព្យសកម្មក្នុងឃ្លាំងត្រៀមរៀបចំរបាយការណ៍ហិរញ្ញវត្ថុ។
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Bottom Navigation Bar ── -->
+  <footer class="no-print border-t border-[#126973]/30 bg-[#041012]/90 backdrop-blur-md px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <button onclick="prevSlide()" class="px-4 py-2 rounded-xl border border-[#126973]/30 hover:bg-[#126973]/20 text-slate-300 hover:text-white text-xs font-bold transition-all flex items-center gap-2 cursor-pointer">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        <span>Previous</span>
+      </button>
+      <button onclick="nextSlide()" class="px-4 py-2 rounded-xl bg-[#126973] hover:bg-[#126973]/80 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-xs cursor-pointer">
+        <span>Next Slide</span>
+        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- Slide Indicators -->
+    <div class="flex items-center gap-1.5" id="indicators">
+      <!-- Generated via JS -->
+    </div>
+
+    <!-- Slide Counter -->
+    <div class="text-xs font-mono font-bold text-[#F1D8C2]">
+      Slide <span id="currentSlideNum">1</span> / <span id="totalSlideNum">8</span>
+    </div>
+  </footer>
+
+  <!-- ── JavaScript for Slide Controls & Hotkeys ── -->
+  <script>
+    lucide.createIcons();
+
+    let currentSlide = 1;
+    const totalSlides = 8;
+    let isScrollMode = false;
+
+    function renderIndicators() {
+      const container = document.getElementById('indicators');
+      container.innerHTML = '';
+      for (let i = 1; i <= totalSlides; i++) {
+        const dot = document.createElement('button');
+        dot.className = `w-2.5 h-2.5 rounded-full transition-all cursor-pointer ${
+          i === currentSlide ? 'bg-[#F1D8C2] w-6' : 'bg-[#126973]/40 hover:bg-[#126973]'
+        }`;
+        dot.onclick = () => goToSlide(i);
+        container.appendChild(dot);
+      }
+    }
+
+    function showSlide(n) {
+      if (isScrollMode) return;
+
+      for (let i = 1; i <= totalSlides; i++) {
+        const el = document.getElementById(`slide-${i}`);
+        if (el) {
+          if (i === n) {
+            el.classList.remove('hidden');
+            el.classList.add('animate-in', 'fade-in', 'zoom-in-95', 'duration-300');
+          } else {
+            el.classList.add('hidden');
+            el.classList.remove('animate-in', 'fade-in', 'zoom-in-95');
+          }
+        }
+      }
+
+      currentSlide = n;
+      document.getElementById('currentSlideNum').innerText = currentSlide;
+      renderIndicators();
+      lucide.createIcons();
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        showSlide(currentSlide + 1);
+      } else {
+        showSlide(1); // loop
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        showSlide(currentSlide - 1);
+      } else {
+        showSlide(totalSlides);
+      }
+    }
+
+    function goToSlide(n) {
+      showSlide(n);
+    }
+
+    function toggleViewMode() {
+      isScrollMode = !isScrollMode;
+      const text = document.getElementById('viewModeText');
+      const main = document.querySelector('main');
+
+      if (isScrollMode) {
+        text.innerText = 'Slide Mode';
+        main.classList.remove('items-center', 'justify-center');
+        main.classList.add('flex-col', 'gap-8');
+        for (let i = 1; i <= totalSlides; i++) {
+          const el = document.getElementById(`slide-${i}`);
+          if (el) el.classList.remove('hidden');
+        }
+      } else {
+        text.innerText = 'Scroll Mode';
+        main.classList.add('items-center', 'justify-center');
+        main.classList.remove('flex-col', 'gap-8');
+        showSlide(currentSlide);
+      }
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Keyboard Hotkeys: Left/Right arrows & Space
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'Space') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        prevSlide();
+      }
+    });
+
+    // Initialize
+    document.getElementById('totalSlideNum').innerText = totalSlides;
+    showSlide(1);
+  </script>
+</body>
+</html>

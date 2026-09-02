@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AdminLayout from '../../../components/layout/AdminLayout'
 import { adminApi } from '../../../api/adminApi'
-import { Button } from '../../../components/common/ButtonComponent'
-import { Plus } from '@untitledui/icons'
+import { CreateButton } from '../../../components/common/ButtonComponent'
+import { Package, Utensils, Truck, History, AlertOctagon, Building2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 // Modular Tabs
@@ -99,69 +99,82 @@ export default function InventoryDashboard() {
     switch (activeTab) {
       case 'ingredients':
         return (
-          <Button
-            variant="primary"
-            size="md"
+          <CreateButton
+            label="Add Ingredient"
             onClick={() => {
               setEditingItem(null)
               setViewMode('create_ingredient')
             }}
-            iconLeading={Plus}
-          >
-            Add Ingredient
-          </Button>
+          />
         )
       case 'recipes':
         return (
-          <Button
-            variant="primary"
-            size="md"
+          <CreateButton
+            label="Add Recipe Formula"
             onClick={() => setViewMode('create_recipe')}
-            iconLeading={Plus}
-          >
-            Add Recipe Item
-          </Button>
+          />
         )
       case 'purchases':
         return (
-          <Button
-            variant="primary"
-            size="md"
+          <CreateButton
+            label="Create Purchase Order"
             onClick={() => setViewMode('create_po')}
-            iconLeading={Plus}
-          >
-            Create Purchase Order
-          </Button>
+          />
         )
       case 'suppliers':
         return (
-          <Button
-            variant="primary"
-            size="md"
+          <CreateButton
+            label="Add Supplier"
             onClick={() => {
               setEditingItem(null)
               setViewMode('create_supplier')
             }}
-            iconLeading={Plus}
-          >
-            Add Supplier
-          </Button>
+          />
         )
       case 'logs':
       case 'waste':
       default:
         return (
-          <Button
-            variant="primary"
-            size="md"
+          <CreateButton
+            label="Record Waste / Spoilage"
             onClick={() => setIsWasteModalOpen(true)}
-            iconLeading={Plus}
-          >
-            Record Spoilage / Waste
-          </Button>
+          />
         )
     }
   }
+
+  const tabsConfig = [
+    {
+      id: 'ingredients',
+      label: 'Raw Ingredients',
+      icon: Package,
+      count: ingredients.length,
+    },
+    {
+      id: 'recipes',
+      label: 'Recipe Formulas (BOM)',
+      icon: Utensils,
+      count: recipes.length,
+    },
+    {
+      id: 'purchases',
+      label: 'Suppliers & POs',
+      icon: Truck,
+      count: purchaseOrders.length,
+    },
+    {
+      id: 'suppliers',
+      label: 'Suppliers Directory',
+      icon: Building2,
+      count: suppliers.length,
+    },
+    {
+      id: 'logs',
+      label: 'Stock Movements',
+      icon: History,
+      count: movementLogs.length,
+    },
+  ]
 
   return (
     <AdminLayout>
@@ -174,14 +187,24 @@ export default function InventoryDashboard() {
           >
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl font-extrabold tracking-tight text-[#072328] dark:text-[#F8F7F4]">
+                <h1
+                  className="text-xl font-extrabold tracking-tight"
+                  style={{ color: 'var(--color-text)' }}
+                >
                   Inventory &amp; Supplies
                 </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#126973]/15 text-[#126973] dark:text-[#F1D8C2] border border-[#126973]/30">
+                <span
+                  className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                  style={{
+                    background: 'rgba(18, 105, 115, 0.15)',
+                    color: 'var(--color-500, #126973)',
+                    border: '1px solid rgba(18, 105, 115, 0.3)',
+                  }}
+                >
                   {ingredients.length} Stock Items
                 </span>
               </div>
-              <p className="text-xs mt-1 text-slate-500 dark:text-slate-400">
+              <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>
                 Raw ingredients, menu recipe portion formulas (BOM), inbound vendor purchase orders &amp; movement logs.
               </p>
             </div>
@@ -192,31 +215,65 @@ export default function InventoryDashboard() {
           </div>
         )}
 
-        {/* ── Sub Navigation Tabs ── */}
+        {/* ── Sub Navigation Tabs (Same UI as Products.jsx Venue Tabs) ── */}
         {viewMode === 'list' && (
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar border-b border-[var(--color-border)]">
-            {[
-              { id: 'ingredients', label: '📦 Raw Ingredients', path: '/inventory' },
-              { id: 'recipes', label: '🍳 Recipe Formulas', path: '/recipes' },
-              { id: 'purchases', label: '🚚 Suppliers & POs', path: '/purchases' },
-              { id: 'logs', label: '📜 Stock Movements', path: '/stock-logs' },
-            ].map((tab) => {
-              const isActive = activeTab === tab.id
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => handleTabClick(tab.id)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                    isActive
-                      ? 'bg-[#126973] text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-[#126973]/10 hover:text-[#126973] dark:hover:text-[#F1D8C2]'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              )
-            })}
+          <div className="relative">
+            {/* Fade effect on mobile */}
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[var(--color-bg)] to-transparent pointer-events-none z-10 sm:hidden" />
+
+            <div
+              className="flex items-center gap-1 overflow-x-auto no-scrollbar rounded-xl p-1 border"
+              style={{
+                background: 'rgba(255, 255, 255, 0.03)',
+                borderColor: 'var(--color-border)',
+              }}
+            >
+              {tabsConfig.map((tab) => {
+                const IconComponent = tab.icon
+                const isActive = activeTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => handleTabClick(tab.id)}
+                    className={`inline-flex items-center gap-2.5 h-10 px-3.5 rounded-xl text-sm transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                      isActive
+                        ? 'shadow-xs font-semibold'
+                        : 'hover:bg-black/5 dark:hover:bg-white/5'
+                    }`}
+                    style={
+                      isActive
+                        ? {
+                            background: 'var(--color-surface, #1e2230)',
+                            color: 'var(--color-text, #ffffff)',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                            border: '1px solid var(--color-border)',
+                          }
+                        : {
+                            color: 'var(--color-muted, #94a3b8)',
+                          }
+                    }
+                  >
+                    <IconComponent
+                      size={18}
+                      className={isActive ? 'shrink-0 text-[#126973] dark:text-[#F1D8C2]' : 'shrink-0 text-slate-400'}
+                    />
+                    <span>{tab.label}</span>
+                    <span
+                      className="inline-flex items-center justify-center rounded-lg px-2 h-5 text-[11px] font-semibold"
+                      style={{
+                        background: isActive
+                          ? 'rgba(18, 105, 115, 0.18)'
+                          : 'rgba(255, 255, 255, 0.06)',
+                        color: isActive ? 'var(--color-500, #126973)' : 'var(--color-muted, #94a3b8)',
+                      }}
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
         )}
 
@@ -300,7 +357,7 @@ export default function InventoryDashboard() {
                 ingredients={ingredients}
                 loading={loading}
                 onRefresh={loadAllData}
-                onOpenCreate={(prod) => setViewMode('create_recipe')}
+                onOpenCreate={() => setViewMode('create_recipe')}
               />
             )}
 

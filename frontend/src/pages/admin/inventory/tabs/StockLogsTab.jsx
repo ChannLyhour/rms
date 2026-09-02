@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import {
   TableCard,
   Table,
+  BadgeWithIcon,
   PaginationPageMinimalCenter,
 } from '../../../../components/TablesComponents'
 import {
@@ -13,6 +14,8 @@ import {
   Package,
   Trash2,
   ArrowDownUp,
+  History,
+  FileText
 } from 'lucide-react'
 
 export default function StockLogsTab({
@@ -43,21 +46,21 @@ export default function StockLogsTab({
       case 'order_deduct':
       case 'order_deduction':
         return (
-          <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-500 border border-rose-500/30">
+          <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
             <ArrowDown size={11} /> POS Sale Deduct
           </span>
         )
       case 'po_receive':
       case 'po_received':
         return (
-          <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
+          <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
             <ArrowUp size={11} /> PO Inbound
           </span>
         )
       case 'waste':
       case 'waste_loss':
         return (
-          <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30">
+          <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
             <Trash2 size={11} /> Waste / Damage
           </span>
         )
@@ -76,10 +79,13 @@ export default function StockLogsTab({
       {/* ── Search & Filter ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs min-w-[240px] max-w-sm shadow-2xs"
-          style={{ background: 'var(--color-card)', borderColor: 'var(--color-border)' }}
+          className="flex items-center gap-3 px-3.5 py-2 rounded-[5px] border text-xs max-w-md shadow-xs w-full sm:w-auto"
+          style={{
+            background: 'var(--color-card)',
+            borderColor: 'var(--color-border)',
+          }}
         >
-          <SearchLg size={15} className="text-slate-400 shrink-0 stroke-[2px]" />
+          <SearchLg size={16} className="text-[var(--color-muted)] shrink-0 stroke-[2px]" />
           <input
             value={search}
             onChange={(e) => {
@@ -87,7 +93,7 @@ export default function StockLogsTab({
               setPage(1)
             }}
             placeholder="Search movement audit trail..."
-            className="bg-transparent border-none outline-none w-full text-xs text-[var(--color-text)] placeholder:text-slate-400"
+            className="bg-transparent border-none outline-none w-full text-xs placeholder:text-[var(--color-muted)] text-[var(--color-text)]"
           />
           {search && (
             <button
@@ -101,14 +107,19 @@ export default function StockLogsTab({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">Event Type:</span>
+          <span className="text-xs text-[var(--color-muted)]">Event Type:</span>
           <select
             value={typeFilter}
             onChange={(e) => {
               setTypeFilter(e.target.value)
               setPage(1)
             }}
-            className="px-2.5 py-1.5 text-xs rounded-lg border outline-none bg-[var(--color-card)] border-[var(--color-border)] text-[var(--color-text)] cursor-pointer"
+            className="px-3 py-1.5 text-xs rounded-[5px] border outline-none font-semibold cursor-pointer"
+            style={{
+              background: 'var(--color-card)',
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text)',
+            }}
           >
             <option value="all">All Movement Types</option>
             <option value="order_deduct">POS Order Deduct</option>
@@ -140,11 +151,11 @@ export default function StockLogsTab({
                 <Table.Row key={log.id} id={log.id}>
                   {/* Ingredient Item */}
                   <Table.Cell>
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-[#126973]/10 dark:bg-[#126973]/25 border border-[#126973]/20 dark:border-[#F1D8C2]/30 flex items-center justify-center font-bold text-xs text-[#126973] dark:text-[#F1D8C2]">
-                        <Package size={14} />
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-[5px] bg-[#126973]/15 border border-[#126973]/30 flex items-center justify-center font-bold text-xs text-[#126973] dark:text-[#F1D8C2] shrink-0">
+                        <Package size={15} />
                       </div>
-                      <span className="font-bold text-xs text-[var(--color-text)]">
+                      <span className="font-bold text-xs" style={{ color: 'var(--color-text)' }}>
                         {log.ingredient?.name || `Ingredient #${log.ingredient_id}`}
                       </span>
                     </div>
@@ -168,21 +179,21 @@ export default function StockLogsTab({
 
                   {/* Balance After */}
                   <Table.Cell>
-                    <span className="font-mono text-xs font-bold text-[var(--color-text)]">
+                    <span className="font-mono text-xs font-bold" style={{ color: 'var(--color-text)' }}>
                       {Number(log.quantity_after).toFixed(3)} {log.ingredient?.unit || ''}
                     </span>
                   </Table.Cell>
 
                   {/* Notes / Ref */}
                   <Table.Cell>
-                    <span className="text-xs text-slate-500 max-w-xs truncate block">
+                    <span className="text-xs max-w-xs truncate block" style={{ color: 'var(--color-muted)' }}>
                       {log.note || (log.order_id ? `Order #${log.order_id}` : log.purchase_order_id ? `PO #${log.purchase_order_id}` : 'System Log')}
                     </span>
                   </Table.Cell>
 
                   {/* Timestamp */}
                   <Table.Cell className="text-right">
-                    <span className="text-xs font-mono text-slate-400">
+                    <span className="text-xs font-mono" style={{ color: 'var(--color-muted)' }}>
                       {new Date(log.created_at).toLocaleString()}
                     </span>
                   </Table.Cell>

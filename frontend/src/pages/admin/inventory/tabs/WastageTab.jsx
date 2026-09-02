@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import {
   TableCard,
   Table,
+  BadgeWithIcon,
   PaginationPageMinimalCenter,
 } from '../../../../components/TablesComponents'
 import {
@@ -12,6 +13,7 @@ import {
   Trash2,
   DollarSign,
   TrendingDown,
+  AlertOctagon
 } from 'lucide-react'
 
 export default function WastageTab({
@@ -44,27 +46,27 @@ export default function WastageTab({
       {/* ── Wastage Summary Banner ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div
-          className="p-4 rounded-xl border flex items-center justify-between shadow-2xs"
+          className="p-4 rounded-[5px] border flex items-center justify-between shadow-xs"
           style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
         >
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Waste Incidents</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Total Waste Incidents</p>
             <p className="text-xl font-extrabold text-[var(--color-text)] mt-0.5">{wasteLogs.length} Records</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-[5px] bg-rose-500/10 text-rose-500 flex items-center justify-center">
             <Trash2 size={20} />
           </div>
         </div>
 
         <div
-          className="p-4 rounded-xl border flex items-center justify-between shadow-2xs"
+          className="p-4 rounded-[5px] border flex items-center justify-between shadow-xs"
           style={{ background: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.3)' }}
         >
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-rose-500">Cumulative Cost Loss</p>
             <p className="text-xl font-extrabold text-rose-500 mt-0.5">${totalWasteLoss.toFixed(2)} USD</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-500 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-[5px] bg-rose-500/20 text-rose-500 flex items-center justify-center">
             <TrendingDown size={20} />
           </div>
         </div>
@@ -73,10 +75,13 @@ export default function WastageTab({
       {/* ── Search ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs min-w-[240px] max-w-sm shadow-2xs"
-          style={{ background: 'var(--color-card)', borderColor: 'var(--color-border)' }}
+          className="flex items-center gap-3 px-3.5 py-2 rounded-[5px] border text-xs max-w-md shadow-xs w-full sm:w-auto"
+          style={{
+            background: 'var(--color-card)',
+            borderColor: 'var(--color-border)',
+          }}
         >
-          <SearchLg size={15} className="text-slate-400 shrink-0 stroke-[2px]" />
+          <SearchLg size={16} className="text-[var(--color-muted)] shrink-0 stroke-[2px]" />
           <input
             value={search}
             onChange={(e) => {
@@ -84,7 +89,7 @@ export default function WastageTab({
               setPage(1)
             }}
             placeholder="Search damaged item, reason..."
-            className="bg-transparent border-none outline-none w-full text-xs text-[var(--color-text)] placeholder:text-slate-400"
+            className="bg-transparent border-none outline-none w-full text-xs placeholder:text-[var(--color-muted)] text-[var(--color-text)]"
           />
           {search && (
             <button
@@ -114,11 +119,11 @@ export default function WastageTab({
               <Table.Row key={w.id} id={w.id}>
                 {/* Item */}
                 <Table.Cell>
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center font-bold text-xs">
-                      <Trash2 size={14} />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-[5px] bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center font-bold text-xs shrink-0">
+                      <Trash2 size={15} />
                     </div>
-                    <span className="font-bold text-xs text-[var(--color-text)]">
+                    <span className="font-bold text-xs" style={{ color: 'var(--color-text)' }}>
                       {w.ingredient?.name || `Ingredient #${w.ingredient_id}`}
                     </span>
                   </div>
@@ -133,7 +138,7 @@ export default function WastageTab({
 
                 {/* Reason */}
                 <Table.Cell>
-                  <span className="capitalize text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  <span className="capitalize text-xs font-semibold px-2.5 py-0.5 rounded-[5px] border" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
                     {w.reason}
                   </span>
                 </Table.Cell>
@@ -147,7 +152,7 @@ export default function WastageTab({
 
                 {/* Date */}
                 <Table.Cell className="text-right">
-                  <span className="text-xs font-mono text-slate-400">
+                  <span className="text-xs font-mono" style={{ color: 'var(--color-muted)' }}>
                     {new Date(w.created_at).toLocaleDateString()}
                   </span>
                 </Table.Cell>

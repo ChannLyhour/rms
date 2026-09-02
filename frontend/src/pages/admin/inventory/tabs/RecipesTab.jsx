@@ -6,6 +6,10 @@ import {
 } from '@untitledui/icons'
 import {
   ChefHat,
+  Utensils,
+  DollarSign,
+  TrendingDown,
+  Layers
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { adminApi } from '../../../../api/adminApi'
@@ -26,15 +30,16 @@ export default function RecipesTab({
     const map = new Map()
 
     products.forEach((p) => {
-      map.set(p.id, {
+      map.set(String(p.id), {
         product: p,
         items: [],
       })
     })
 
     recipes.forEach((r) => {
-      if (r.product_id && map.has(r.product_id)) {
-        map.get(r.product_id).items.push(r)
+      const pid = String(r.product_id)
+      if (map.has(pid)) {
+        map.get(pid).items.push(r)
       }
     })
 
@@ -47,7 +52,7 @@ export default function RecipesTab({
   }, [products, recipes, search, selectedProductId])
 
   const handleDeleteRecipeItem = async (id) => {
-    if (!confirm('Remove this ingredient from dish recipe?')) return
+    if (!confirm('Remove this ingredient from dish recipe formula?')) return
     try {
       await adminApi.deleteRecipe(id)
       toast.success('Ingredient removed from recipe')
@@ -62,15 +67,18 @@ export default function RecipesTab({
       {/* ── Search & Filter ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs min-w-[240px] max-w-sm shadow-2xs"
-          style={{ background: 'var(--color-card)', borderColor: 'var(--color-border)' }}
+          className="flex items-center gap-3 px-3.5 py-2 rounded-[5px] border text-xs max-w-md shadow-xs w-full sm:w-auto"
+          style={{
+            background: 'var(--color-card)',
+            borderColor: 'var(--color-border)',
+          }}
         >
-          <SearchLg size={15} className="text-slate-400 shrink-0 stroke-[2px]" />
+          <SearchLg size={16} className="text-[var(--color-muted)] shrink-0 stroke-[2px]" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search product recipes..."
-            className="bg-transparent border-none outline-none w-full text-xs text-[var(--color-text)] placeholder:text-slate-400"
+            placeholder="Search dish recipe formulas..."
+            className="bg-transparent border-none outline-none w-full text-xs placeholder:text-[var(--color-muted)] text-[var(--color-text)]"
           />
           {search && (
             <button
@@ -84,11 +92,16 @@ export default function RecipesTab({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">Filter Dish:</span>
+          <span className="text-xs text-[var(--color-muted)]">Filter Dish:</span>
           <select
             value={selectedProductId}
             onChange={(e) => setSelectedProductId(e.target.value)}
-            className="px-2.5 py-1.5 text-xs rounded-lg border outline-none bg-[var(--color-card)] border-[var(--color-border)] text-[var(--color-text)] cursor-pointer max-w-xs truncate"
+            className="px-3 py-1.5 text-xs rounded-[5px] border outline-none font-semibold cursor-pointer max-w-xs truncate"
+            style={{
+              background: 'var(--color-card)',
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text)',
+            }}
           >
             <option value="all">All Menu Dishes</option>
             {products.map((p) => (
@@ -109,36 +122,44 @@ export default function RecipesTab({
           }, 0)
 
           const price = Number(product.price) || 0
-          const foodCostPct = price > 0 ? ((totalEstimatedCost / price) * 100).toFixed(1) : 0
+          const foodCostPct = price > 0 ? ((totalEstimatedCost / price) * 100).toFixed(1) : '0.0'
 
           return (
             <div
               key={product.id}
-              className="rounded-2xl border p-5 space-y-4 shadow-2xs transition-all hover:border-[#126973]/40"
-              style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+              className="rounded-[5px] border p-5 space-y-4 shadow-xs transition-all hover:border-[#126973]/50"
+              style={{
+                background: 'var(--color-surface)',
+                borderColor: 'var(--color-border)',
+              }}
             >
               {/* Dish Header */}
-              <div className="flex items-start justify-between gap-3 border-b pb-3.5 border-[var(--color-border)]">
+              <div
+                className="flex items-start justify-between gap-3 border-b pb-3.5"
+                style={{ borderColor: 'var(--color-border)' }}
+              >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-[#126973]/10 dark:bg-[#126973]/25 border border-[#126973]/20 dark:border-[#F1D8C2]/30 flex items-center justify-center font-bold text-sm text-[#126973] dark:text-[#F1D8C2] shrink-0">
+                  <div className="w-10 h-10 rounded-[5px] bg-[#126973]/15 border border-[#126973]/30 flex items-center justify-center font-bold text-sm text-[#126973] dark:text-[#F1D8C2] shrink-0">
                     <ChefHat size={20} />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-bold text-sm text-[var(--color-text)] truncate">
+                    <h3 className="font-bold text-sm truncate" style={{ color: 'var(--color-text)' }}>
                       {product.name}
                     </h3>
-                    <p className="text-[11px] text-slate-500 font-mono">
-                      Price: ${price.toFixed(2)} · {product.category?.name || 'Menu Item'}
+                    <p className="text-[11px] font-mono" style={{ color: 'var(--color-muted)' }}>
+                      POS Price: ${price.toFixed(2)} · {product.category?.name || 'Dish'}
                     </p>
                   </div>
                 </div>
 
                 <div className="text-right shrink-0">
-                  <span className="text-[10.5px] uppercase font-bold text-slate-400">Recipe Cost:</span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: 'var(--color-muted)' }}>
+                    BOM Cost:
+                  </span>
                   <p className="text-sm font-extrabold text-emerald-500 font-mono">
                     ${totalEstimatedCost.toFixed(2)}{' '}
                     <span className="text-[10.5px] font-semibold text-slate-400 font-sans">
-                      ({foodCostPct}% Cost)
+                      ({foodCostPct}%)
                     </span>
                   </p>
                 </div>
@@ -146,14 +167,20 @@ export default function RecipesTab({
 
               {/* Ingredients List */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
-                  <span>Ingredient</span>
-                  <span>Portion & Cost</span>
+                <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)] px-1">
+                  <span>Linked Ingredient</span>
+                  <span>Portion Quantity &amp; Cost</span>
                 </div>
 
                 {items.length === 0 ? (
-                  <div className="p-4 rounded-xl border border-dashed border-[var(--color-border)] text-center text-xs text-slate-400">
-                    No ingredients linked yet. Click &quot;Add Ingredient&quot; below.
+                  <div
+                    className="p-4 rounded-[5px] border border-dashed text-center text-xs"
+                    style={{
+                      borderColor: 'var(--color-border)',
+                      color: 'var(--color-muted)',
+                    }}
+                  >
+                    No ingredients linked yet. Click &ldquo;+ Link Ingredient&rdquo; below.
                   </div>
                 ) : (
                   <div className="space-y-1.5 font-mono text-xs">
@@ -165,17 +192,21 @@ export default function RecipesTab({
                       return (
                         <div
                           key={r.id}
-                          className="flex items-center justify-between p-2 rounded-lg bg-[var(--color-bg)] border border-[var(--color-border)] group"
+                          className="flex items-center justify-between p-2.5 rounded-[5px] border group"
+                          style={{
+                            background: 'var(--color-bg)',
+                            borderColor: 'var(--color-border)',
+                          }}
                         >
                           <div className="flex items-center gap-2 min-w-0 font-sans">
-                            <span className="w-2 h-2 rounded-full bg-[#126973] dark:bg-[#F1D8C2]" />
-                            <span className="font-semibold text-xs text-[var(--color-text)] truncate">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#126973] dark:bg-[#F1D8C2]" />
+                            <span className="font-semibold text-xs truncate" style={{ color: 'var(--color-text)' }}>
                               {ing?.name || `Ingredient #${r.ingredient_id}`}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-3">
-                            <span className="text-slate-500 dark:text-slate-400">
+                            <span style={{ color: 'var(--color-muted)' }}>
                               {Number(r.quantity_required).toFixed(3)} {ing?.unit || 'unit'}
                             </span>
                             <span className="font-bold text-emerald-500 w-14 text-right">
@@ -201,10 +232,11 @@ export default function RecipesTab({
               <button
                 type="button"
                 onClick={() => onOpenCreate(product)}
-                className="w-full py-1.5 rounded-lg border border-dashed border-[#126973]/30 text-[#126973] dark:text-[#F1D8C2] hover:bg-[#126973]/10 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full py-2 rounded-[5px] border border-dashed text-[#126973] dark:text-[#F1D8C2] hover:bg-[#126973]/10 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                style={{ borderColor: 'rgba(18, 105, 115, 0.3)' }}
               >
                 <Plus size={13} />
-                <span>Add Ingredient to {product.name}</span>
+                <span>+ Link Ingredient to {product.name}</span>
               </button>
             </div>
           )

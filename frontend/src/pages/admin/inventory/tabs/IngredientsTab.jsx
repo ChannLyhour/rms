@@ -114,20 +114,20 @@ export default function IngredientsTab({
       {/* ── Metrics Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div
-          className="p-4 rounded-xl border flex items-center justify-between shadow-2xs"
+          className="p-4 rounded-[5px] border flex items-center justify-between shadow-xs"
           style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
         >
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Tracked Items</p>
-            <p className="text-xl font-extrabold text-[#072328] dark:text-[#F8F7F4] mt-0.5">{metrics.totalItems}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Total Tracked Items</p>
+            <p className="text-xl font-extrabold text-[var(--color-text)] mt-0.5">{metrics.totalItems}</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-[#126973]/10 dark:bg-[#126973]/25 text-[#126973] dark:text-[#F1D8C2] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-[5px] bg-[#126973]/15 text-[#126973] dark:text-[#F1D8C2] flex items-center justify-center">
             <Package size={20} />
           </div>
         </div>
 
         <div
-          className="p-4 rounded-xl border flex items-center justify-between shadow-2xs"
+          className="p-4 rounded-[5px] border flex items-center justify-between shadow-xs"
           style={{
             background: metrics.lowStockCount > 0 ? 'rgba(245, 158, 11, 0.08)' : 'var(--color-surface)',
             borderColor: metrics.lowStockCount > 0 ? 'rgba(245, 158, 11, 0.3)' : 'var(--color-border)'
@@ -137,20 +137,20 @@ export default function IngredientsTab({
             <p className="text-[11px] font-bold uppercase tracking-wider text-amber-500">Low Stock Warnings</p>
             <p className="text-xl font-extrabold text-amber-500 mt-0.5">{metrics.lowStockCount} Items</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-[5px] bg-amber-500/20 text-amber-500 flex items-center justify-center">
             <AlertTriangle size={20} />
           </div>
         </div>
 
         <div
-          className="p-4 rounded-xl border flex items-center justify-between shadow-2xs"
+          className="p-4 rounded-[5px] border flex items-center justify-between shadow-xs"
           style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
         >
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Estimated Stock Valuation</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Estimated Stock Valuation</p>
             <p className="text-xl font-extrabold text-emerald-500 mt-0.5">${metrics.totalValue.toFixed(2)}</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-[5px] bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
             <ShoppingBag size={20} />
           </div>
         </div>
@@ -158,20 +158,23 @@ export default function IngredientsTab({
 
       {/* ── Filters & Search Row ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap">
           <div
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs min-w-[240px] max-w-sm shadow-2xs"
-            style={{ background: 'var(--color-card)', borderColor: 'var(--color-border)' }}
+            className="flex items-center gap-3 px-3.5 py-2 rounded-[5px] border text-xs max-w-md shadow-xs"
+            style={{
+              background: 'var(--color-card)',
+              borderColor: 'var(--color-border)',
+            }}
           >
-            <SearchLg size={15} className="text-slate-400 shrink-0 stroke-[2px]" />
+            <SearchLg size={16} className="text-[var(--color-muted)] shrink-0 stroke-[2px]" />
             <input
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value)
                 setPage(1)
               }}
-              placeholder="Search ingredients..."
-              className="bg-transparent border-none outline-none w-full text-xs text-[var(--color-text)] placeholder:text-slate-400"
+              placeholder="Search ingredients by name, unit..."
+              className="bg-transparent border-none outline-none w-full text-xs placeholder:text-[var(--color-muted)] text-[var(--color-text)]"
             />
             {search && (
               <button
@@ -187,10 +190,10 @@ export default function IngredientsTab({
           <button
             type="button"
             onClick={() => setShowLowStockOnly(!showLowStockOnly)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-2 rounded-[5px] text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
               showLowStockOnly
-                ? 'bg-amber-500/15 border-amber-500/40 text-amber-500 shadow-2xs'
-                : 'border-[var(--color-border)] text-slate-600 dark:text-slate-300 hover:bg-[#126973]/5'
+                ? 'bg-amber-500/15 border-amber-500/40 text-amber-500 shadow-xs'
+                : 'border-[var(--color-border)] text-[var(--color-muted)] hover:bg-[#126973]/5'
             }`}
           >
             <AlertTriangle size={13} />
@@ -199,21 +202,30 @@ export default function IngredientsTab({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">Unit:</span>
+          <span className="text-xs text-[var(--color-muted)]">Filter Unit:</span>
           <select
             value={unitFilter}
             onChange={(e) => {
               setUnitFilter(e.target.value)
               setPage(1)
             }}
-            className="px-2.5 py-1.5 text-xs rounded-lg border outline-none bg-[var(--color-card)] border-[var(--color-border)] text-[var(--color-text)] cursor-pointer"
+            className="px-3 py-1.5 text-xs rounded-[5px] border outline-none font-semibold cursor-pointer"
+            style={{
+              background: 'var(--color-card)',
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text)',
+            }}
           >
             <option value="all">All Units</option>
             <option value="kg">kg (Kilogram)</option>
             <option value="g">g (Gram)</option>
-            <option value="l">l (Liter)</option>
+            <option value="L">L (Liter)</option>
             <option value="ml">ml (Milliliter)</option>
             <option value="pcs">pcs (Pieces)</option>
+            <option value="pack">pack (Pack / Bundle)</option>
+            <option value="bottle">bottle (Bottle)</option>
+            <option value="can">can (Can / Tin)</option>
+            <option value="box">box (Carton / Box)</option>
           </select>
         </div>
       </div>
@@ -263,7 +275,7 @@ export default function IngredientsTab({
                   {/* Name */}
                   <Table.Cell>
                     <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-lg bg-[#126973]/10 dark:bg-[#126973]/25 border border-[#126973]/20 dark:border-[#F1D8C2]/30 flex items-center justify-center font-bold text-xs text-[#126973] dark:text-[#F1D8C2] shrink-0">
+                      <div className="w-8 h-8 rounded-[5px] bg-[#126973]/15 border border-[#126973]/30 flex items-center justify-center font-bold text-xs text-[#126973] dark:text-[#F1D8C2] shrink-0">
                         {item.name.charAt(0).toUpperCase()}
                       </div>
                       <span className="font-bold text-xs text-[var(--color-text)]">
@@ -274,7 +286,7 @@ export default function IngredientsTab({
 
                   {/* Unit */}
                   <Table.Cell>
-                    <span className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold uppercase bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                    <span className="px-2 py-0.5 rounded-[5px] text-[11px] font-mono font-semibold uppercase" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}>
                       {item.unit}
                     </span>
                   </Table.Cell>
@@ -297,7 +309,7 @@ export default function IngredientsTab({
 
                   {/* Threshold */}
                   <Table.Cell>
-                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                    <span className="text-xs font-mono" style={{ color: 'var(--color-muted)' }}>
                       {Number(item.low_stock_threshold).toFixed(2)} {item.unit}
                     </span>
                   </Table.Cell>
@@ -311,7 +323,7 @@ export default function IngredientsTab({
 
                   {/* Total Value */}
                   <Table.Cell>
-                    <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-200">
+                    <span className="font-mono text-xs font-bold text-[var(--color-text)]">
                       ${totalCost.toFixed(2)}
                     </span>
                   </Table.Cell>
@@ -319,7 +331,7 @@ export default function IngredientsTab({
                   {/* Status */}
                   <Table.Cell>
                     {isLowStock ? (
-                      <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                      <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30">
                         Low Stock
                       </span>
                     ) : (
@@ -335,7 +347,7 @@ export default function IngredientsTab({
                       <button
                         type="button"
                         onClick={() => setAdjustTarget(item)}
-                        className="px-2 py-1 rounded text-[11px] font-bold text-[#126973] dark:text-[#F1D8C2] bg-[#126973]/10 hover:bg-[#126973]/20 transition-all cursor-pointer flex items-center gap-1"
+                        className="px-2.5 py-1 rounded-[5px] text-[11px] font-bold text-[#126973] dark:text-[#F1D8C2] bg-[#126973]/10 hover:bg-[#126973]/20 transition-all cursor-pointer flex items-center gap-1"
                         title="Quick Restock / Adjust"
                       >
                         <ArrowDownUp size={13} />
@@ -345,7 +357,7 @@ export default function IngredientsTab({
                         type="button"
                         onClick={() => onOpenEdit(item)}
                         className="p-1.5 rounded-[5px] text-slate-400 hover:text-[#126973] hover:bg-[#126973]/10 dark:hover:text-[#F1D8C2] transition-all cursor-pointer"
-                        title="Edit"
+                        title="Edit Ingredient"
                       >
                         <Edit01 size={15} />
                       </button>
@@ -353,7 +365,7 @@ export default function IngredientsTab({
                         type="button"
                         onClick={() => handleDeleteIngredient(item.id)}
                         className="p-1.5 rounded-[5px] text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all cursor-pointer"
-                        title="Delete"
+                        title="Delete Ingredient"
                       >
                         <Trash01 size={15} />
                       </button>

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import {
   TableCard,
   Table,
+  BadgeWithIcon,
   PaginationPageMinimalCenter,
 } from '../../../../components/TablesComponents'
 import {
@@ -9,11 +10,14 @@ import {
   Plus,
   Trash01,
   Check,
-  Truck01
 } from '@untitledui/icons'
 import {
   Truck,
   FileText,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { adminApi } from '../../../../api/adminApi'
@@ -45,7 +49,7 @@ export default function PurchaseOrdersTab({
   const handleUpdatePOStatus = async (id, status) => {
     try {
       await adminApi.updatePurchaseOrderStatus(id, status)
-      toast.success(`PO marked as ${status.toUpperCase()} (Inventory Stock Restocked)`)
+      toast.success(`PO marked as ${status.toUpperCase()} (Inventory Restocked)`)
       onRefresh()
     } catch (err) {
       toast.error('Failed to update PO status')
@@ -68,18 +72,21 @@ export default function PurchaseOrdersTab({
       {/* ── Search & Filter ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs min-w-[240px] max-w-sm shadow-2xs"
-          style={{ background: 'var(--color-card)', borderColor: 'var(--color-border)' }}
+          className="flex items-center gap-3 px-3.5 py-2 rounded-[5px] border text-xs max-w-md shadow-xs w-full sm:w-auto"
+          style={{
+            background: 'var(--color-card)',
+            borderColor: 'var(--color-border)',
+          }}
         >
-          <SearchLg size={15} className="text-slate-400 shrink-0 stroke-[2px]" />
+          <SearchLg size={16} className="text-[var(--color-muted)] shrink-0 stroke-[2px]" />
           <input
             value={search}
             onChange={(e) => {
               setSearch(e.target.value)
               setPage(1)
             }}
-            placeholder="Search PO number, supplier..."
-            className="bg-transparent border-none outline-none w-full text-xs text-[var(--color-text)] placeholder:text-slate-400"
+            placeholder="Search PO number, vendor..."
+            className="bg-transparent border-none outline-none w-full text-xs placeholder:text-[var(--color-muted)] text-[var(--color-text)]"
           />
           {search && (
             <button
@@ -93,14 +100,19 @@ export default function PurchaseOrdersTab({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">Status:</span>
+          <span className="text-xs text-[var(--color-muted)]">Status:</span>
           <select
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value)
               setPage(1)
             }}
-            className="px-2.5 py-1.5 text-xs rounded-lg border outline-none bg-[var(--color-card)] border-[var(--color-border)] text-[var(--color-text)] cursor-pointer"
+            className="px-3 py-1.5 text-xs rounded-[5px] border outline-none font-semibold cursor-pointer"
+            style={{
+              background: 'var(--color-card)',
+              borderColor: 'var(--color-border)',
+              color: 'var(--color-text)',
+            }}
           >
             <option value="all">All Statuses</option>
             <option value="draft">Draft</option>
@@ -117,7 +129,7 @@ export default function PurchaseOrdersTab({
           <Table.Header>
             <Table.Head id="po_number" label="PO Number" isRowHeader />
             <Table.Head id="supplier" label="Supplier / Vendor" />
-            <Table.Head id="amount" label="Total Amount" />
+            <Table.Head id="amount" label="Total Commitment" />
             <Table.Head id="expected" label="Expected Date" />
             <Table.Head id="status" label="Status" />
             <Table.Head id="actions" className="text-right">Actions</Table.Head>
@@ -133,9 +145,9 @@ export default function PurchaseOrdersTab({
                 <Table.Row key={po.id} id={po.id}>
                   {/* PO Number */}
                   <Table.Cell>
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-[#126973]/10 dark:bg-[#126973]/25 border border-[#126973]/20 dark:border-[#F1D8C2]/30 flex items-center justify-center font-bold text-xs text-[#126973] dark:text-[#F1D8C2]">
-                        <FileText size={14} />
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-[5px] bg-[#126973]/15 border border-[#126973]/30 flex items-center justify-center font-bold text-xs text-[#126973] dark:text-[#F1D8C2] shrink-0">
+                        <FileText size={15} />
                       </div>
                       <span className="font-mono font-bold text-xs text-[var(--color-text)]">
                         {po.po_number}
@@ -152,14 +164,14 @@ export default function PurchaseOrdersTab({
 
                   {/* Total Amount */}
                   <Table.Cell>
-                    <span className="font-mono font-bold text-xs text-emerald-500">
+                    <span className="font-mono font-extrabold text-xs text-emerald-500">
                       ${Number(po.total_amount).toFixed(2)}
                     </span>
                   </Table.Cell>
 
                   {/* Expected Date */}
                   <Table.Cell>
-                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                    <span className="text-xs font-mono text-[var(--color-muted)]">
                       {po.expected_delivery_date || 'N/A'}
                     </span>
                   </Table.Cell>
@@ -167,18 +179,18 @@ export default function PurchaseOrdersTab({
                   {/* Status */}
                   <Table.Cell>
                     {isReceived && (
-                      <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
+                      <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                         <Check size={12} /> Received
                       </span>
                     )}
                     {isOrdered && (
-                      <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-500 border border-blue-500/30">
-                        <Truck size={12} /> Ordered
+                      <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30">
+                        <Truck size={12} /> In Transit
                       </span>
                     )}
                     {isDraft && (
-                      <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-slate-500/15 text-slate-400 border border-slate-500/30">
-                        Draft
+                      <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-0.5 rounded-full bg-slate-500/15 text-slate-500 dark:text-slate-400 border border-slate-500/30">
+                        <Clock size={12} /> Draft
                       </span>
                     )}
                   </Table.Cell>
@@ -190,8 +202,8 @@ export default function PurchaseOrdersTab({
                         <button
                           type="button"
                           onClick={() => handleUpdatePOStatus(po.id, 'received')}
-                          className="px-2.5 py-1 rounded text-[11px] font-bold text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all cursor-pointer flex items-center gap-1"
-                          title="Confirm Goods Received (Restock Ingredients)"
+                          className="px-2.5 py-1 rounded-[5px] text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all cursor-pointer flex items-center gap-1"
+                          title="Confirm Goods Received (Auto Restock)"
                         >
                           <Check size={13} />
                           <span>Receive</span>
