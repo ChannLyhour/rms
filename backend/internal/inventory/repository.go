@@ -25,8 +25,7 @@ func (r *Repository) ListSuppliers(search string, p pagination.Params) ([]Suppli
 
 	q := r.db.Model(&Supplier{})
 	if search != "" {
-		s := "%" + search + "%"
-		q = q.Where("name ILIKE ? OR contact_person ILIKE ? OR email ILIKE ?", s, s, s)
+		q = q.Where("name ILIKE ? OR contact_person ILIKE ? OR phone ILIKE ?", "%"+search+"%", "%"+search+"%", "%"+search+"%")
 	}
 
 	if err := q.Count(&total).Error; err != nil {
@@ -88,11 +87,52 @@ func (r *Repository) GetIngredientByID(id uuid.UUID) (*Ingredient, error) {
 }
 
 func (r *Repository) CreateIngredient(ing *Ingredient) error {
-	return r.db.Create(ing).Error
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(ing).Error; err != nil {
+			return err
+		}
+		if ing.StockQuantity > 0 {
+			note := fmt.Sprintf("Initial stock balance recorded: %.3f %s", ing.StockQuantity, ing.Unit)
+			log := &IngredientStockLog{
+				IngredientID:  ing.ID,
+				Type:          "adjustment",
+				Quantity:      ing.StockQuantity,
+				QuantityAfter: ing.StockQuantity,
+				Note:          &note,
+				CreatedAt:     time.Now(),
+			}
+			return tx.Create(log).Error
+		}
+		return nil
+	})
 }
 
 func (r *Repository) UpdateIngredient(id uuid.UUID, ing *Ingredient) error {
-	return r.db.Model(&Ingredient{}).Where("id = ?", id).Updates(ing).Error
+	var oldIng Ingredient
+	if err := r.db.First(&oldIng, id).Error; err != nil {
+		return err
+	}
+
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&Ingredient{}).Where("id = ?", id).Updates(ing).Error; err != nil {
+			return err
+		}
+
+		delta := ing.StockQuantity - oldIng.StockQuantity
+		if delta != 0 {
+			note := fmt.Sprintf("Manual stock adjustment: %.3f -> %.3f %s", oldIng.StockQuantity, ing.StockQuantity, oldIng.Unit)
+			log := &IngredientStockLog{
+				IngredientID:  id,
+				Type:          "adjustment",
+				Quantity:      delta,
+				QuantityAfter: ing.StockQuantity,
+				Note:          &note,
+				CreatedAt:     time.Now(),
+			}
+			return tx.Create(log).Error
+		}
+		return nil
+	})
 }
 
 func (r *Repository) DeleteIngredient(id uuid.UUID) error {
@@ -119,26 +159,26 @@ func (r *Repository) ListRecipes(productID *uuid.UUID, p pagination.Params) ([]R
 }
 
 func (r *Repository) GetRecipeByID(id uuid.UUID) (*Recipe, error) {
-	var rec Recipe
-	if err := r.db.Preload("Ingredient").First(&rec, id).Error; err != nil {
+	var recipe Recipe
+	if err := r.db.Preload("Ingredient").First(&recipe, id).Error; err != nil {
 		return nil, err
 	}
-	return &rec, nil
+	return &recipe, nil
 }
 
-func (r *Repository) CreateRecipe(rec *Recipe) error {
-	return r.db.Create(rec).Error
+func (r *Repository) CreateRecipe(recipe *Recipe) error {
+	return r.db.Create(recipe).Error
 }
 
-func (r *Repository) UpdateRecipe(id uuid.UUID, rec *Recipe) error {
-	return r.db.Model(&Recipe{}).Where("id = ?", id).Updates(rec).Error
+func (r *Repository) UpdateRecipe(id uuid.UUID, recipe *Recipe) error {
+	return r.db.Model(&Recipe{}).Where("id = ?", id).Updates(recipe).Error
 }
 
 func (r *Repository) DeleteRecipe(id uuid.UUID) error {
 	return r.db.Delete(&Recipe{}, id).Error
 }
 
-// ── Purchase Orders CRUD ─────────────────────────────────────────
+// ── Purchase Orders & Weighted Average Cost (WAC) ─────────────────
 
 func (r *Repository) ListPurchaseOrders(supplierID *uuid.UUID, status string, p pagination.Params) ([]PurchaseOrder, int64, error) {
 	var list []PurchaseOrder
@@ -176,12 +216,79 @@ func (r *Repository) CreatePurchaseOrder(po *PurchaseOrder) error {
 }
 
 func (r *Repository) UpdatePurchaseOrderStatus(id uuid.UUID, status string) error {
-	updates := map[string]interface{}{"status": status, "updated_at": time.Now()}
-	if status == "received" {
-		now := time.Now()
-		updates["received_at"] = &now
+	var po PurchaseOrder
+	if err := r.db.Preload("Items").First(&po, id).Error; err != nil {
+		return err
 	}
-	return r.db.Model(&PurchaseOrder{}).Where("id = ?", id).Updates(updates).Error
+
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// If marking as received and it wasn't received yet -> recalculate WAC & restock
+		if status == "received" && po.Status != "received" {
+			now := time.Now()
+			for _, item := range po.Items {
+				if item.IngredientID != nil && *item.IngredientID != uuid.Nil {
+					var ing Ingredient
+					if err := tx.First(&ing, *item.IngredientID).Error; err != nil {
+						continue
+					}
+
+					oldStock := ing.StockQuantity
+					oldCost := ing.CostPerUnit
+					orderedQty := item.QuantityOrdered
+					unitCost := item.UnitCost
+
+					newStock := oldStock + orderedQty
+					var newCost float64
+
+					// Weighted Average Cost (WAC) Formula:
+					// New Cost = (Old Stock * Old Cost + Inbound Qty * Inbound Cost) / Total Combined Stock
+					if oldStock <= 0 {
+						newCost = unitCost
+					} else if newStock > 0 {
+						newCost = ((oldStock * oldCost) + (orderedQty * unitCost)) / newStock
+					} else {
+						newCost = unitCost
+					}
+
+					if err := tx.Model(&Ingredient{}).Where("id = ?", ing.ID).Updates(map[string]interface{}{
+						"stock_quantity": newStock,
+						"cost_per_unit":  newCost,
+						"updated_at":     now,
+					}).Error; err != nil {
+						return err
+					}
+
+					// Update Line item received quantity
+					tx.Model(&PurchaseOrderItem{}).Where("id = ?", item.ID).Update("quantity_received", orderedQty)
+
+					// Log movement in stock audit trail
+					note := fmt.Sprintf("PO #%s received: +%.3f %s (WAC Cost: $%.2f -> $%.2f)", po.PONumber, orderedQty, ing.Unit, oldCost, newCost)
+					log := &IngredientStockLog{
+						IngredientID:    *item.IngredientID,
+						PurchaseOrderID: &po.ID,
+						Type:            "po_receive",
+						Quantity:        orderedQty,
+						QuantityAfter:   newStock,
+						Note:            &note,
+						CreatedAt:       now,
+					}
+					if err := tx.Create(log).Error; err != nil {
+						return err
+					}
+				}
+			}
+
+			return tx.Model(&PurchaseOrder{}).Where("id = ?", id).Updates(map[string]interface{}{
+				"status":      "received",
+				"received_at": &now,
+				"updated_at":  now,
+			}).Error
+		}
+
+		// Standard status update (e.g. draft -> ordered, canceled)
+		updates := map[string]interface{}{"status": status, "updated_at": time.Now()}
+		return tx.Model(&PurchaseOrder{}).Where("id = ?", id).Updates(updates).Error
+	})
 }
 
 func (r *Repository) DeletePurchaseOrder(id uuid.UUID) error {
@@ -246,5 +353,42 @@ func (r *Repository) ListStockWastes(p pagination.Params) ([]StockWaste, int64, 
 }
 
 func (r *Repository) CreateStockWaste(waste *StockWaste) error {
-	return r.db.Create(waste).Error
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var ing Ingredient
+		if err := tx.First(&ing, waste.IngredientID).Error; err != nil {
+			return err
+		}
+
+		if waste.CostLoss <= 0 {
+			waste.CostLoss = waste.Quantity * ing.CostPerUnit
+		}
+
+		if err := tx.Create(waste).Error; err != nil {
+			return err
+		}
+
+		newStock := ing.StockQuantity - waste.Quantity
+		if newStock < 0 {
+			newStock = 0
+		}
+
+		now := time.Now()
+		if err := tx.Model(&Ingredient{}).Where("id = ?", ing.ID).Updates(map[string]interface{}{
+			"stock_quantity": newStock,
+			"updated_at":     now,
+		}).Error; err != nil {
+			return err
+		}
+
+		note := fmt.Sprintf("Wastage/Spoilage: -%.3f %s (Reason: %s, Financial Loss: $%.2f)", waste.Quantity, ing.Unit, waste.Reason, waste.CostLoss)
+		log := &IngredientStockLog{
+			IngredientID:  ing.ID,
+			Type:          "waste",
+			Quantity:      -waste.Quantity,
+			QuantityAfter: newStock,
+			Note:          &note,
+			CreatedAt:     now,
+		}
+		return tx.Create(log).Error
+	})
 }

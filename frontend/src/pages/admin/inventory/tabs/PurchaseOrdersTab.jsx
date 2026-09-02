@@ -47,9 +47,14 @@ export default function PurchaseOrdersTab({
   const paginatedPOs = filteredPOs.slice((page - 1) * pageSize, page * pageSize)
 
   const handleUpdatePOStatus = async (id, status) => {
+    if (status === 'received') {
+      if (!confirm('Confirm receiving goods for this PO? The system will automatically restock raw ingredients and update Weighted Average Cost (WAC).')) {
+        return
+      }
+    }
     try {
       await adminApi.updatePurchaseOrderStatus(id, status)
-      toast.success(`PO marked as ${status.toUpperCase()} (Inventory Restocked)`)
+      toast.success(status === 'received' ? 'PO Received: Inventory restocked & WAC costs updated' : `PO status updated to ${status.toUpperCase()}`)
       onRefresh()
     } catch (err) {
       toast.error('Failed to update PO status')

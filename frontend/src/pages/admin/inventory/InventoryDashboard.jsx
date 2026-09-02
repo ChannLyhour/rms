@@ -92,7 +92,8 @@ export default function InventoryDashboard() {
     if (tabKey === 'recipes') navigate('/recipes')
     else if (tabKey === 'purchases') navigate('/purchases')
     else if (tabKey === 'logs') navigate('/stock-logs')
-    else navigate('/inventory')
+    else if (tabKey === 'ingredients') navigate('/inventory')
+    else navigate(`/inventory?tab=${tabKey}`)
   }
 
   const renderHeaderAction = () => {
@@ -107,6 +108,13 @@ export default function InventoryDashboard() {
             }}
           />
         )
+      case 'purchases':
+        return (
+          <CreateButton
+            label="Create Purchase Order"
+            onClick={() => setViewMode('create_po')}
+          />
+        )
       case 'recipes':
         return (
           <CreateButton
@@ -114,11 +122,11 @@ export default function InventoryDashboard() {
             onClick={() => setViewMode('create_recipe')}
           />
         )
-      case 'purchases':
+      case 'waste':
         return (
           <CreateButton
-            label="Create Purchase Order"
-            onClick={() => setViewMode('create_po')}
+            label="Record Waste / Spoilage"
+            onClick={() => setIsWasteModalOpen(true)}
           />
         )
       case 'suppliers':
@@ -132,7 +140,6 @@ export default function InventoryDashboard() {
           />
         )
       case 'logs':
-      case 'waste':
       default:
         return (
           <CreateButton
@@ -151,16 +158,22 @@ export default function InventoryDashboard() {
       count: ingredients.length,
     },
     {
+      id: 'purchases',
+      label: 'Suppliers & POs',
+      icon: Truck,
+      count: purchaseOrders.length,
+    },
+    {
       id: 'recipes',
       label: 'Recipe Formulas (BOM)',
       icon: Utensils,
       count: recipes.length,
     },
     {
-      id: 'purchases',
-      label: 'Suppliers & POs',
-      icon: Truck,
-      count: purchaseOrders.length,
+      id: 'waste',
+      label: 'Waste & Spoilage',
+      icon: AlertOctagon,
+      count: wasteLogs.length,
     },
     {
       id: 'suppliers',
@@ -350,6 +363,15 @@ export default function InventoryDashboard() {
               />
             )}
 
+            {activeTab === 'purchases' && (
+              <PurchaseOrdersTab
+                purchaseOrders={purchaseOrders}
+                loading={loading}
+                onRefresh={loadAllData}
+                onOpenCreate={() => setViewMode('create_po')}
+              />
+            )}
+
             {activeTab === 'recipes' && (
               <RecipesTab
                 recipes={recipes}
@@ -361,12 +383,13 @@ export default function InventoryDashboard() {
               />
             )}
 
-            {activeTab === 'purchases' && (
-              <PurchaseOrdersTab
-                purchaseOrders={purchaseOrders}
+            {activeTab === 'waste' && (
+              <WastageTab
+                wasteLogs={wasteLogs}
+                ingredients={ingredients}
                 loading={loading}
                 onRefresh={loadAllData}
-                onOpenCreate={() => setViewMode('create_po')}
+                onOpenCreate={() => setIsWasteModalOpen(true)}
               />
             )}
 
@@ -388,16 +411,6 @@ export default function InventoryDashboard() {
                 movementLogs={movementLogs}
                 loading={loading}
                 onRefresh={loadAllData}
-              />
-            )}
-
-            {activeTab === 'waste' && (
-              <WastageTab
-                wasteLogs={wasteLogs}
-                ingredients={ingredients}
-                loading={loading}
-                onRefresh={loadAllData}
-                onOpenCreate={() => setIsWasteModalOpen(true)}
               />
             )}
           </>
