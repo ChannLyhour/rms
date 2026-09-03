@@ -14,7 +14,7 @@ import {
 import toast from 'react-hot-toast'
 import { adminApi } from '../../../../api/adminApi'
 
-export default function RecipesTab({
+export default function RecipesPage({
   recipes = [],
   products = [],
   ingredients = [],

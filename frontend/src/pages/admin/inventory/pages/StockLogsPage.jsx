@@ -18,7 +18,7 @@ import {
   FileText
 } from 'lucide-react'
 
-export default function StockLogsTab({
+export default function StockLogsPage({
   movementLogs = [],
   loading = false,
   onRefresh,

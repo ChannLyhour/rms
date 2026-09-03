@@ -17,12 +17,13 @@ import {
   Package,
   ShoppingBag,
   ArrowDownUp,
+  X,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { adminApi } from '../../../../api/adminApi'
 import StockAdjustModal from '../views/StockAdjustModal'
 
-export default function IngredientsTab({
+export default function IngredientsPage({
   ingredients = [],
   loading = false,
   onRefresh,
@@ -42,6 +43,73 @@ export default function IngredientsTab({
 
   // Quick Adjustment Modal state
   const [adjustTarget, setAdjustTarget] = useState(null)
+
+  // Inline Table Add Row state
+  const [isAddingRow, setIsAddingRow] = useState(false)
+  const [savingNew, setSavingNew] = useState(false)
+  const [newRow, setNewRow] = useState({
+    name: '',
+    unit: 'kg',
+    stock_quantity: '',
+    low_stock_threshold: '5',
+    cost_per_unit: '',
+  })
+
+  const handleSaveInlineRow = async () => {
+    if (!newRow.name || !newRow.name.trim()) {
+      toast.error('Please enter ingredient name')
+      return
+    }
+
+    setSavingNew(true)
+    try {
+      await adminApi.createIngredient({
+        name: newRow.name.trim(),
+        unit: newRow.unit || 'kg',
+        stock_quantity: parseFloat(newRow.stock_quantity) || 0,
+        low_stock_threshold: parseFloat(newRow.low_stock_threshold) || 5,
+        cost_per_unit: parseFloat(newRow.cost_per_unit) || 0,
+        is_active: true,
+      })
+
+      toast.success(`Added ${newRow.name.trim()} successfully`)
+      setNewRow({
+        name: '',
+        unit: 'kg',
+        stock_quantity: '',
+        low_stock_threshold: '5',
+        cost_per_unit: '',
+      })
+      setIsAddingRow(false)
+      if (onRefresh) onRefresh()
+    } catch (err) {
+      console.error('Failed to create ingredient:', err)
+      toast.error(err.response?.data?.error || 'Failed to add ingredient')
+    } finally {
+      setSavingNew(false)
+    }
+  }
+
+  const handleCancelInlineRow = () => {
+    setIsAddingRow(false)
+    setNewRow({
+      name: '',
+      unit: 'kg',
+      stock_quantity: '',
+      low_stock_threshold: '5',
+      cost_per_unit: '',
+    })
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleSaveInlineRow()
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      handleCancelInlineRow()
+    }
+  }
 
   // Metrics
   const metrics = useMemo(() => {
@@ -201,8 +269,19 @@ export default function IngredientsTab({
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-[var(--color-muted)]">Filter Unit:</span>
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setIsAddingRow(true)}
+            className="px-3.5 py-1.5 rounded-[5px] text-xs font-bold text-white bg-[#126973] hover:bg-[#126973]/90 active:scale-[0.98] transition-all cursor-pointer flex items-center gap-1.5 shadow-xs shrink-0"
+            title="Add new ingredient row directly on table"
+          >
+            <Plus size={14} className="stroke-[2.5px]" />
+            <span>Add Ingredient</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[var(--color-muted)] shrink-0">Filter Unit:</span>
           <select
             value={unitFilter}
             onChange={(e) => {
@@ -229,6 +308,7 @@ export default function IngredientsTab({
           </select>
         </div>
       </div>
+    </div>
 
       {/* ── Table Card ── */}
       <TableCard.Root>
@@ -242,7 +322,6 @@ export default function IngredientsTab({
               sortDescriptor={sortDescriptor}
               onSort={handleSort}
             />
-            <Table.Head id="unit" label="Unit" />
             <Table.Head
               id="stock_quantity"
               label="Current Stock"
@@ -265,8 +344,153 @@ export default function IngredientsTab({
             </Table.Head>
           </Table.Header>
 
-          <Table.Body items={paginatedList}>
-            {(item) => {
+          <Table.Body>
+            {/* ── Inline Add New Ingredient Row on Table.Cell ── */}
+            {isAddingRow && (
+              <Table.Row className="bg-[#126973]/8 dark:bg-[#126973]/15 border-b-2 border-[#126973]/50 animate-in fade-in duration-150">
+                {/* 1. Ingredient Name & Unit */}
+                <Table.Cell>
+                  <div className="flex items-center gap-2 py-0.5">
+                    <div className="w-8 h-8 rounded-[5px] bg-[#126973]/20 border border-[#126973]/40 flex items-center justify-center font-bold text-xs text-[#126973] dark:text-[#F1D8C2] shrink-0">
+                      {newRow.name ? newRow.name.charAt(0).toUpperCase() : '+'}
+                    </div>
+                    <div className="flex-1 flex items-center gap-1.5 min-w-[170px]">
+                      <input
+                        type="text"
+                        autoFocus
+                        placeholder="Ingredient name (e.g. Tomato)..."
+                        value={newRow.name}
+                        onChange={(e) => setNewRow({ ...newRow, name: e.target.value })}
+                        onKeyDown={handleKeyDown}
+                        className="w-full px-2.5 py-1.5 rounded-[5px] text-xs font-semibold border outline-none bg-[var(--color-surface)] text-[var(--color-text)] border-[#126973]/40 focus:border-[#126973] focus:ring-1 focus:ring-[#126973]"
+                      />
+                      <select
+                        value={newRow.unit}
+                        onChange={(e) => setNewRow({ ...newRow, unit: e.target.value })}
+                        className="px-2 py-1.5 rounded-[5px] text-xs font-semibold border outline-none bg-[var(--color-surface)] text-[var(--color-text)] border-[#126973]/40 cursor-pointer shrink-0"
+                      >
+                        <option value="kg">kg</option>
+                        <option value="g">g</option>
+                        <option value="L">L</option>
+                        <option value="ml">ml</option>
+                        <option value="pcs">pcs</option>
+                        <option value="pack">pack</option>
+                        <option value="bottle">bottle</option>
+                        <option value="can">can</option>
+                        <option value="box">box</option>
+                      </select>
+                    </div>
+                  </div>
+                </Table.Cell>
+
+                {/* 2. Current Stock */}
+                <Table.Cell>
+                  <div className="flex items-center gap-1 min-w-[100px]">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={newRow.stock_quantity}
+                      onChange={(e) => setNewRow({ ...newRow, stock_quantity: e.target.value })}
+                      onKeyDown={handleKeyDown}
+                      className="w-20 px-2 py-1.5 rounded-[5px] text-xs font-mono font-bold border outline-none bg-[var(--color-surface)] text-[var(--color-text)] border-[#126973]/40 focus:border-[#126973]"
+                    />
+                    <span className="text-xs text-[var(--color-muted)] font-mono">{newRow.unit}</span>
+                  </div>
+                </Table.Cell>
+
+                {/* 3. Threshold */}
+                <Table.Cell>
+                  <div className="flex items-center gap-1 min-w-[95px]">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="5.00"
+                      value={newRow.low_stock_threshold}
+                      onChange={(e) => setNewRow({ ...newRow, low_stock_threshold: e.target.value })}
+                      onKeyDown={handleKeyDown}
+                      className="w-20 px-2 py-1.5 rounded-[5px] text-xs font-mono border outline-none bg-[var(--color-surface)] text-[var(--color-text)] border-[#126973]/40 focus:border-[#126973]"
+                    />
+                    <span className="text-xs text-[var(--color-muted)] font-mono">{newRow.unit}</span>
+                  </div>
+                </Table.Cell>
+
+                {/* 4. Cost Per Unit */}
+                <Table.Cell>
+                  <div className="flex items-center gap-1 min-w-[85px]">
+                    <span className="text-xs font-bold text-[var(--color-muted)]">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={newRow.cost_per_unit}
+                      onChange={(e) => setNewRow({ ...newRow, cost_per_unit: e.target.value })}
+                      onKeyDown={handleKeyDown}
+                      className="w-18 px-2 py-1.5 rounded-[5px] text-xs font-mono border outline-none bg-[var(--color-surface)] text-[var(--color-text)] border-[#126973]/40 focus:border-[#126973]"
+                    />
+                  </div>
+                </Table.Cell>
+
+                {/* 5. Total Value Preview */}
+                <Table.Cell>
+                  <span className="font-mono text-xs font-bold text-[var(--color-text)]">
+                    ${((Number(newRow.stock_quantity) || 0) * (Number(newRow.cost_per_unit) || 0)).toFixed(2)}
+                  </span>
+                </Table.Cell>
+
+                {/* 6. Status Preview */}
+                <Table.Cell>
+                  {(Number(newRow.stock_quantity) || 0) <= 0 ? (
+                    <span className="inline-flex items-center text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-500 border border-rose-500/30">
+                      Out of Stock
+                    </span>
+                  ) : (Number(newRow.stock_quantity) || 0) <= (Number(newRow.low_stock_threshold) || 0) ? (
+                    <span className="inline-flex items-center text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                      Low Stock
+                    </span>
+                  ) : (
+                    <BadgeWithIcon color="success" className="font-semibold capitalize">
+                      Good
+                    </BadgeWithIcon>
+                  )}
+                </Table.Cell>
+
+                {/* 7. Actions */}
+                <Table.Cell className="text-right">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button
+                      type="button"
+                      disabled={savingNew}
+                      onClick={handleSaveInlineRow}
+                      className="px-2.5 py-1.5 rounded-[5px] text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition-all cursor-pointer flex items-center gap-1 shadow-xs"
+                      title="Save (or press Enter)"
+                    >
+                      {savingNew ? (
+                        <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Check size={13} strokeWidth={2.5} />
+                      )}
+                      <span>Save</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={savingNew}
+                      onClick={handleCancelInlineRow}
+                      className="p-1.5 rounded-[5px] text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all cursor-pointer"
+                      title="Cancel (or press Esc)"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                </Table.Cell>
+              </Table.Row>
+            )}
+
+            {/* ── Existing Data Rows ── */}
+            {paginatedList.map((item) => {
               const isLowStock = Number(item.stock_quantity) <= Number(item.low_stock_threshold)
               const totalCost = (Number(item.stock_quantity) * Number(item.cost_per_unit)) || 0
 
@@ -282,13 +506,6 @@ export default function IngredientsTab({
                         {item.name}
                       </span>
                     </div>
-                  </Table.Cell>
-
-                  {/* Unit */}
-                  <Table.Cell>
-                    <span className="px-2 py-0.5 rounded-[5px] text-[11px] font-mono font-semibold uppercase" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}>
-                      {item.unit}
-                    </span>
                   </Table.Cell>
 
                   {/* Current Stock */}
@@ -335,8 +552,8 @@ export default function IngredientsTab({
                         Low Stock
                       </span>
                     ) : (
-                      <BadgeWithIcon size="sm" color="success" iconLeading={Check} className="font-semibold capitalize">
-                        Healthy
+                      <BadgeWithIcon color="success" className="font-semibold capitalize">
+                        Good
                       </BadgeWithIcon>
                     )}
                   </Table.Cell>
@@ -373,7 +590,42 @@ export default function IngredientsTab({
                   </Table.Cell>
                 </Table.Row>
               )
-            }}
+            })}
+
+            {/* ── Empty State ── */}
+            {paginatedList.length === 0 && !isAddingRow && (
+              <Table.Row>
+                <Table.Cell colSpan={7} className="py-12 text-center text-[var(--color-muted)]">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <Package size={30} className="text-slate-300 dark:text-slate-600" />
+                    <p className="text-xs font-semibold">No ingredients found</p>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingRow(true)}
+                      className="mt-1 px-3 py-1.5 rounded-[5px] text-xs font-bold text-white bg-[#126973] hover:bg-[#126973]/90 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
+                    >
+                      <Plus size={13} strokeWidth={2.5} />
+                      <span>Add First Ingredient Directly</span>
+                    </button>
+                  </div>
+                </Table.Cell>
+              </Table.Row>
+            )}
+
+            {/* ── Bottom Quick Add Trigger Row ── */}
+            {!isAddingRow && paginatedList.length > 0 && (
+              <Table.Row
+                onClick={() => setIsAddingRow(true)}
+                className="hover:bg-[#126973]/5 dark:hover:bg-[#126973]/10 cursor-pointer border-t border-dashed border-[var(--color-border)] group transition-colors"
+              >
+                <Table.Cell colSpan={7} className="py-2.5 px-4 text-center">
+                  <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#126973] dark:text-[#F1D8C2] group-hover:underline">
+                    <Plus size={14} className="stroke-[2.5px]" />
+                    <span>+ Add new ingredient row directly on table...</span>
+                  </div>
+                </Table.Cell>
+              </Table.Row>
+            )}
           </Table.Body>
         </Table>
 

@@ -53,9 +53,9 @@ export const BadgeWithIcon = ({
 
   const colorStyles = {
     success: {
-      background: 'rgba(34, 197, 94, 0.12)',
+      // background: 'rgba(34, 197, 94, 0.12)',
       color: '#16a34a',
-      borderColor: 'rgba(34, 197, 94, 0.25)',
+      // borderColor: 'rgba(34, 197, 94, 0.25)',
     },
     gray: {
       background: 'var(--color-bg)',

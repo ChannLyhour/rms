@@ -1,0 +1,282 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 210" fill="none">
+  <defs>
+    <!-- ── Soft 3D Lighting & Shadows ── -->
+    <filter id="flatShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.18" />
+    </filter>
+
+    <filter id="softContactBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" />
+    </filter>
+
+    <!-- ── 3D Flat Gradients ── -->
+
+    <!-- Sack (Organic Tan) -->
+    <linearGradient id="sackGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#faeedb" />
+      <stop offset="45%" stop-color="#e8caa4" />
+      <stop offset="85%" stop-color="#cf9f6c" />
+      <stop offset="100%" stop-color="#b07d4b" />
+    </linearGradient>
+
+    <linearGradient id="sackShade" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.35)" />
+      <stop offset="50%" stop-color="transparent" />
+      <stop offset="100%" stop-color="rgba(80,45,15,0.22)" />
+    </linearGradient>
+
+    <!-- Wooden Crate (Warm Modern Timber) -->
+    <linearGradient id="woodFront" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#b89a80" />
+      <stop offset="50%" stop-color="#a4846b" />
+      <stop offset="100%" stop-color="#8a6951" />
+    </linearGradient>
+
+    <linearGradient id="woodPost" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c6aa92" />
+      <stop offset="50%" stop-color="#a8886e" />
+      <stop offset="100%" stop-color="#7e6049" />
+    </linearGradient>
+
+    <!-- Green Tomato (Glossy Emerald Lime) -->
+    <radialGradient id="tomatoGrad" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#bef264" />
+      <stop offset="40%" stop-color="#84cc16" />
+      <stop offset="85%" stop-color="#4d7c0f" />
+      <stop offset="100%" stop-color="#2d5208" />
+    </radialGradient>
+
+    <!-- Carrot (Vibrant Sunset Orange) -->
+    <linearGradient id="carrotGrad" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#fed7aa" />
+      <stop offset="35%" stop-color="#fb923c" />
+      <stop offset="85%" stop-color="#ea580c" />
+      <stop offset="100%" stop-color="#c2410c" />
+    </linearGradient>
+
+    <!-- Carrot Foliage (Lush Emerald) -->
+    <linearGradient id="foliageGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#15803d" />
+      <stop offset="100%" stop-color="#4ade80" />
+    </linearGradient>
+
+    <!-- Mushroom (Minimalist Cream / Mocha) -->
+    <linearGradient id="mushroomGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f5ede3" />
+      <stop offset="50%" stop-color="#cbb59f" />
+      <stop offset="100%" stop-color="#8d6e53" />
+    </linearGradient>
+
+    <!-- Olive Oil (Golden Glow Glass) -->
+    <linearGradient id="oilLiquid" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ca8a04" />
+      <stop offset="30%" stop-color="#facc15" />
+      <stop offset="70%" stop-color="#fef08a" />
+      <stop offset="90%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#a16207" />
+    </linearGradient>
+
+    <!-- Herb Jar (Deep Mint Speckle) -->
+    <linearGradient id="herbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#166534" />
+      <stop offset="60%" stop-color="#15803d" />
+      <stop offset="100%" stop-color="#14532d" />
+    </linearGradient>
+  </defs>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- 1. SOFT 3D AMBIENT GROUND SHADOW                                      -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <g opacity="0.45" filter="url(#softContactBlur)">
+    <ellipse cx="68" cy="184" rx="42" ry="11" fill="#1e1710" />
+    <ellipse cx="146" cy="186" rx="60" ry="12" fill="#1e1710" />
+    <ellipse cx="224" cy="185" rx="30" ry="9" fill="#1e1710" />
+  </g>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- 2. MAIN 3D FLAT ICON GROUP                                            -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <g filter="url(#flatShadow)">
+
+    <!-- ── A. CARROT LEAVES / FOLIAGE (Backdrop) ── -->
+    <g id="carrotFoliage">
+      <path d="M 148,92 C 145,55 130,42 120,40 C 132,54 135,70 144,92 Z" fill="url(#foliageGrad)" />
+      <path d="M 152,90 C 158,52 172,38 184,36 C 172,52 168,70 156,90 Z" fill="url(#foliageGrad)" />
+      <path d="M 150,88 C 150,45 152,32 152,24 C 158,35 156,58 152,88 Z" fill="#22c55e" />
+      <!-- Stylized geometric leaf pods -->
+      <circle cx="124" cy="42" r="5.5" fill="#4ade80" />
+      <circle cx="180" cy="38" r="5.5" fill="#4ade80" />
+      <circle cx="152" cy="24" r="5" fill="#86efac" />
+    </g>
+
+    <!-- ── B. 3D WOODEN PRODUCE CRATE ── -->
+    <g id="crate">
+      <!-- Crate Dark Interior -->
+      <rect x="94" y="98" width="108" height="74" rx="6" fill="#423225" />
+
+      <!-- Fresh Produce Inside Crate -->
+      <!-- Carrot 1 (Angled) -->
+      <path d="M 142,88 C 147,105 152,132 147,156 C 141,156 137,130 135,102 Z" fill="url(#carrotGrad)" />
+      <!-- Carrot horizontal rings -->
+      <path d="M 137,108 Q 142,110 147,109" stroke="#9a3412" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.6" />
+      <path d="M 139,124 Q 143,126 148,125" stroke="#9a3412" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.6" />
+
+      <!-- Green Tomato (Glossy 3D Sphere) -->
+      <g>
+        <circle cx="118" cy="116" r="19" fill="url(#tomatoGrad)" />
+        <!-- Tomato Specular Gloss Highlight -->
+        <ellipse cx="111" cy="108" rx="6.5" ry="3.5" fill="#ffffff" opacity="0.75" transform="rotate(-30 111 108)" />
+        <!-- Star Sepals / Stem -->
+        <path d="M 118,97 L 117,102 M 118,102 L 112,100 M 118,102 L 114,106 M 118,102 L 123,101 M 118,102 L 122,105"
+              stroke="#2e5a1c" stroke-width="2.2" stroke-linecap="round" />
+        <circle cx="118" cy="101" r="2" fill="#4d7c0f" />
+      </g>
+
+      <!-- Second Mini Tomato (Peeking Behind) -->
+      <g opacity="0.9">
+        <circle cx="102" cy="126" r="13" fill="url(#tomatoGrad)" />
+        <ellipse cx="98" cy="121" rx="4" ry="2" fill="#ffffff" opacity="0.6" transform="rotate(-30 98 121)" />
+      </g>
+
+      <!-- Cremini Mushroom (Cute Rounded 3D Cap) -->
+      <g>
+        <!-- Mushroom Cap -->
+        <path d="M 160,118 C 160,98 194,98 194,118 C 194,124 160,124 160,118 Z" fill="url(#mushroomGrad)" />
+        <ellipse cx="174" cy="107" rx="8" ry="3.5" fill="#ffffff" opacity="0.45" transform="rotate(-15 174 107)" />
+        <!-- Mushroom Stem -->
+        <rect x="172" y="122" width="10" height="12" rx="4" fill="#faeedb" />
+      </g>
+
+      <!-- Crate Front Slats (Clean Minimalist Wood Slats) -->
+      <!-- Slat 1 (Top) -->
+      <rect x="92" y="124" width="112" height="23" rx="4" fill="url(#woodFront)" />
+      <!-- Slat top highlight -->
+      <line x1="94" y1="125" x2="202" y2="125" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" />
+
+      <!-- Slat 2 (Bottom) -->
+      <rect x="92" y="152" width="112" height="24" rx="4" fill="url(#woodFront)" />
+      <line x1="94" y1="153" x2="202" y2="153" stroke="rgba(255,255,255,0.25)" stroke-width="1.2" />
+
+      <!-- Left Corner Post -->
+      <rect x="92" y="116" width="16" height="60" rx="3" fill="url(#woodPost)" />
+      <polygon points="92,116 97,111 113,111 108,116" fill="#dfc6b0" />
+      <circle cx="100" cy="135" r="2.2" fill="#423225" />
+      <circle cx="100" cy="164" r="2.2" fill="#423225" />
+
+      <!-- Right Corner Post -->
+      <rect x="188" y="116" width="16" height="60" rx="3" fill="url(#woodPost)" />
+      <polygon points="188,116 193,111 209,111 204,116" fill="#dfc6b0" />
+      <circle cx="196" cy="135" r="2.2" fill="#423225" />
+      <circle cx="196" cy="164" r="2.2" fill="#423225" />
+    </g>
+
+    <!-- ── C. FLOUR BURLAP SACK (Left) ── -->
+    <g id="burlapSack">
+      <!-- Main Plump Sack Body -->
+      <path d="M 48,96
+               C 34,118 22,148 24,168
+               C 26,182 42,187 68,187
+               C 94,187 106,182 108,168
+               C 110,148 100,118 84,96 Z"
+            fill="url(#sackGrad)" />
+      <!-- Sack 3D Overlay Shading -->
+      <path d="M 48,96
+               C 34,118 22,148 24,168
+               C 26,182 42,187 68,187
+               C 94,187 106,182 108,168
+               C 110,148 100,118 84,96 Z"
+            fill="url(#sackShade)" />
+
+      <!-- Gathered Ruffled Top -->
+      <path d="M 46,78
+               C 42,88 56,92 68,91
+               C 80,92 92,88 88,78
+               C 94,70 82,64 74,68
+               C 68,62 58,62 54,68
+               C 44,64 38,70 46,78 Z"
+            fill="#faeedb" stroke="#ad8252" stroke-width="1.5" />
+
+      <!-- Tied Neck Shadow -->
+      <ellipse cx="67" cy="94" rx="20" ry="6" fill="#6d4722" />
+
+      <!-- Twine String & Bow Knot -->
+      <path d="M 48,94 Q 67,99 86,94" stroke="#4d2f13" stroke-width="3" stroke-linecap="round" fill="none" />
+      <path d="M 48,94 Q 67,99 86,94" stroke="#fed7aa" stroke-width="1.2" stroke-linecap="round" fill="none" stroke-dasharray="2,2" />
+      <!-- Bow loops -->
+      <ellipse cx="61" cy="94" rx="6" ry="4" fill="none" stroke="#4d2f13" stroke-width="2.4" />
+      <ellipse cx="73" cy="94" rx="6" ry="4" fill="none" stroke="#4d2f13" stroke-width="2.4" />
+      <circle cx="67" cy="94" r="3.2" fill="#5c3817" />
+      <!-- Bow tails -->
+      <path d="M 65,97 Q 58,108 55,116" stroke="#4d2f13" stroke-width="2" stroke-linecap="round" fill="none" />
+      <path d="M 69,97 Q 74,108 78,116" stroke="#4d2f13" stroke-width="2" stroke-linecap="round" fill="none" />
+
+      <!-- ── Minimalist 3D Brand Emblem (Leaf Badge) ── -->
+      <rect x="52" y="115" width="30" height="24" rx="6" fill="#059669" />
+      <rect x="53" y="116" width="28" height="22" rx="5" fill="#10b981" />
+      <!-- Sprout Graphic inside Badge -->
+      <path d="M 67,121 C 67,128 60,128 60,124 C 60,120 67,121 67,121 Z" fill="#ffffff" />
+      <path d="M 67,121 C 67,128 74,128 74,124 C 74,120 67,121 67,121 Z" fill="#ffffff" />
+      <line x1="67" y1="121" x2="67" y2="133" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" />
+
+      <!-- Stenciled Minimalist Text Accent: WHEAT FLOUR -->
+      <text x="67" y="152" font-family="system-ui, -apple-system, sans-serif" font-size="7.5" font-weight="900" fill="#583515" text-anchor="middle" letter-spacing="1.2">
+        FLOUR
+      </text>
+      <!-- Green Accent Underline -->
+      <line x1="48" y1="158" x2="86" y2="158" stroke="#10b981" stroke-width="2" stroke-linecap="round" />
+    </g>
+
+    <!-- ── D. GLASS BOTTLE OF OLIVE OIL (Right) ── -->
+    <g id="oilBottle">
+      <!-- Cork Stopper -->
+      <polygon points="220,52 232,52 230,64 222,64" fill="#b08455" />
+      <rect x="219" y="62" width="14" height="4" rx="2" fill="#d8b286" />
+
+      <!-- Slender Glass Neck -->
+      <rect x="221" y="66" width="10" height="22" rx="2" fill="rgba(255,255,255,0.45)" />
+      <rect x="222.5" y="72" width="7" height="16" fill="url(#oilLiquid)" />
+
+      <!-- Bottle Shoulders -->
+      <path d="M 221,88 L 210,102 L 242,102 L 231,88 Z" fill="rgba(255,255,255,0.4)" />
+      <path d="M 222,89 L 212,102 L 240,102 L 230,89 Z" fill="url(#oilLiquid)" />
+
+      <!-- Main Bottle Body (Sleek Modern 3D Glass) -->
+      <rect x="210" y="102" width="32" height="78" rx="6" fill="url(#oilLiquid)" />
+
+      <!-- Modern Emerald Label -->
+      <rect x="211" y="122" width="30" height="40" rx="3" fill="#047857" />
+      <rect x="212" y="123" width="28" height="38" rx="2" fill="#059669" />
+      <!-- Label Typography & Olive Icon -->
+      <g fill="#ffffff" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif">
+        <circle cx="226" cy="130" r="3.5" fill="#a7f3d0" />
+        <path d="M 226,128 Q 230,125 231,128" stroke="#ffffff" stroke-width="1" fill="none" />
+        <text x="226" y="142" font-size="5.5" font-weight="800" letter-spacing="0.5">OLIVE</text>
+        <text x="226" y="150" font-size="5.5" font-weight="800" letter-spacing="0.5">OIL</text>
+      </g>
+
+      <!-- Glass Specular Highlight Streak -->
+      <rect x="212" y="104" width="4" height="74" rx="2" fill="#ffffff" opacity="0.6" />
+      <rect x="238" y="104" width="2" height="74" rx="1" fill="#ffffff" opacity="0.3" />
+    </g>
+
+    <!-- ── E. HERB SPICE JAR (Foreground Accent) ── -->
+    <g id="spiceJar">
+      <!-- Jar Glass Body -->
+      <rect x="194" y="138" width="22" height="42" rx="4" fill="url(#herbGrad)" />
+
+      <!-- Glass Specular Highlight -->
+      <rect x="195.5" y="140" width="2.5" height="38" rx="1.2" fill="#ffffff" opacity="0.5" />
+
+      <!-- White/Mint Label Band -->
+      <rect x="194" y="150" width="22" height="17" fill="#ffffff" />
+      <text x="205" y="158" font-family="system-ui, -apple-system, sans-serif" font-size="4.5" font-weight="900" fill="#065f46" text-anchor="middle">
+        HERBS
+      </text>
+
+      <!-- Green Screw Cap -->
+      <rect x="192.5" y="133" width="25" height="6.5" rx="2" fill="#15803d" />
+      <line x1="195" y1="134" x2="215" y2="134" stroke="#4ade80" stroke-width="0.8" />
+    </g>
+
+  </g>
+</svg>

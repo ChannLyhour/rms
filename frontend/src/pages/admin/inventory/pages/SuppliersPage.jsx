@@ -20,7 +20,7 @@ import {
 import toast from 'react-hot-toast'
 import { adminApi } from '../../../../api/adminApi'
 
-export default function SuppliersTab({
+export default function SuppliersPage({
   suppliers = [],
   loading = false,
   onRefresh,

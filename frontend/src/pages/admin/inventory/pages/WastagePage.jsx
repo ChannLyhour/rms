@@ -16,7 +16,7 @@ import {
   AlertOctagon
 } from 'lucide-react'
 
-export default function WastageTab({
+export default function WastagePage({
   wasteLogs = [],
   ingredients = [],
   loading = false,

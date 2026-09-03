@@ -22,7 +22,7 @@ import {
 import toast from 'react-hot-toast'
 import { adminApi } from '../../../../api/adminApi'
 
-export default function PurchaseOrdersTab({
+export default function PurchaseOrdersPage({
   purchaseOrders = [],
   loading = false,
   onRefresh,
