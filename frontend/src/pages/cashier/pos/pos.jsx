@@ -209,15 +209,15 @@ export default function CashierPOS() {
     setIsPlacingOrder(true)
     try {
       const payload = {
-        table_session_id: Number(selectedSession),
+        table_session_id: selectedSession,
         order_type: orderType || 'dine_in',
         items: items.map((i) => {
           const itemObj = {
-            product_id: Number(i.product?.id || i.product_id || 0),
+            product_id: i.product?.id || i.product_id,
             quantity: Math.max(1, Number(i.quantity || 1)),
             option_value_ids: (i.options || [])
-              .map((o) => Number(o.id))
-              .filter((id) => Boolean(id) && !isNaN(id) && id > 0),
+              .map((o) => o.id || o.option_value_id)
+              .filter(Boolean),
           }
           if (i.specialInstructions && String(i.specialInstructions).trim()) {
             itemObj.special_instructions = String(i.specialInstructions).trim()
@@ -247,7 +247,7 @@ export default function CashierPOS() {
       // Resolve valid session ID for Takeaway or Dine-In
       if (!targetSessionId) {
         if (sessions && sessions.length > 0) {
-          targetSessionId = Number(sessions[0].id)
+          targetSessionId = sessions[0].id
         } else {
           try {
             const tablesRes = await posApi.getTables()
@@ -255,13 +255,13 @@ export default function CashierPOS() {
             const availTable = tablesList.find((t) => t.status === 'available') || tablesList[0]
             if (availTable) {
               try {
-                const sessRes = await posApi.openSession({ table_id: Number(availTable.id) })
-                targetSessionId = Number(sessRes.data?.session?.id || sessRes.data?.data?.session?.id)
+                const sessRes = await posApi.openSession({ table_id: availTable.id })
+                targetSessionId = sessRes.data?.session?.id || sessRes.data?.data?.session?.id
               } catch (openErr) {
                 const activeSessRes = await posApi.getSessions()
                 const activeList = activeSessRes.data?.data || []
                 if (activeList.length > 0) {
-                  targetSessionId = Number(activeList[0].id)
+                  targetSessionId = activeList[0].id
                 }
               }
             }
@@ -275,14 +275,14 @@ export default function CashierPOS() {
         // 1. If cart has pending items, save order to DB first
         if (items && items.length > 0) {
           const orderPayload = {
-            table_session_id: Number(targetSessionId),
+            table_session_id: targetSessionId,
             order_type: orderType || (selectedSession ? 'dine_in' : 'takeaway'),
             items: items.map((i) => {
-              const prodId = Number(i.product?.id || i.product_id || 0)
+              const prodId = i.product?.id || i.product_id
               const qty = Math.max(1, Number(i.quantity || 1))
               const optIds = (i.options || [])
-                .map((o) => Number(o.id))
-                .filter((id) => Boolean(id) && !isNaN(id) && id > 0)
+                .map((o) => o.id || o.option_value_id)
+                .filter(Boolean)
 
               const itemObj = {
                 product_id: prodId,
@@ -304,7 +304,7 @@ export default function CashierPOS() {
           : undefined
 
         await posApi.processPayment({
-          table_session_id: Number(targetSessionId),
+          table_session_id: targetSessionId,
           payment_method: checkoutData.paymentMethod || 'cash',
           amount_paid: Number(checkoutData.amountPaid || checkoutData.total || 0),
           transaction_ref: transRef,
@@ -361,14 +361,14 @@ export default function CashierPOS() {
           const activeSessRes = await posApi.getSessions()
           const activeList = activeSessRes.data?.data || []
           if (activeList.length > 0) {
-            targetSessionId = Number(activeList[0].id)
+            targetSessionId = activeList[0].id
           } else {
             const tablesRes = await posApi.getTables()
             const tablesList = tablesRes.data?.data || []
             const availTable = tablesList.find((t) => t.status === 'available') || tablesList[0]
             if (availTable) {
-              const sessRes = await posApi.openSession({ table_id: Number(availTable.id) })
-              targetSessionId = Number(sessRes.data?.session?.id || sessRes.data?.data?.session?.id)
+              const sessRes = await posApi.openSession({ table_id: availTable.id })
+              targetSessionId = sessRes.data?.session?.id || sessRes.data?.data?.session?.id
             }
           }
         } catch (e) {
@@ -378,14 +378,14 @@ export default function CashierPOS() {
 
       if (targetSessionId) {
         const orderPayload = {
-          table_session_id: Number(targetSessionId),
+          table_session_id: targetSessionId,
           order_type: orderType || (selectedSession ? 'dine_in' : 'takeaway'),
           items: items.map((i) => {
-            const prodId = Number(i.product?.id || i.product_id || 0)
+            const prodId = i.product?.id || i.product_id
             const qty = Math.max(1, Number(i.quantity || 1))
             const optIds = (i.options || [])
-              .map((o) => Number(o.id))
-              .filter((id) => Boolean(id) && !isNaN(id) && id > 0)
+              .map((o) => o.id || o.option_value_id)
+              .filter(Boolean)
 
             const itemObj = {
               product_id: prodId,

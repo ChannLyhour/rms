@@ -43,6 +43,16 @@ func (r *repository) ListSettings(p pagination.Params) ([]Setting, int64, error)
 func (r *repository) GetSettingByKey(key string) (*Setting, error) {
 	var s Setting
 	if err := r.db.Where("setting_key = ?", key).First(&s).Error; err != nil {
+		if key == "tax_rate" {
+			defaultRate := "7.0"
+			s = Setting{
+				SettingKey:   key,
+				SettingValue: &defaultRate,
+				UpdatedAt:    time.Now(),
+			}
+			_ = r.db.Create(&s).Error
+			return &s, nil
+		}
 		return nil, err
 	}
 	return &s, nil

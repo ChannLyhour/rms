@@ -60,7 +60,7 @@ export default function InventoryDashboard() {
     setLoading(true)
     try {
       const [ingRes, recRes, prodRes, poRes, supRes, logsRes, wasteRes] = await Promise.all([
-        adminApi.getIngredients().catch(() => ({ data: { data: [] } })),
+        adminApi.getIngredients({ limit: 200 }).catch(() => ({ data: { data: [] } })),
         adminApi.getRecipes().catch(() => ({ data: { data: [] } })),
         adminApi.getProducts().catch(() => ({ data: { data: [] } })),
         adminApi.getPurchaseOrders().catch(() => ({ data: { data: [] } })),

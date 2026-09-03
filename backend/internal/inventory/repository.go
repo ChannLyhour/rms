@@ -74,7 +74,7 @@ func (r *Repository) ListIngredients(search string, lowStock bool, p pagination.
 		return nil, 0, err
 	}
 
-	err := q.Order("id DESC").Limit(p.Limit).Offset(p.Offset).Find(&list).Error
+	err := q.Order("created_at DESC, id DESC").Limit(p.Limit).Offset(p.Offset).Find(&list).Error
 	return list, total, err
 }
 

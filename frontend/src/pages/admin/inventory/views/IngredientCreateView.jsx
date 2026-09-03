@@ -14,7 +14,10 @@ import {
   Sparkles,
   Building2,
   Tag,
-  Loader2
+  Loader2,
+  Camera,
+  Upload,
+  X
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { adminApi } from '../../../../api/adminApi'
@@ -43,11 +46,13 @@ export default function IngredientCreateView({ ingredient, onClose, onSave }) {
     cost_per_unit: '',
     sku: '',
     storage_location: 'Main Dry Storage',
+    image_url: '',
     is_active: true,
   })
 
   const parentRef = useRef(null)
   const [saving, setSaving] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
 
   useEffect(() => {
     if (ingredient) {
@@ -60,6 +65,7 @@ export default function IngredientCreateView({ ingredient, onClose, onSave }) {
         cost_per_unit: String(ingredient.cost_per_unit ?? '0'),
         sku: ingredient.sku || '',
         storage_location: ingredient.storage_location || 'Main Dry Storage',
+        image_url: ingredient.image_url || '',
         is_active: ingredient.is_active !== undefined ? Boolean(ingredient.is_active) : true,
       })
     } else {
@@ -72,6 +78,7 @@ export default function IngredientCreateView({ ingredient, onClose, onSave }) {
         cost_per_unit: '',
         sku: '',
         storage_location: 'Main Dry Storage',
+        image_url: '',
         is_active: true,
       })
     }
@@ -79,6 +86,27 @@ export default function IngredientCreateView({ ingredient, onClose, onSave }) {
 
   const setField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const form = new FormData()
+    form.append('image', file)
+    setIsUploadingImage(true)
+    try {
+      const { data } = await adminApi.uploadImage(form, 'ingredients')
+      const uploadedUrl = data?.url || data?.path || data?.full_url
+      if (uploadedUrl) {
+        setField('image_url', uploadedUrl)
+        toast.success('Image uploaded successfully')
+      }
+    } catch (err) {
+      console.error('Failed to upload image:', err)
+      toast.error('Failed to upload image')
+    } finally {
+      setIsUploadingImage(false)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -96,6 +124,7 @@ export default function IngredientCreateView({ ingredient, onClose, onSave }) {
       stock_quantity: parseFloat(formData.stock_quantity) || 0,
       low_stock_threshold: parseFloat(formData.low_stock_threshold) || 5,
       cost_per_unit: parseFloat(formData.cost_per_unit) || 0,
+      image_url: formData.image_url || null,
       is_active: Boolean(formData.is_active),
     }
 
@@ -263,6 +292,66 @@ export default function IngredientCreateView({ ingredient, onClose, onSave }) {
                   }}
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {/* Ingredient Image Upload */}
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--color-muted)' }}>
+                        Ingredient Photo (Optional)
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <div className="relative group/editimg w-20 h-20 rounded-[8px] border-2 border-dashed border-[#126973]/40 bg-[var(--color-bg)] flex items-center justify-center overflow-hidden shrink-0">
+                          {isUploadingImage ? (
+                            <span className="w-5 h-5 border-2 border-[#126973] border-t-transparent rounded-full animate-spin" />
+                          ) : formData.image_url ? (
+                            <>
+                              <img
+                                src={formData.image_url}
+                                alt="Ingredient preview"
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setField('image_url', '')}
+                                className="absolute inset-0 bg-black/60 opacity-0 group-hover/editimg:opacity-100 flex items-center justify-center text-white transition-opacity cursor-pointer"
+                                title="Remove image"
+                              >
+                                <X size={18} />
+                              </button>
+                            </>
+                          ) : (
+                            <label
+                              htmlFor="ingredient-modal-img"
+                              className="w-full h-full flex flex-col items-center justify-center text-[#126973] dark:text-[#F1D8C2] cursor-pointer gap-1 p-2 text-center"
+                              title="Upload photo"
+                            >
+                              <Camera size={20} />
+                              <span className="text-[10px] font-semibold">Upload</span>
+                            </label>
+                          )}
+                          <input
+                            id="ingredient-modal-img"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={isUploadingImage}
+                            onChange={handleImageChange}
+                          />
+                        </div>
+
+                        <div className="text-xs text-[var(--color-muted)]">
+                          <p className="font-semibold text-[var(--color-text)]">Upload a photo of this ingredient</p>
+                          <p className="text-[11px] mt-0.5">Supports PNG, JPG, WEBP, SVG up to 5MB.</p>
+                          {formData.image_url && (
+                            <label
+                              htmlFor="ingredient-modal-img"
+                              className="inline-block mt-1.5 text-xs font-bold text-[#126973] dark:text-[#F1D8C2] hover:underline cursor-pointer"
+                            >
+                              Change Photo
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
                         Ingredient / Raw Material Name *

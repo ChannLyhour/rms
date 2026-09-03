@@ -32,6 +32,7 @@ type Ingredient struct {
 	StockQuantity     float64    `gorm:"type:numeric(10,3);default:0.000" json:"stock_quantity"`
 	LowStockThreshold float64    `gorm:"type:numeric(10,3);default:5.000" json:"low_stock_threshold"`
 	CostPerUnit       float64    `gorm:"type:numeric(10,2);default:0.00" json:"cost_per_unit"`
+	ImageURL          *string    `gorm:"type:text" json:"image_url"`
 	IsActive          bool       `gorm:"default:true" json:"is_active"`
 	CreatedBy         *uuid.UUID `gorm:"type:uuid" json:"created_by"`
 	CreatedAt         time.Time  `json:"created_at"`

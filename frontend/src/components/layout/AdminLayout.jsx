@@ -24,10 +24,7 @@ export default function AdminLayout({ children }) {
         <HeaderLayout />
         
         {/* Main content */}
-        <main
-          className="flex-1 overflow-y-auto overflow-x-hidden p-6"
-          style={{ background: 'var(--color-bg)' }}
-        >
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 bg-[#e9e9ef] dark:bg-[#0b0d13]">
           {children}
         </main>
       </SidebarInset>

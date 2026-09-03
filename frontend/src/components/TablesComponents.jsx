@@ -1,6 +1,26 @@
 import { useMemo, useState, isValidElement } from 'react'
 import { Check, ReverseLeft, X, ChevronLeft, ChevronRight, ArrowUp, ArrowDown } from '@untitledui/icons'
 import { TableActionButtons, EditButton, DeleteButton, ViewButton } from './plugin/components/button-Action-Components'
+import {
+  FilterBar,
+  FilterSearchInput,
+  CreateButton,
+  AddButton,
+  NewButton,
+  FilterButton,
+  FilterSelect,
+  FilterTabs,
+  SortDropdown,
+  ViewToggle,
+  ActiveFilterPills,
+  FiltersPopover,
+  Filters,
+  SelectDatesButton,
+  DateRangePicker,
+  DateRangePopover,
+  FilterLinesIcon,
+  DateAndFiltersBar
+} from './FilterCompoents'
 
 // Helper to safely render icons
 const renderIcon = (Icon, props = {}) => {
@@ -58,7 +78,7 @@ export const BadgeWithIcon = ({
       // borderColor: 'rgba(34, 197, 94, 0.25)',
     },
     gray: {
-      background: 'var(--color-bg)',
+      background: '#ced4da',
       color: 'var(--color-muted)',
       borderColor: 'var(--color-border)',
     },
@@ -78,7 +98,7 @@ export const BadgeWithIcon = ({
       borderColor: 'rgba(191, 64, 64, 0.25)',
     },
   }[color] || {
-    background: 'var(--color-bg)',
+    background: '#ced4da',
     color: 'var(--color-text)',
     borderColor: 'var(--color-border)',
   }
@@ -160,12 +180,37 @@ export const Button = ({
     </button>
   )
 }
+// ── Filter Bar Components (from ./FilterCompoents) ─────────────────────────
+export {
+  FilterBar,
+  FilterSearchInput,
+  CreateButton,
+  AddButton,
+  NewButton,
+  FilterButton,
+  FilterSelect,
+  FilterTabs,
+  SortDropdown,
+  ViewToggle,
+  ActiveFilterPills,
+  FiltersPopover,
+  Filters,
+  SelectDatesButton,
+  DateRangePicker,
+  DateRangePopover,
+  FilterLinesIcon,
+  DateAndFiltersBar,
+  TableActionButtons,
+  EditButton,
+  DeleteButton,
+  ViewButton
+}
 
 // ── Base Table & TableCard Components ──────────────────────────────────────
 export const TableCard = {
   Root: ({ children, className = '', ...props }) => (
     <div
-      className={`w-full rounded-[8px] border shadow-xs overflow-hidden flex flex-col ${className}`}
+      className={`w-full rounded-[8px] border shadow-xl/20 overflow-hidden flex flex-col ${className}`}
       style={{
         background: 'var(--color-card)',
         borderColor: 'var(--color-border)',
@@ -175,6 +220,82 @@ export const TableCard = {
       {children}
     </div>
   ),
+
+  Header: ({ title, description, badge, actions, children, className = '', ...props }) => (
+    <div
+      className={`p-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${className}`}
+      style={{ borderColor: 'var(--color-border)' }}
+      {...props}
+    >
+      {children || (
+        <>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-[var(--color-text)]">{title}</h3>
+              {badge}
+            </div>
+            {description && (
+              <p className="text-xs text-[var(--color-muted)] mt-0.5">{description}</p>
+            )}
+          </div>
+          {actions && <div className="flex items-center gap-2">{actions}</div>}
+        </>
+      )}
+    </div>
+  ),
+
+  FilterBar: ({
+    children,
+    hasCreate = false,
+    onCreate,
+    createLabel = 'Create',
+    createIcon,
+    createButtonProps = {},
+    actions,
+    className = '',
+    ...props
+  }) => {
+    const showCreate = Boolean(hasCreate || onCreate)
+
+    return (
+      <div
+        className={`p-3.5 border-b bg-[var(--color-surface,#f8fafc)]/50 ${className}`}
+        style={{ borderColor: 'var(--color-border)' }}
+        {...props}
+      >
+        {showCreate || actions ? (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2.5 flex-wrap flex-1 min-w-0">
+              {children}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {actions}
+              {showCreate && (
+                <CreateButton
+                  label={createLabel}
+                  onClick={onCreate}
+                  icon={createIcon}
+                  {...createButtonProps}
+                />
+              )}
+            </div>
+          </div>
+        ) : (
+          children
+        )}
+      </div>
+    )
+  },
+
+  CreateButton: CreateButton,
+  AddButton: CreateButton,
+  NewButton: CreateButton,
+  SearchInput: FilterSearchInput,
+  FilterSelect: FilterSelect,
+  FilterButton: FilterButton,
+  FilterTabs: FilterTabs,
+  SortDropdown: SortDropdown,
+  ActiveFilterPills: ActiveFilterPills,
 }
 
 export const Table = Object.assign(
@@ -204,6 +325,10 @@ export const Table = Object.assign(
       const isSorted = sortDescriptor?.column === id
       const isAsc = isSorted && sortDescriptor?.direction === 'ascending'
 
+      const isRight = className.includes('text-right')
+      const isCenter = className.includes('text-center')
+      const justifyClass = isRight ? 'justify-end' : isCenter ? 'justify-center' : 'justify-start'
+
       return (
         <th
           scope={isRowHeader ? 'row' : 'col'}
@@ -217,7 +342,7 @@ export const Table = Object.assign(
           } ${className}`}
           {...props}
         >
-          <div className="flex items-center gap-1.5">
+          <div className={`flex items-center gap-1.5 w-full ${justifyClass}`}>
             <span>{label || children}</span>
             {allowsSorting && isSorted && (
               <span className="shrink-0 text-[var(--color-500,#BF4040)]">

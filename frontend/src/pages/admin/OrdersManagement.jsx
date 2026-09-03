@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import AdminLayout from '../../components/layout/AdminLayout'
 import { adminApi } from '../../api/adminApi'
 import { posApi } from '../../api/posApi'
@@ -10,7 +10,11 @@ import {
   BadgeWithIcon,
   Button as TableButton,
   PaginationPageMinimalCenter,
-  Avatar
+  Avatar,
+  FilterBar,
+  FilterSearchInput,
+  FiltersPopover,
+  SelectDatesButton
 } from '../../components/TablesComponents'
 import {
   Receipt,
@@ -54,28 +58,23 @@ import { DualOrdersStatusTabs, OrderStatusTabs, PaymentStatusTabs } from './tabs
 export default function OrdersManagement() {
   const { subscribe } = useWebSocket('cashier')
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
   const [orders, setOrders] = useState([])
   const [outlets, setOutlets] = useState([])
   const [outletFilter, setOutletFilter] = useState('all')
   const [loading, setLoading] = useState(false)
   const [updatingId, setUpdatingId] = useState(null)
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') || 'all')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [paymentFilter, setPaymentFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
+  const [advancedFilters, setAdvancedFilters] = useState([])
+  const [dateRange, setDateRange] = useState({ start: null, end: null, label: 'Select dates' })
   const [page, setPage] = useState(1)
   const pageSize = 10
 
   useEffect(() => {
     client.get('/outlets').then((res) => setOutlets(res.data?.data || [])).catch(() => {})
   }, [])
-
-  useEffect(() => {
-    const q = searchParams.get('status') || 'all'
-    setStatusFilter(q)
-    setPage(1)
-  }, [searchParams])
 
   const [sortDescriptor, setSortDescriptor] = useState({
     column: 'created_at',
@@ -229,9 +228,56 @@ export default function OrdersManagement() {
 
       const matchType = typeFilter === 'all' ? true : o.order_type === typeFilter
       const matchOutlet = outletFilter === 'all' ? true : String(o.outlet_id) === String(outletFilter)
-      return matchSearch && matchStatus && matchPayment && matchType && matchOutlet
+
+      // Advanced Filters from FiltersPopover
+      const matchAdvanced = advancedFilters.length === 0 || advancedFilters.every((c) => {
+        if (!c.field || !c.value) return true
+        const val = String(c.value).toLowerCase().trim()
+        let targetVal = ''
+
+        if (c.field === 'order_number') {
+          targetVal = String(o.order_number || o.id || '').toLowerCase()
+        } else if (c.field === 'status') {
+          targetVal = String(o.status || '').toLowerCase()
+        } else if (c.field === 'type') {
+          targetVal = String(o.order_type || '').toLowerCase()
+        } else if (c.field === 'payment') {
+          targetVal = String(o.payment_status || (s === 'completed' || s === 'paid' ? 'paid' : 'unpaid')).toLowerCase()
+        } else if (c.field === 'table_number') {
+          targetVal = String(o.table_session?.table?.table_number || o.table_session?.table_id || '').toLowerCase()
+        } else if (c.field === 'total_amount') {
+          const numTarget = Number(o.total_amount || 0)
+          const numVal = Number(c.value || 0)
+          if (c.operator === 'greater_than') return numTarget > numVal
+          if (c.operator === 'less_than') return numTarget < numVal
+          if (c.operator === 'equals') return numTarget === numVal
+          if (c.operator === 'not_equals') return numTarget !== numVal
+          return true
+        } else if (c.field === 'customer') {
+          targetVal = String(o.customer_name || o.customer?.name || '').toLowerCase()
+        } else {
+          targetVal = String(o[c.field] || '').toLowerCase()
+        }
+
+        if (c.operator === 'equals') return targetVal === val
+        if (c.operator === 'contains') return targetVal.includes(val)
+        if (c.operator === 'not_equals') return targetVal !== val
+        if (c.operator === 'starts_with') return targetVal.startsWith(val)
+        return true
+      })
+
+      // Date Range Filter
+      const matchDate = !dateRange.start ? true : (() => {
+        const orderTime = new Date(o.created_at || 0).getTime()
+        const startTime = new Date(dateRange.start.getFullYear(), dateRange.start.getMonth(), dateRange.start.getDate(), 0, 0, 0).getTime()
+        const endBase = dateRange.end || dateRange.start
+        const endTime = new Date(endBase.getFullYear(), endBase.getMonth(), endBase.getDate(), 23, 59, 59).getTime()
+        return orderTime >= startTime && orderTime <= endTime
+      })()
+
+      return matchSearch && matchStatus && matchPayment && matchType && matchOutlet && matchAdvanced && matchDate
     })
-  }, [orders, search, statusFilter, paymentFilter, typeFilter, outletFilter])
+  }, [orders, search, statusFilter, paymentFilter, typeFilter, outletFilter, advancedFilters, dateRange])
 
   // Sorted list
   const sortedOrders = useMemo(() => {
@@ -326,20 +372,28 @@ export default function OrdersManagement() {
     }
   }
 
-  const hasActiveFilters = statusFilter !== 'all' || paymentFilter !== 'all' || typeFilter !== 'all' || search !== ''
+  const hasActiveFilters =
+    statusFilter !== 'all' ||
+    paymentFilter !== 'all' ||
+    typeFilter !== 'all' ||
+    search !== '' ||
+    advancedFilters.length > 0 ||
+    Boolean(dateRange.start)
 
   const handleResetFilters = () => {
     setStatusFilter('all')
     setPaymentFilter('all')
     setTypeFilter('all')
     setSearch('')
+    setAdvancedFilters([])
+    setDateRange({ start: null, end: null, label: 'Select dates' })
     setPage(1)
   }
 
   return (
     <AdminLayout>
       <div className="space-y-5 max-w-7xl mx-auto font-sans">
-        {/* ── Title & Actions ── */}
+        {/* ── Title & Actions (with Select dates & Filters popover) ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-base sm:text-lg font-semibold tracking-tight" style={{ color: 'var(--color-text)' }}>
@@ -348,6 +402,71 @@ export default function OrdersManagement() {
             <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>
               Live order tracking, kitchen tickets &amp; payment receipts
             </p>
+          </div>
+
+          {/* Untitled UI Action Buttons: [📅 Select dates] [🟰 Filters ⌵] */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <SelectDatesButton
+              startDate={dateRange.start}
+              endDate={dateRange.end}
+              value={dateRange.label !== 'Select dates' ? dateRange.label : undefined}
+              onApply={({ startDate, endDate, label }) => {
+                setDateRange({ start: startDate, end: endDate, label })
+                setPage(1)
+                toast.success(`Date filter: ${label}`)
+              }}
+            />
+
+            <FiltersPopover
+              fields={[
+                { value: 'order_number', label: 'Order Number' },
+                {
+                  value: 'status',
+                  label: 'Status',
+                  options: [
+                    { value: 'pending', label: 'Pending' },
+                    { value: 'preparing', label: 'Preparing' },
+                    { value: 'ready', label: 'Ready' },
+                    { value: 'completed', label: 'Completed' },
+                    { value: 'paid', label: 'Paid' },
+                    { value: 'unpaid', label: 'Unpaid' },
+                    { value: 'cancelled', label: 'Cancelled' },
+                  ],
+                },
+                {
+                  value: 'type',
+                  label: 'Order Type',
+                  options: [
+                    { value: 'dine_in', label: 'Dine In' },
+                    { value: 'takeaway', label: 'Takeaway' },
+                    { value: 'delivery', label: 'Delivery' },
+                    { value: 'qr_scan', label: 'Customer QR' },
+                  ],
+                },
+                {
+                  value: 'payment',
+                  label: 'Payment',
+                  options: [
+                    { value: 'paid', label: 'Paid' },
+                    { value: 'unpaid', label: 'Unpaid' },
+                    { value: 'partially_paid', label: 'Partially Paid' },
+                  ],
+                },
+                { value: 'table_number', label: 'Table Number' },
+                { value: 'total_amount', label: 'Total Amount' },
+              ]}
+              initialFilters={advancedFilters}
+              onApply={(rules) => {
+                setAdvancedFilters(rules)
+                setPage(1)
+                toast.success(`Applied ${rules.length} filter${rules.length === 1 ? '' : 's'}`)
+              }}
+              onClear={() => {
+                setAdvancedFilters([])
+                setPage(1)
+                toast('Cleared filters')
+              }}
+            />
           </div>
         </div>
 
@@ -476,19 +595,6 @@ export default function OrdersManagement() {
                   onClick={() => {
                     setStatusFilter(tab.id)
                     setPage(1)
-                    if (tab.id === 'all') {
-                      setSearchParams((prev) => {
-                        const next = new URLSearchParams(prev)
-                        next.delete('status')
-                        return next
-                      })
-                    } else {
-                      setSearchParams((prev) => {
-                        const next = new URLSearchParams(prev)
-                        next.set('status', tab.id)
-                        return next
-                      })
-                    }
                   }}
                   className={`inline-flex items-center gap-2.5 h-10 px-3.5 rounded-xl text-sm transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                     isActive
@@ -529,6 +635,24 @@ export default function OrdersManagement() {
 
         {/* ── TableCard Component Integration ── */}
         <TableCard.Root>
+          <TableCard.FilterBar>
+            <FilterBar>
+              {/* Search Input */}
+              <div className="w-full sm:max-w-md">
+                <FilterSearchInput
+                  value={search}
+                  onChange={(val) => {
+                    setSearch(val)
+                    setPage(1)
+                  }}
+                  placeholder="Search order #, table, items..."
+                  shortcut="⌘K"
+                  className="w-full"
+                />
+              </div>
+            </FilterBar>
+          </TableCard.FilterBar>
+
           <Table aria-label="Orders Management Table" sortDescriptor={sortDescriptor}>
             <Table.Header>
               <Table.Head

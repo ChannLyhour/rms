@@ -3,9 +3,19 @@ import AdminLayout from '../../components/layout/AdminLayout'
 import MenuitemCreateView from './products/ProductsitemCreateView'
 import { adminApi } from '../../api/adminApi'
 import axiosClient from '../../api/axiosClient'
-import { Table, TableCard, BadgeWithIcon, Button, PaginationPageMinimalCenter } from '../../components/TablesComponents'
-import { CreateButton } from '../../components/common/ButtonComponent'
-import { Check, X, SearchLg, Plus, Edit01, Trash01 } from '@untitledui/icons'
+import {
+  Table,
+  TableCard,
+  BadgeWithIcon,
+  Button,
+  PaginationPageMinimalCenter,
+  FilterBar,
+  FilterSearchInput,
+  FiltersPopover,
+  CreateButton,
+  TableActionButtons
+} from '../../components/TablesComponents'
+import { Check, X, SearchLg, Plus } from '@untitledui/icons'
 import { Package, Tag, EyeOff, Building2, Coffee, Wine, ShoppingCart, Utensils } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -15,6 +25,7 @@ export default function Products() {
   const [outlets, setOutlets] = useState([])
   const [outletFilter, setOutletFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [advancedFilters, setAdvancedFilters] = useState([])
   const [activeView, setActiveView] = useState('list') // 'list' | 'create' | 'edit'
   const [selectedProduct, setSelectedProduct] = useState(null)
 
@@ -57,7 +68,49 @@ export default function Products() {
         (p.barcode && p.barcode.toLowerCase().includes(search.toLowerCase()))
 
       const matchOutlet = outletFilter === 'all' || String(p.outlet_id) === String(outletFilter)
-      return matchSearch && matchOutlet
+
+      // Advanced filters from FiltersPopover
+      const matchAdvanced = advancedFilters.length === 0 || advancedFilters.every((c) => {
+        if (!c.field || !c.value) return true
+        const val = String(c.value).toLowerCase().trim()
+        let targetVal = ''
+
+        if (c.field === 'name') {
+          targetVal = String(p.name || '').toLowerCase()
+        } else if (c.field === 'category') {
+          targetVal = String(p.category?.name || '').toLowerCase()
+        } else if (c.field === 'barcode') {
+          targetVal = String(p.barcode || '').toLowerCase()
+        } else if (c.field === 'is_available') {
+          targetVal = p.is_available ? 'available' : 'hidden'
+        } else if (c.field === 'price') {
+          const numTarget = Number(p.price || 0)
+          const numVal = Number(c.value || 0)
+          if (c.operator === 'greater_than') return numTarget > numVal
+          if (c.operator === 'less_than') return numTarget < numVal
+          if (c.operator === 'equals') return numTarget === numVal
+          if (c.operator === 'not_equals') return numTarget !== numVal
+          return true
+        } else if (c.field === 'stock_quantity') {
+          const numTarget = Number(p.stock_quantity || 0)
+          const numVal = Number(c.value || 0)
+          if (c.operator === 'greater_than') return numTarget > numVal
+          if (c.operator === 'less_than') return numTarget < numVal
+          if (c.operator === 'equals') return numTarget === numVal
+          if (c.operator === 'not_equals') return numTarget !== numVal
+          return true
+        } else {
+          targetVal = String(p[c.field] || '').toLowerCase()
+        }
+
+        if (c.operator === 'equals') return targetVal === val
+        if (c.operator === 'contains') return targetVal.includes(val)
+        if (c.operator === 'not_equals') return targetVal !== val
+        if (c.operator === 'starts_with') return targetVal.startsWith(val)
+        return true
+      })
+
+      return matchSearch && matchOutlet && matchAdvanced
     })
 
     return list.sort((a, b) => {
@@ -88,10 +141,10 @@ export default function Products() {
     })
   }, [products, search, outletFilter, sortDescriptor])
 
-  // Reset page on search or outlet filter
+  // Reset page on search or filter change
   useEffect(() => {
     setCurrentPage(1)
-  }, [search, outletFilter])
+  }, [search, outletFilter, advancedFilters])
 
   const totalPages = Math.ceil(sortedAndFiltered.length / itemsPerPage) || 1
   const paginatedItems = sortedAndFiltered.slice(
@@ -177,12 +230,10 @@ export default function Products() {
                 >
                   Product Catalog
                 </h1>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>
+                  Manage menu items, prices, inventory &amp; modifiers across venues
+                </p>
               </div>
-
-              <CreateButton
-                label="Add New Product"
-                onClick={handleOpenCreate}
-              />
             </div>
 
             {/* Multi-Venue Tabs */}
@@ -284,34 +335,60 @@ export default function Products() {
               </div>
             </div>
 
-            {/* Search Bar */}
-            <div
-              className="flex items-center gap-3 px-3.5 py-2 rounded-[5px] border text-xs max-w-md shadow-xs"
-              style={{
-                background: 'var(--color-card)',
-                borderColor: 'var(--color-border)',
-              }}
-            >
-              <SearchLg size={16} className="text-[var(--color-muted)] shrink-0 stroke-[2px]" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search products by title, category, or barcode..."
-                className="bg-transparent border-none outline-none w-full text-xs placeholder:text-[var(--color-muted)] text-[var(--color-text)]"
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch('')}
-                  className="text-[11px] font-medium transition-colors hover:text-red-500 text-[var(--color-muted)]"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-
             {/* Untitled UI / React Aria TableCard */}
             <TableCard.Root>
+              <TableCard.FilterBar
+                hasCreate
+                onCreate={handleOpenCreate}
+                // createLabel="Add New Product"
+              >
+                <div className="flex items-center gap-2.5 flex-1 max-w-xl">
+                  <FilterSearchInput
+                    value={search}
+                    onChange={(val) => {
+                      setSearch(val)
+                      setCurrentPage(1)
+                    }}
+                    placeholder="Search products by title, category, or barcode..."
+                    shortcut="⌘K"
+                    className="w-full"
+                  />
+
+                  <FiltersPopover
+                    fields={[
+                      { value: 'name', label: 'Product Name' },
+                      {
+                        value: 'category',
+                        label: 'Category',
+                        options: categories.map((c) => ({ value: c.name, label: c.name })),
+                      },
+                      {
+                        value: 'is_available',
+                        label: 'Availability',
+                        options: [
+                          { value: 'available', label: 'Available' },
+                          { value: 'hidden', label: 'Hidden' },
+                        ],
+                      },
+                      { value: 'price', label: 'Price ($)' },
+                      { value: 'stock_quantity', label: 'Stock Quantity' },
+                      { value: 'barcode', label: 'Barcode' },
+                    ]}
+                    initialFilters={advancedFilters}
+                    onApply={(rules) => {
+                      setAdvancedFilters(rules)
+                      setCurrentPage(1)
+                      toast.success(`Applied ${rules.length} filter${rules.length === 1 ? '' : 's'}`)
+                    }}
+                    onClear={() => {
+                      setAdvancedFilters([])
+                      setCurrentPage(1)
+                      toast('Cleared filters')
+                    }}
+                  />
+                </div>
+              </TableCard.FilterBar>
+
               <Table aria-label="Products Catalog" sortDescriptor={sortDescriptor}>
                 <Table.Header>
                   <Table.Head
@@ -488,24 +565,12 @@ export default function Products() {
 
                         {/* Actions */}
                         <Table.Cell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEdit(p)}
-                              className="p-1.5 rounded-[5px] text-slate-400 hover:text-[#126973] hover:bg-[#126973]/10 dark:hover:text-[#F1D8C2] transition-all cursor-pointer"
-                              title="Edit Product"
-                            >
-                              <Edit01 size={15} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(p.id)}
-                              className="p-1.5 rounded-[5px] text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all cursor-pointer"
-                              title="Delete Product"
-                            >
-                              <Trash01 size={15} />
-                            </button>
-                          </div>
+                          <TableActionButtons
+                            onEdit={() => handleOpenEdit(p)}
+                            onDelete={() => handleDelete(p.id)}
+                            showView={false}
+                            confirmDelete={`Are you sure you want to delete "${p.name}"?`}
+                          />
                         </Table.Cell>
                       </Table.Row>
                     )
