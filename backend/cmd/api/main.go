@@ -293,6 +293,12 @@ func registerAPIRoutes(
 		inventoryGroup.PUT("/suppliers/:id", inventoryHdl.UpdateSupplier)
 		inventoryGroup.DELETE("/suppliers/:id", inventoryHdl.DeleteSupplier)
 
+		inventoryGroup.GET("/ingredient-categories", inventoryHdl.ListIngredientCategories)
+		inventoryGroup.GET("/ingredient-categories/:id", inventoryHdl.GetIngredientCategory)
+		inventoryGroup.POST("/ingredient-categories", inventoryHdl.CreateIngredientCategory)
+		inventoryGroup.PUT("/ingredient-categories/:id", inventoryHdl.UpdateIngredientCategory)
+		inventoryGroup.DELETE("/ingredient-categories/:id", inventoryHdl.DeleteIngredientCategory)
+
 		inventoryGroup.GET("/ingredients", inventoryHdl.ListIngredients)
 		inventoryGroup.GET("/ingredients/:id", inventoryHdl.GetIngredient)
 		inventoryGroup.POST("/ingredients", inventoryHdl.CreateIngredient)

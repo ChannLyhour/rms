@@ -36,9 +36,10 @@ const UNIT_OPTIONS = [
   { id: 'box', value: 'box', label: 'Carton / Box', name: 'Carton / Box', badge: 'BULK' },
 ]
 
-export default function IngredientCreateView({ ingredient, onClose, onSave }) {
+export default function IngredientCreateView({ ingredient, categories = [], onClose, onSave }) {
   const [formData, setFormData] = useState({
     id: '',
+    category_id: '',
     name: '',
     unit: 'kg',
     stock_quantity: '',
@@ -50,6 +51,17 @@ export default function IngredientCreateView({ ingredient, onClose, onSave }) {
     is_active: true,
   })
 
+  const categoryOptions = useMemo(() => [
+    { id: '', value: '', label: 'None (Uncategorized)', name: 'None (Uncategorized)' },
+    ...categories.map((c) => ({
+      id: c.id,
+      value: c.id,
+      label: c.name + (c.code ? ` (${c.code})` : ''),
+      name: c.name + (c.code ? ` (${c.code})` : ''),
+      badge: c.code || undefined,
+    })),
+  ], [categories])
+
   const parentRef = useRef(null)
   const [saving, setSaving] = useState(false)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
@@ -58,6 +70,7 @@ export default function IngredientCreateView({ ingredient, onClose, onSave }) {
     if (ingredient) {
       setFormData({
         id: ingredient.id || '',
+        category_id: ingredient.category_id || '',
         name: ingredient.name || '',
         unit: ingredient.unit || 'kg',
         stock_quantity: String(ingredient.stock_quantity ?? '0'),
@@ -71,6 +84,7 @@ export default function IngredientCreateView({ ingredient, onClose, onSave }) {
     } else {
       setFormData({
         id: '',
+        category_id: '',
         name: '',
         unit: 'kg',
         stock_quantity: '',
@@ -119,6 +133,7 @@ export default function IngredientCreateView({ ingredient, onClose, onSave }) {
     }
 
     const payload = {
+      category_id: formData.category_id || null,
       name: formData.name.trim(),
       unit: formData.unit,
       stock_quantity: parseFloat(formData.stock_quantity) || 0,
@@ -373,6 +388,23 @@ export default function IngredientCreateView({ ingredient, onClose, onSave }) {
 
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
+                        Category (Raw Material)
+                      </label>
+                      <SearchSelection
+                        name="category_id"
+                        options={categoryOptions}
+                        valueKey="value"
+                        labelKey="name"
+                        value={formData.category_id}
+                        autoSelect={false}
+                        onChange={(val) => setField('category_id', val)}
+                        placeholder="Select Category..."
+                        searchPlaceholder="Search categories..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
                         Measurement Unit *
                       </label>
                       <SearchSelection
@@ -388,7 +420,7 @@ export default function IngredientCreateView({ ingredient, onClose, onSave }) {
                       />
                     </div>
 
-                    <div>
+                    <div className="sm:col-span-2">
                       <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
                         SKU / Item Code (Optional)
                       </label>

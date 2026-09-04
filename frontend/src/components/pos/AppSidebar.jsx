@@ -175,6 +175,7 @@ export default function AppSidebar() {
       permissions: ['stock.manage', 'ingredients.manage', 'po.manage', 'suppliers.manage'],
       items: [
         { label: 'Raw Ingredients', to: '/inventory', roles: ['admin', 'manager', 'kitchen'], permissions: ['stock.manage'] },
+        { label: 'Material Categories', to: '/inventory/categories', roles: ['admin', 'manager', 'kitchen'], permissions: ['stock.manage', 'ingredients.manage'] },
         { label: 'Recipe Formulas', to: '/recipes', roles: ['admin', 'manager', 'kitchen'], permissions: ['ingredients.manage'] },
         { label: 'Suppliers & POs', to: '/purchases', roles: ['admin', 'manager'], permissions: ['po.manage'] },
         { label: 'Stock Movements', to: '/stock-logs', roles: ['admin', 'manager', 'kitchen'], permissions: ['stock.manage'] },

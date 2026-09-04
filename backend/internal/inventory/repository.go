@@ -58,16 +58,19 @@ func (r *Repository) DeleteSupplier(id uuid.UUID) error {
 
 // ── Ingredients CRUD ─────────────────────────────────────────────
 
-func (r *Repository) ListIngredients(search string, lowStock bool, p pagination.Params) ([]Ingredient, int64, error) {
+func (r *Repository) ListIngredients(search string, lowStock bool, categoryID *uuid.UUID, p pagination.Params) ([]Ingredient, int64, error) {
 	var list []Ingredient
 	var total int64
 
-	q := r.db.Model(&Ingredient{})
+	q := r.db.Model(&Ingredient{}).Preload("Category")
 	if search != "" {
 		q = q.Where("name ILIKE ?", "%"+search+"%")
 	}
 	if lowStock {
 		q = q.Where("stock_quantity <= low_stock_threshold")
+	}
+	if categoryID != nil && *categoryID != uuid.Nil {
+		q = q.Where("category_id = ?", *categoryID)
 	}
 
 	if err := q.Count(&total).Error; err != nil {
@@ -80,7 +83,7 @@ func (r *Repository) ListIngredients(search string, lowStock bool, p pagination.
 
 func (r *Repository) GetIngredientByID(id uuid.UUID) (*Ingredient, error) {
 	var ing Ingredient
-	if err := r.db.First(&ing, id).Error; err != nil {
+	if err := r.db.Preload("Category").First(&ing, id).Error; err != nil {
 		return nil, err
 	}
 	return &ing, nil
@@ -114,7 +117,18 @@ func (r *Repository) UpdateIngredient(id uuid.UUID, ing *Ingredient) error {
 	}
 
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&Ingredient{}).Where("id = ?", id).Updates(ing).Error; err != nil {
+		updates := map[string]interface{}{
+			"category_id":         ing.CategoryID,
+			"name":                ing.Name,
+			"unit":                ing.Unit,
+			"stock_quantity":      ing.StockQuantity,
+			"low_stock_threshold": ing.LowStockThreshold,
+			"cost_per_unit":       ing.CostPerUnit,
+			"image_url":           ing.ImageURL,
+			"is_active":           ing.IsActive,
+			"updated_at":          time.Now(),
+		}
+		if err := tx.Model(&Ingredient{}).Where("id = ?", id).Updates(updates).Error; err != nil {
 			return err
 		}
 
@@ -137,6 +151,45 @@ func (r *Repository) UpdateIngredient(id uuid.UUID, ing *Ingredient) error {
 
 func (r *Repository) DeleteIngredient(id uuid.UUID) error {
 	return r.db.Delete(&Ingredient{}, id).Error
+}
+
+// ── Ingredient Categories CRUD ───────────────────────────────────
+
+func (r *Repository) ListIngredientCategories(search string) ([]IngredientCategory, error) {
+	var list []IngredientCategory
+	q := r.db.Model(&IngredientCategory{})
+	if search != "" {
+		q = q.Where("name ILIKE ? OR code ILIKE ?", "%"+search+"%", "%"+search+"%")
+	}
+	err := q.Order("sort_order ASC, name ASC").Find(&list).Error
+	return list, err
+}
+
+func (r *Repository) GetIngredientCategoryByID(id uuid.UUID) (*IngredientCategory, error) {
+	var cat IngredientCategory
+	if err := r.db.First(&cat, id).Error; err != nil {
+		return nil, err
+	}
+	return &cat, nil
+}
+
+func (r *Repository) CreateIngredientCategory(cat *IngredientCategory) error {
+	return r.db.Create(cat).Error
+}
+
+func (r *Repository) UpdateIngredientCategory(id uuid.UUID, cat *IngredientCategory) error {
+	return r.db.Model(&IngredientCategory{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"name":        cat.Name,
+		"code":        cat.Code,
+		"description": cat.Description,
+		"sort_order":  cat.SortOrder,
+		"is_active":   cat.IsActive,
+		"updated_at":  time.Now(),
+	}).Error
+}
+
+func (r *Repository) DeleteIngredientCategory(id uuid.UUID) error {
+	return r.db.Delete(&IngredientCategory{}, id).Error
 }
 
 // ── Recipes CRUD ─────────────────────────────────────────────────

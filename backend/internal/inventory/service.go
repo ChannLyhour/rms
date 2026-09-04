@@ -35,10 +35,32 @@ func (s *Service) DeleteSupplier(id uuid.UUID) error {
 	return s.repo.DeleteSupplier(id)
 }
 
+// ── Ingredient Categories ────────────────────────────────────────
+
+func (s *Service) ListIngredientCategories(search string) ([]IngredientCategory, error) {
+	return s.repo.ListIngredientCategories(search)
+}
+
+func (s *Service) GetIngredientCategory(id uuid.UUID) (*IngredientCategory, error) {
+	return s.repo.GetIngredientCategoryByID(id)
+}
+
+func (s *Service) CreateIngredientCategory(cat *IngredientCategory) error {
+	return s.repo.CreateIngredientCategory(cat)
+}
+
+func (s *Service) UpdateIngredientCategory(id uuid.UUID, cat *IngredientCategory) error {
+	return s.repo.UpdateIngredientCategory(id, cat)
+}
+
+func (s *Service) DeleteIngredientCategory(id uuid.UUID) error {
+	return s.repo.DeleteIngredientCategory(id)
+}
+
 // ── Ingredients ──────────────────────────────────────────────────
 
-func (s *Service) ListIngredients(search string, lowStock bool, p pagination.Params) ([]Ingredient, int64, error) {
-	return s.repo.ListIngredients(search, lowStock, p)
+func (s *Service) ListIngredients(search string, lowStock bool, categoryID *uuid.UUID, p pagination.Params) ([]Ingredient, int64, error) {
+	return s.repo.ListIngredients(search, lowStock, categoryID, p)
 }
 
 func (s *Service) GetIngredient(id uuid.UUID) (*Ingredient, error) {

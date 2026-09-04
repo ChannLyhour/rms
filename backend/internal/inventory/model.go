@@ -24,19 +24,38 @@ func (Supplier) TableName() string {
 	return "suppliers"
 }
 
+// IngredientCategory represents a master classification for raw materials
+type IngredientCategory struct {
+	ID          uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
+	Name        string         `gorm:"size:100;not null" json:"name"`
+	Code        string         `gorm:"size:50;not null;unique" json:"code"`
+	Description *string        `gorm:"type:text" json:"description"`
+	SortOrder   int            `gorm:"default:0" json:"sort_order"`
+	IsActive    bool           `gorm:"default:true" json:"is_active"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	Ingredients []Ingredient   `gorm:"foreignKey:CategoryID" json:"ingredients,omitempty"`
+}
+
+func (IngredientCategory) TableName() string {
+	return "ingredient_categories"
+}
+
 // Ingredient represents raw kitchen stock
 type Ingredient struct {
-	ID                uuid.UUID  `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
-	Name              string     `gorm:"size:255;not null" json:"name"`
-	Unit              string     `gorm:"size:50;not null" json:"unit"` // kg | g | l | ml | pcs
-	StockQuantity     float64    `gorm:"type:numeric(10,3);default:0.000" json:"stock_quantity"`
-	LowStockThreshold float64    `gorm:"type:numeric(10,3);default:5.000" json:"low_stock_threshold"`
-	CostPerUnit       float64    `gorm:"type:numeric(10,2);default:0.00" json:"cost_per_unit"`
-	ImageURL          *string    `gorm:"type:text" json:"image_url"`
-	IsActive          bool       `gorm:"default:true" json:"is_active"`
-	CreatedBy         *uuid.UUID `gorm:"type:uuid" json:"created_by"`
-	CreatedAt         time.Time  `json:"created_at"`
-	UpdatedAt         time.Time  `json:"updated_at"`
+	ID                uuid.UUID           `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
+	CategoryID        *uuid.UUID          `gorm:"type:uuid" json:"category_id"`
+	Name              string              `gorm:"size:255;not null" json:"name"`
+	Unit              string              `gorm:"size:50;not null" json:"unit"` // kg | g | l | ml | pcs
+	StockQuantity     float64             `gorm:"type:numeric(10,3);default:0.000" json:"stock_quantity"`
+	LowStockThreshold float64             `gorm:"type:numeric(10,3);default:5.000" json:"low_stock_threshold"`
+	CostPerUnit       float64             `gorm:"type:numeric(10,2);default:0.00" json:"cost_per_unit"`
+	ImageURL          *string             `gorm:"type:text" json:"image_url"`
+	IsActive          bool                `gorm:"default:true" json:"is_active"`
+	CreatedBy         *uuid.UUID          `gorm:"type:uuid" json:"created_by"`
+	CreatedAt         time.Time           `json:"created_at"`
+	UpdatedAt         time.Time           `json:"updated_at"`
+	Category          *IngredientCategory `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
 }
 
 func (Ingredient) TableName() string {

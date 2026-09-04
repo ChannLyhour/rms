@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import AdminLayout from '../../../components/layout/AdminLayout'
-import CategoriesCreateView from '../../../components/admin/CategoriesCreateView'
+import CategoriesCreateView from './CategoriesCreateView'
+import CategoriesDetails from './CategoriesDetails'
 import { adminApi } from '../../../api/adminApi'
 import axiosClient from '../../../api/axiosClient'
 import { TableCard, BadgeWithIcon, Button } from '../../../components/TablesComponents'
 import { CreateButton } from '../../../components/common/ButtonComponent'
-import { Check, X, SearchLg, Plus, Edit01, Trash01 } from '@untitledui/icons'
+import { Check, X, SearchLg, Plus, Edit01, Trash01, Eye } from '@untitledui/icons'
 import {
   Folder,
   CornerDownRight,
@@ -46,10 +47,11 @@ export default function Categoriesgroup() {
   const [outlets, setOutlets] = useState([])
   const [products, setProducts] = useState([])
   const [outletFilter, setOutletFilter] = useState('all')
-  const [typeFilter, setTypeFilter] = useState('all') // 'all' | 'main' | 'sub'
   const [search, setSearch] = useState('')
-  const [activeView, setActiveView] = useState('list') // 'list' | 'create' | 'edit'
+  const [activeView, setActiveView] = useState('list') // 'list' | 'detail'
   const [selectedCategory, setSelectedCategory] = useState(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalItem, setModalItem] = useState(null)
   const [collapsedVenues, setCollapsedVenues] = useState({})
 
   const getOutletIcon = (type, size = 16, className = '') => {
@@ -62,7 +64,7 @@ export default function Categoriesgroup() {
         return <ShoppingCart size={size} className={className || "text-emerald-600 dark:text-emerald-400 shrink-0"} />
       case 'dine_in':
       default:
-        return <Utensils size={size} className={className || "text-[#126973] dark:text-[#F1D8C2] shrink-0"} />
+        return <Utensils size={size} className={className || "text-[var(--color-500,#BF4040)] shrink-0"} />
     }
   }
 
@@ -116,19 +118,43 @@ export default function Categoriesgroup() {
   const mainCount = outletFilteredList.filter((c) => !c.parent_id).length
   const subCount = outletFilteredList.filter((c) => c.parent_id).length
 
-  // Build Venue Grouped Data
+  // Build Venue Grouped Data (Show only Main Categories)
   const venueGroups = useMemo(() => {
     const q = search.toLowerCase().trim()
 
     // 1. Map physical outlets
     const list = outlets.map((outlet) => {
-      const venueCats = categories.filter((c) => String(c.outlet_id) === String(outlet.id))
+      const allVenueCats = categories.filter((c) => String(c.outlet_id) === String(outlet.id))
+      const mainVenueCats = allVenueCats.filter((c) => !c.parent_id)
 
-      const filteredCats = venueCats.filter((c) => {
-        const isSub = Boolean(c.parent_id)
-        if (typeFilter === 'main' && isSub) return false
-        if (typeFilter === 'sub' && !isSub) return false
+      const filteredCats = mainVenueCats
+        .filter((c) => {
+          if (q) {
+            const matchName = c.name?.toLowerCase().includes(q)
+            const matchDesc = c.description?.toLowerCase().includes(q)
+            const matchSub = (subCategoryMap[c.id] || []).some((sc) => sc.name?.toLowerCase().includes(q))
+            return matchName || matchDesc || matchSub
+          }
+          return true
+        })
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.name || '').localeCompare(b.name || ''))
 
+      return {
+        id: String(outlet.id),
+        venue: outlet,
+        isGlobal: false,
+        categories: filteredCats,
+        totalCategories: allVenueCats.length,
+        mainCategories: mainVenueCats.length,
+        subCategories: allVenueCats.filter((c) => Boolean(c.parent_id)).length,
+      }
+    })
+
+    // 2. Global / Unassigned categories
+    const allGlobalCats = categories.filter((c) => !c.outlet_id || c.outlet_id === 0)
+    const globalMains = allGlobalCats.filter((c) => !c.parent_id)
+    const filteredGlobalCats = globalMains
+      .filter((c) => {
         if (q) {
           const matchName = c.name?.toLowerCase().includes(q)
           const matchDesc = c.description?.toLowerCase().includes(q)
@@ -137,35 +163,9 @@ export default function Categoriesgroup() {
         }
         return true
       })
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.name || '').localeCompare(b.name || ''))
 
-      return {
-        id: String(outlet.id),
-        venue: outlet,
-        isGlobal: false,
-        categories: filteredCats,
-        totalCategories: venueCats.length,
-        mainCategories: venueCats.filter((c) => !c.parent_id).length,
-        subCategories: venueCats.filter((c) => Boolean(c.parent_id)).length,
-      }
-    })
-
-    // 2. Global / Unassigned categories
-    const globalCats = categories.filter((c) => !c.outlet_id || c.outlet_id === 0)
-    const filteredGlobalCats = globalCats.filter((c) => {
-      const isSub = Boolean(c.parent_id)
-      if (typeFilter === 'main' && isSub) return false
-      if (typeFilter === 'sub' && !isSub) return false
-
-      if (q) {
-        const matchName = c.name?.toLowerCase().includes(q)
-        const matchDesc = c.description?.toLowerCase().includes(q)
-        const matchSub = (subCategoryMap[c.id] || []).some((sc) => sc.name?.toLowerCase().includes(q))
-        return matchName || matchDesc || matchSub
-      }
-      return true
-    })
-
-    if (globalCats.length > 0 || outletFilter === 'global') {
+    if (allGlobalCats.length > 0 || outletFilter === 'global') {
       list.push({
         id: 'global',
         venue: {
@@ -177,9 +177,9 @@ export default function Categoriesgroup() {
         },
         isGlobal: true,
         categories: filteredGlobalCats,
-        totalCategories: globalCats.length,
-        mainCategories: globalCats.filter((c) => !c.parent_id).length,
-        subCategories: globalCats.filter((c) => Boolean(c.parent_id)).length,
+        totalCategories: allGlobalCats.length,
+        mainCategories: globalMains.length,
+        subCategories: allGlobalCats.filter((c) => Boolean(c.parent_id)).length,
       })
     }
 
@@ -187,21 +187,26 @@ export default function Categoriesgroup() {
     if (outletFilter === 'all') return list
     if (outletFilter === 'global') return list.filter((g) => g.isGlobal)
     return list.filter((g) => String(g.venue.id) === String(outletFilter))
-  }, [outlets, categories, search, typeFilter, outletFilter, subCategoryMap])
+  }, [outlets, categories, search, outletFilter, subCategoryMap])
 
   // Handlers
   const handleOpenCreate = (outletId = null, parentId = null) => {
-    setSelectedCategory(
+    setModalItem(
       outletId || parentId
         ? { outlet_id: outletId, parent_id: parentId }
         : null
     )
-    setActiveView('create')
+    setModalOpen(true)
   }
 
   const handleOpenEdit = (c) => {
+    setModalItem(c)
+    setModalOpen(true)
+  }
+
+  const handleOpenDetail = (c) => {
     setSelectedCategory(c)
-    setActiveView('edit')
+    setActiveView('detail')
   }
 
   const handleCloseView = () => {
@@ -209,17 +214,22 @@ export default function Categoriesgroup() {
     setActiveView('list')
   }
 
+  const handleCloseModal = () => {
+    setModalOpen(false)
+    setModalItem(null)
+  }
+
   const handleSaveCategory = async (payload) => {
     try {
-      if (activeView === 'create') {
+      if (!modalItem?.id) {
         await adminApi.createCategory(payload)
         toast.success(payload.parent_id ? 'Sub-category created successfully' : 'Category created successfully')
-      } else if (selectedCategory?.id) {
-        await adminApi.updateCategory(selectedCategory.id, payload)
+      } else {
+        await adminApi.updateCategory(modalItem.id, payload)
         toast.success('Category updated successfully')
       }
       loadData()
-      handleCloseView()
+      handleCloseModal()
     } catch (err) {
       toast.error(err.response?.data?.error || 'Save failed')
     }
@@ -273,14 +283,17 @@ export default function Categoriesgroup() {
   return (
     <AdminLayout>
       <div className="space-y-6 max-w-7xl mx-auto">
-        {/* If creating or editing, show full CategoriesCreateView */}
-        {activeView !== 'list' ? (
-          <CategoriesCreateView
-            item={selectedCategory}
+        {/* If viewing details, show CategoriesDetails */}
+        {activeView === 'detail' && selectedCategory ? (
+          <CategoriesDetails
+            category={selectedCategory}
             categories={categories}
-            onClose={handleCloseView}
-            onSave={handleSaveCategory}
-            onQuickCreateSubCategory={loadData}
+            onBack={handleCloseView}
+            onEdit={(cat) => {
+              setModalItem(cat)
+              setModalOpen(true)
+            }}
+            onRefresh={loadData}
           />
         ) : (
           <>
@@ -407,64 +420,30 @@ export default function Categoriesgroup() {
             </div>
 
             {/* Type Filter & Search Bar */}
+            {/* Filter Indicator & Search Bar */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              {/* <div className="relative overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-2">
                 <div
-                  className="flex items-center gap-1 rounded-xl p-1 border"
+                  className="inline-flex items-center gap-2 h-9 px-3.5 rounded-xl border text-xs font-semibold shadow-2xs"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.03)',
+                    background: 'var(--color-card)',
                     borderColor: 'var(--color-border)',
+                    color: 'var(--color-text)',
                   }}
                 >
-                  {[
-                    { id: 'all', label: 'All Categories', icon: Layers, count: outletFilteredList.length },
-                    { id: 'main', label: 'Main Categories', icon: Folder, count: mainCount },
-                    { id: 'sub', label: 'Sub-Categories', icon: CornerDownRight, count: subCount },
-                  ].map((tab) => {
-                    const Icon = tab.icon
-                    const isActive = typeFilter === tab.id
-                    return (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => {
-                          setTypeFilter(tab.id)
-                        }}
-                        className={`inline-flex items-center gap-2 h-9 px-3 rounded-lg text-xs transition-all whitespace-nowrap shrink-0 cursor-pointer ${
-                          isActive
-                            ? 'shadow-xs font-semibold'
-                            : 'hover:bg-black/5 dark:hover:bg-white/5'
-                        }`}
-                        style={
-                          isActive
-                            ? {
-                                background: 'var(--color-surface, #1e2230)',
-                                color: 'var(--color-text, #ffffff)',
-                                border: '1px solid var(--color-border)',
-                              }
-                            : {
-                                color: 'var(--color-muted, #94a3b8)',
-                              }
-                        }
-                      >
-                        <Icon size={14} className="shrink-0 text-[#126973] dark:text-[#F1D8C2]" />
-                        <span>{tab.label}</span>
-                        <span
-                          className="inline-flex items-center justify-center rounded px-1.5 h-4.5 text-[10px] font-semibold"
-                          style={{
-                            background: isActive
-                              ? 'rgba(18, 105, 115, 0.18)'
-                              : 'rgba(255, 255, 255, 0.06)',
-                            color: isActive ? 'var(--color-500, #126973)' : 'var(--color-muted, #94a3b8)',
-                          }}
-                        >
-                          {tab.count}
-                        </span>
-                      </button>
-                    )
-                  })}
+                  <Folder size={14} style={{ color: 'var(--color-500, #BF4040)' }} />
+                  <span>Main Categories</span>
+                  <span
+                    className="inline-flex items-center justify-center rounded px-1.5 h-4.5 text-[10px] font-bold"
+                    style={{
+                      background: 'rgba(191, 64, 64, 0.12)',
+                      color: 'var(--color-500, #BF4040)',
+                    }}
+                  >
+                    {mainCount}
+                  </span>
                 </div>
-              </div> */}
+              </div>
 
               {/* Search Bar */}
               <div
@@ -547,7 +526,8 @@ export default function Categoriesgroup() {
                               </h2>
                             </div>
                             <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
-                              {group.totalCategories} Categories · {group.mainCategories} Main · {group.subCategories} Sub
+                              {group.categories.length} {group.categories.length === 1 ? 'Main Category' : 'Main Categories'}
+                              {group.subCategories > 0 && ` · ${group.subCategories} ${group.subCategories === 1 ? 'Sub-category' : 'Sub-categories'}`}
                             </p>
                           </div>
                         </div>
@@ -557,7 +537,10 @@ export default function Categoriesgroup() {
                           <button
                             type="button"
                             onClick={() => handleOpenCreate(venueOutletId)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#126973] hover:bg-[#126973]/90 transition-colors shadow-xs cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white shadow-xs cursor-pointer hover:opacity-95 active:scale-95 transition-all"
+                            style={{
+                              background: 'linear-gradient(135deg, var(--color-500, #BF4040), var(--color-600, #9D3434))',
+                            }}
                           >
                             <Plus size={13} />
                             <span>Add Category</span>
@@ -594,7 +577,7 @@ export default function Categoriesgroup() {
                               <button
                                 type="button"
                                 onClick={() => handleOpenCreate(venueOutletId)}
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-[#126973] dark:text-[#F1D8C2] hover:underline cursor-pointer"
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-500,#BF4040)] hover:underline cursor-pointer"
                               >
                                 <Plus size={12} />
                                 <span>Create Category</span>
@@ -603,8 +586,6 @@ export default function Categoriesgroup() {
                           ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
                               {group.categories.map((cat) => {
-                                const isSub = Boolean(cat.parent_id)
-                                const parentName = cat.parent_id ? categoryMap[cat.parent_id] : null
                                 const subList = subCategoryMap[cat.id] || []
                                 const productCount = productCountMap[cat.id] || 0
                                 const emoji = getCategoryEmoji(cat.name)
@@ -612,23 +593,22 @@ export default function Categoriesgroup() {
                                 return (
                                   <div
                                     key={cat.id}
-                                    className="group rounded-xl border shadow-xs hover:border-[#126973]/50 transition-all duration-150 overflow-hidden flex flex-col justify-between"
+                                    className="group rounded-xl shadow-xs transition-all duration-200 overflow-hidden flex flex-col justify-between hover:shadow-md"
                                     style={{
                                       background: 'var(--color-card)',
-                                      borderColor: 'var(--color-border)'
+                                      borderColor: 'var(--color-border)',
+                                      borderLeftColor: 'var(--color-500, #BF4040)'
                                     }}
                                   >
                                     {/* Card Header & Visual */}
                                     <div className="p-3.5 space-y-3">
                                       <div className="flex items-start justify-between gap-2">
-                                        <div className="flex items-center gap-2.5 min-w-0">
+                                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                           {/* Image / Emoji */}
                                           <div
-                                            className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border flex items-center justify-center text-lg"
-                                            style={{
-                                              background: 'var(--color-bg)',
-                                              borderColor: 'var(--color-border)'
-                                            }}
+                                            onClick={() => handleOpenDetail(cat)}
+                                            className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-[var(--color-border)] bg-[var(--color-bg)] flex items-center justify-center text-lg transition-transform duration-200 group-hover:scale-105 shadow-2xs cursor-pointer"
+                                            title="Click to view details"
                                           >
                                             {cat.image_url ? (
                                               <img
@@ -644,17 +624,21 @@ export default function Categoriesgroup() {
                                             )}
                                           </div>
 
-                                          <div className="min-w-0">
-                                            <h3
-                                              className="text-xs font-bold truncate group-hover:text-[#126973] dark:group-hover:text-[#F1D8C2] transition-colors"
-                                              style={{ color: 'var(--color-text)' }}
-                                            >
-                                              {cat.name}
-                                            </h3>
+                                          <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-1.5">
+                                              <h3
+                                                onClick={() => handleOpenDetail(cat)}
+                                                className="text-xs font-bold truncate transition-colors cursor-pointer hover:underline"
+                                                style={{ color: 'var(--color-text)' }}
+                                                title={`Click to view ${cat.name} details`}
+                                              >
+                                                {cat.name}
+                                              </h3>
+                                            </div>
                                             <div className="flex items-center gap-1.5 text-[10.5px] text-slate-400 mt-0.5">
                                               <span>#{cat.sort_order ?? 0}</span>
                                               <span>·</span>
-                                              <span>{productCount} {productCount === 1 ? 'Dish' : 'Dishes'}</span>
+                                              <span>{productCount} {productCount === 1 ? 'Product' : 'Products'}</span>
                                             </div>
                                           </div>
                                         </div>
@@ -663,7 +647,7 @@ export default function Categoriesgroup() {
                                         <button
                                           type="button"
                                           onClick={() => handleToggleStatus(cat)}
-                                          className="cursor-pointer"
+                                          className="cursor-pointer shrink-0 transition-opacity hover:opacity-80"
                                           title="Toggle status"
                                         >
                                           <BadgeWithIcon
@@ -676,78 +660,66 @@ export default function Categoriesgroup() {
                                         </button>
                                       </div>
 
-                                      {/* Sub-category info or parent name */}
-                                      {isSub ? (
-                                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                                          <CornerDownRight size={11} />
-                                          <span className="truncate">Under: {parentName || `Parent #${cat.parent_id}`}</span>
+                                      {/* Sub-categories indicator */}
+                                      {subList.length > 0 ? (
+                                        <div
+                                          onClick={() => handleOpenDetail(cat)}
+                                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer"
+                                        
+                                          title="Click to view sub-categories"
+                                        >
+                                          <FolderTree size={12} className="shrink-0" />
+                                          <span>{subList.length} {subList.length === 1 ? 'Sub-category' : 'Sub-categories'}</span>
                                         </div>
-                                      ) : subList.length > 0 ? (
-                                        <div className="flex flex-wrap items-center gap-1">
-                                          <span className="text-[10px] text-slate-400 font-medium">
-                                            {subList.length} Sub-categories:
-                                          </span>
-                                          {subList.slice(0, 2).map((s) => (
-                                            <span
-                                              key={s.id}
-                                              className="px-1.5 py-0.2 rounded text-[9.5px] bg-black/5 dark:bg-white/5 text-slate-500 truncate max-w-[80px]"
-                                            >
-                                              {s.name}
-                                            </span>
-                                          ))}
-                                          {subList.length > 2 && (
-                                            <span className="text-[9.5px] text-slate-400">
-                                              +{subList.length - 2}
-                                            </span>
-                                          )}
+                                      ) : (
+                                        <div className="text-[10.5px] text-slate-400 flex items-center gap-1.5 pt-0.5">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700" />
+                                          <span>0 Sub</span>
                                         </div>
-                                      ) : null}
-
-                                      {/* Description */}
-                                      {cat.description && (
-                                        <p className="text-[11px] text-slate-400 dark:text-slate-500 line-clamp-2">
-                                          {cat.description}
-                                        </p>
                                       )}
                                     </div>
 
                                     {/* Card Footer Actions */}
                                     <div
-                                      className="px-3.5 py-2 border-t flex items-center justify-between gap-2"
+                                      className="px-3.5 py-2.5 border-t flex items-center justify-between gap-2"
                                       style={{
-                                        background: 'rgba(255, 255, 255, 0.01)',
+                                        background: 'rgba(255, 255, 255, 0.015)',
                                         borderColor: 'var(--color-border)'
                                       }}
                                     >
-                                      {!isSub ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenCreate(venueOutletId, cat.id)}
+                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] transition-all cursor-pointer active:scale-95"
+                                       
+                                        title="Add a sub-category under this category"
+                                      >
+                                        <Plus size={14} strokeWidth={3} />
+                                        <span>Sub</span>
+                                      </button>
+
+                                      <div className="flex items-center gap-0.5">
                                         <button
                                           type="button"
-                                          onClick={() => handleOpenCreate(venueOutletId, cat.id)}
-                                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-[#126973] dark:hover:text-[#F1D8C2] transition-colors cursor-pointer"
+                                          onClick={() => handleOpenDetail(cat)}
+                                          className="p-1.5 rounded-md text-slate-400 hover:text-[var(--color-500,#BF4040)] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                                          title="View category details"
                                         >
-                                          <Plus size={12} />
-                                          <span>Add Sub</span>
+                                          <Eye size={14} />
                                         </button>
-                                      ) : (
-                                        <span className="text-[10px] text-slate-400">
-                                          Sub-item
-                                        </span>
-                                      )}
-
-                                      <div className="flex items-center gap-1">
                                         <button
                                           type="button"
                                           onClick={() => handleOpenEdit(cat)}
-                                          className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
-                                          title="Edit"
+                                          className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                                          title="Edit category"
                                         >
                                           <Edit01 size={14} />
                                         </button>
                                         <button
                                           type="button"
                                           onClick={() => handleDelete(cat.id)}
-                                          className="p-1 rounded text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                                          title="Delete"
+                                          className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer"
+                                          title="Delete category"
                                         >
                                           <Trash01 size={14} />
                                         </button>
@@ -767,6 +739,16 @@ export default function Categoriesgroup() {
             )}
           </>
         )}
+
+        {/* Modal for Create / Edit Category */}
+        <CategoriesCreateView
+          isOpen={modalOpen}
+          item={modalItem}
+          categories={categories}
+          onClose={handleCloseModal}
+          onSave={handleSaveCategory}
+          onQuickCreateSubCategory={loadData}
+        />
       </div>
     </AdminLayout>
   )

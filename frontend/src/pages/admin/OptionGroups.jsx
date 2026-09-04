@@ -557,6 +557,11 @@ export default function OptionGroups() {
                                     +${Number(v.price).toFixed(2)}
                                   </span>
                                 )}
+                                {!v.is_unlimited && (
+                                  <span className="font-mono text-slate-500 dark:text-slate-400 font-bold ml-1">
+                                    ({v.stock_quantity ?? 0})
+                                  </span>
+                                )}
                               </span>
                             ))}
                             {values.length > 4 && (

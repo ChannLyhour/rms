@@ -88,6 +88,77 @@ func (h *Handler) DeleteSupplier(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "supplier deleted"})
 }
 
+// ── Ingredient Categories Endpoints ──────────────────────────────
+
+func (h *Handler) ListIngredientCategories(c *gin.Context) {
+	search := c.Query("search")
+
+	list, err := h.svc.ListIngredientCategories(search)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": list})
+}
+
+func (h *Handler) GetIngredientCategory(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ingredient category id"})
+		return
+	}
+	item, err := h.svc.GetIngredientCategory(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "ingredient category not found"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": item})
+}
+
+func (h *Handler) CreateIngredientCategory(c *gin.Context) {
+	var req IngredientCategory
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := h.svc.CreateIngredientCategory(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"data": req, "message": "ingredient category created"})
+}
+
+func (h *Handler) UpdateIngredientCategory(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ingredient category id"})
+		return
+	}
+	var req IngredientCategory
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := h.svc.UpdateIngredientCategory(id, &req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "ingredient category updated"})
+}
+
+func (h *Handler) DeleteIngredientCategory(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ingredient category id"})
+		return
+	}
+	if err := h.svc.DeleteIngredientCategory(id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "ingredient category deleted"})
+}
+
 // ── Ingredients Endpoints ────────────────────────────────────────
 
 func (h *Handler) ListIngredients(c *gin.Context) {
@@ -95,7 +166,14 @@ func (h *Handler) ListIngredients(c *gin.Context) {
 	search := c.Query("search")
 	lowStock := c.Query("low_stock") == "true"
 
-	list, total, err := h.svc.ListIngredients(search, lowStock, p)
+	var categoryID *uuid.UUID
+	if catStr := c.Query("category_id"); catStr != "" {
+		if catUUID, err := uuid.Parse(catStr); err == nil {
+			categoryID = &catUUID
+		}
+	}
+
+	list, total, err := h.svc.ListIngredients(search, lowStock, categoryID, p)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

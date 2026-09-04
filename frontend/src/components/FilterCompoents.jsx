@@ -395,9 +395,14 @@ export const FilterTabs = ({
             onClick={() => onChange?.(tab.id)}
             className={`relative flex items-center gap-2 px-3 py-1.5 font-semibold rounded-md transition-all cursor-pointer select-none ${
               isActive
-                ? 'bg-[#126973] text-white shadow-2xs'
+                ? 'text-white shadow-2xs'
                 : 'text-[var(--color-muted,#94a3b8)] hover:text-[var(--color-text,#0f172a)] hover:bg-black/5 dark:hover:bg-white/5'
             }`}
+            style={
+              isActive
+                ? { background: 'linear-gradient(135deg, var(--color-500, #BF4040), var(--color-600, #9D3434))' }
+                : {}
+            }
           >
             {tab.icon && <tab.icon size={13} className="shrink-0 stroke-[2.2px]" />}
             <span>{tab.label}</span>
@@ -544,9 +549,14 @@ export const ViewToggle = ({
         title="List view"
         className={`p-1.5 rounded-md transition-all cursor-pointer ${
           view === 'list'
-            ? 'bg-[#126973] text-white shadow-2xs'
+            ? 'text-white shadow-2xs'
             : 'text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-black/5 dark:hover:bg-white/5'
         }`}
+        style={
+          view === 'list'
+            ? { background: 'linear-gradient(135deg, var(--color-500, #BF4040), var(--color-600, #9D3434))' }
+            : {}
+        }
       >
         <ListIcon size={iconSizes} className="stroke-[2.2px]" />
       </button>
@@ -556,9 +566,14 @@ export const ViewToggle = ({
         title="Grid view"
         className={`p-1.5 rounded-md transition-all cursor-pointer ${
           view === 'grid'
-            ? 'bg-[#126973] text-white shadow-2xs'
+            ? 'text-white shadow-2xs'
             : 'text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-black/5 dark:hover:bg-white/5'
         }`}
+        style={
+          view === 'grid'
+            ? { background: 'linear-gradient(135deg, var(--color-500, #BF4040), var(--color-600, #9D3434))' }
+            : {}
+        }
       >
         <LayoutGrid size={iconSizes} className="stroke-[2.2px]" />
       </button>

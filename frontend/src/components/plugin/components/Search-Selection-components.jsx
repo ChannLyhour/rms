@@ -761,6 +761,10 @@ export function SearchSelection({
                 return (
                   <div
                     key={opt.value}
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      handleSelectOption(opt)
+                    }}
                     onClick={() => handleSelectOption(opt)}
                     onMouseEnter={() => setHighlightedIndex(idx)}
                     className={`flex items-center justify-between px-3 py-2 rounded-[5px] cursor-pointer transition-colors text-xs ${

@@ -28,8 +28,8 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
     type: 'single', // 'single' | 'multiple'
     is_required: false,
     values: [
-      { name: '', price: 0 },
-      { name: '', price: 0 },
+      { name: '', price: 0, stock_quantity: 0, is_unlimited: true },
+      { name: '', price: 0, stock_quantity: 0, is_unlimited: true },
     ],
   })
 
@@ -51,8 +51,13 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
         is_required: Boolean(item.is_required),
         values:
           item.values && item.values.length > 0
-            ? item.values.map((v) => ({ name: v.name, price: v.price || 0 }))
-            : [{ name: '', price: 0 }],
+            ? item.values.map((v) => ({
+                name: v.name,
+                price: v.price || 0,
+                stock_quantity: v.stock_quantity || 0,
+                is_unlimited: v.is_unlimited !== undefined ? Boolean(v.is_unlimited) : true,
+              }))
+            : [{ name: '', price: 0, stock_quantity: 0, is_unlimited: true }],
       })
     } else {
       setFormData({
@@ -61,8 +66,8 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
         type: 'single',
         is_required: false,
         values: [
-          { name: '', price: 0 },
-          { name: '', price: 0 },
+          { name: '', price: 0, stock_quantity: 0, is_unlimited: true },
+          { name: '', price: 0, stock_quantity: 0, is_unlimited: true },
         ],
       })
     }
@@ -108,7 +113,7 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
   const addValueRow = () => {
     setFormData((prev) => ({
       ...prev,
-      values: [...prev.values, { name: '', price: 0 }],
+      values: [...prev.values, { name: '', price: 0, stock_quantity: 0, is_unlimited: true }],
     }))
   }
 
@@ -117,7 +122,14 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
       const next = [...prev.values]
       next[index] = {
         ...next[index],
-        [field]: field === 'price' ? parseFloat(value) || 0 : value,
+        [field]:
+          field === 'price'
+            ? parseFloat(value) || 0
+            : field === 'stock_quantity'
+            ? parseInt(value) || 0
+            : field === 'is_unlimited'
+            ? Boolean(value)
+            : value,
       }
       return { ...prev, values: next }
     })
@@ -139,7 +151,12 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
       ...prev,
       name: prev.name || presetName,
       type: presetType,
-      values: presetValues.map((v) => ({ name: v.name, price: v.price || 0 })),
+      values: presetValues.map((v) => ({
+        name: v.name,
+        price: v.price || 0,
+        stock_quantity: v.stock_quantity || 0,
+        is_unlimited: v.is_unlimited !== undefined ? Boolean(v.is_unlimited) : true,
+      })),
     }))
     toast.success(`Preset "${presetName}" applied`)
   }
@@ -170,6 +187,8 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
       values: validValues.map((v) => ({
         name: v.name.trim(),
         price: parseFloat(v.price) || 0,
+        stock_quantity: v.is_unlimited ? 0 : (parseInt(v.stock_quantity) || 0),
+        is_unlimited: Boolean(v.is_unlimited),
       })),
     }
 
@@ -503,7 +522,7 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
                     {formData.values.map((val, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center gap-2 sm:gap-3 p-2 rounded-[5px] border shadow-2xs"
+                        className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 p-2.5 rounded-[5px] border shadow-2xs"
                         style={{
                           background: 'var(--color-bg)',
                           borderColor: 'var(--color-border)',
@@ -518,8 +537,8 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
                           required
                           value={val.name}
                           onChange={(e) => updateValueRow(idx, 'name', e.target.value)}
-                          placeholder="e.g. Regular, Medium, Large, Extra Cheese"
-                          className="flex-1 px-3 py-2 text-xs rounded-[4px] border outline-none font-medium"
+                          placeholder="e.g. Regular, Extra Cheese, Boba Pearls"
+                          className="flex-1 min-w-[150px] px-3 py-2 text-xs rounded-[4px] border outline-none font-medium"
                           style={{
                             background: 'var(--color-card)',
                             borderColor: 'var(--color-border)',
@@ -527,7 +546,8 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
                           }}
                         />
 
-                        <div className="flex items-center gap-1 shrink-0 w-28 sm:w-32">
+                        {/* Extra Price */}
+                        <div className="flex items-center gap-1 shrink-0 w-24 sm:w-28">
                           <span className="text-xs font-bold text-slate-400">$</span>
                           <input
                             type="number"
@@ -542,7 +562,45 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
                               borderColor: 'var(--color-border)',
                               color: 'var(--color-text)',
                             }}
+                            title="Extra Price"
                           />
+                        </div>
+
+                        {/* Stock Policy Toggle & Qty */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => updateValueRow(idx, 'is_unlimited', !val.is_unlimited)}
+                            className={`px-2 py-1.5 rounded-[4px] border text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1 ${
+                              val.is_unlimited
+                                ? 'bg-slate-100 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-[var(--color-500,#126973)]'
+                                : 'bg-[var(--color-500,#126973)]/10 text-[var(--color-500,#126973)] border-[var(--color-500,#126973)]'
+                            }`}
+                            title={val.is_unlimited ? 'Click to track stock quantity' : 'Click to set unlimited'}
+                          >
+                            <span className="font-mono text-xs leading-none">∞</span>
+                            <span>{val.is_unlimited ? 'Unlimited' : 'Tracked'}</span>
+                          </button>
+
+                          {!val.is_unlimited && (
+                            <div className="flex items-center gap-1 w-20 animate-in fade-in duration-150">
+                              <span className="text-[10px] font-bold text-slate-400">Qty</span>
+                              <input
+                                type="number"
+                                min="0"
+                                value={val.stock_quantity ?? 0}
+                                onChange={(e) => updateValueRow(idx, 'stock_quantity', e.target.value)}
+                                placeholder="0"
+                                className="w-full px-2 py-1.5 text-xs rounded-[4px] border outline-none font-mono text-center font-bold"
+                                style={{
+                                  background: 'var(--color-card)',
+                                  borderColor: 'var(--color-border)',
+                                  color: 'var(--color-text)',
+                                }}
+                                title="Stock Quantity"
+                              />
+                            </div>
+                          )}
                         </div>
 
                         <button
@@ -641,12 +699,19 @@ export default function OptionGroupCreateView({ item, onClose, onSave }) {
                               <span style={{ color: 'var(--color-text)' }}>{val.name}</span>
                             </div>
 
-                            <span
-                              className="font-mono text-[11px] font-bold"
-                              style={{ color: 'var(--color-500, #BF4040)' }}
-                            >
-                              {val.price > 0 ? `+$${val.price.toFixed(2)}` : 'Free'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              {!val.is_unlimited && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                  Qty: {val.stock_quantity ?? 0}
+                                </span>
+                              )}
+                              <span
+                                className="font-mono text-[11px] font-bold"
+                                style={{ color: 'var(--color-500, #BF4040)' }}
+                              >
+                                {val.price > 0 ? `+$${val.price.toFixed(2)}` : 'Free'}
+                              </span>
+                            </div>
                           </div>
                         )
                       })}

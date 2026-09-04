@@ -119,14 +119,25 @@ func (s *service) CreateProduct(req *CreateProductRequest, creatorID *uuid.UUID)
 		DiscountPct:       req.DiscountPct,
 		StockQuantity:     req.StockQuantity,
 		LowStockThreshold: req.LowStockThreshold,
-		TrackStock:        req.TrackStock,
-		ImageProductsID:   req.ImageProductsID,
-		ImageURL:          req.ImageURL,
-		IsAvailable:       isAvail,
-		IsFeatured:        isFeat,
-		KitchenStation:    kitchenStation,
-		PrepTimeMins:      prepTime,
-		CreatedBy:         creatorID,
+		TrackStock: func() bool {
+			if req.IsUnlimited != nil {
+				return !*req.IsUnlimited
+			}
+			return req.TrackStock
+		}(),
+		IsUnlimited: func() bool {
+			if req.IsUnlimited != nil {
+				return *req.IsUnlimited
+			}
+			return !req.TrackStock
+		}(),
+		ImageProductsID: req.ImageProductsID,
+		ImageURL:        req.ImageURL,
+		IsAvailable:     isAvail,
+		IsFeatured:      isFeat,
+		KitchenStation:  kitchenStation,
+		PrepTimeMins:    prepTime,
+		CreatedBy:       creatorID,
 	}
 	if err := s.repo.CreateProduct(p, req.OptionGroupIDs); err != nil {
 		return nil, err
@@ -142,12 +153,15 @@ func (s *service) UpdateProduct(id uuid.UUID, req *UpdateProductRequest) (*Produ
 
 	if req.OutletID != nil {
 		p.OutletID = req.OutletID
+		p.Outlet = nil
 	}
 	if req.StationID != nil {
 		p.StationID = req.StationID
+		p.Station = nil
 	}
 	if req.CategoryID != nil {
 		p.CategoryID = *req.CategoryID
+		p.Category = nil
 	}
 	if req.Name != nil {
 		p.Name = *req.Name
@@ -179,8 +193,12 @@ func (s *service) UpdateProduct(id uuid.UUID, req *UpdateProductRequest) (*Produ
 	if req.LowStockThreshold != nil {
 		p.LowStockThreshold = *req.LowStockThreshold
 	}
-	if req.TrackStock != nil {
+	if req.IsUnlimited != nil {
+		p.IsUnlimited = *req.IsUnlimited
+		p.TrackStock = !(*req.IsUnlimited)
+	} else if req.TrackStock != nil {
 		p.TrackStock = *req.TrackStock
+		p.IsUnlimited = !(*req.TrackStock)
 	}
 	if req.ImageProductsID != nil {
 		p.ImageProductsID = req.ImageProductsID
@@ -222,10 +240,20 @@ func (s *service) GetOptionGroup(id uuid.UUID) (*OptionGroup, error) {
 func (s *service) CreateOptionGroup(req *CreateOptionGroupRequest, creatorID *uuid.UUID) (*OptionGroup, error) {
 	vals := make([]OptionValue, len(req.Values))
 	for i, v := range req.Values {
+		isUnlimited := true
+		if v.IsUnlimited != nil {
+			isUnlimited = *v.IsUnlimited
+		}
+		stockQty := v.StockQuantity
+		if isUnlimited {
+			stockQty = 0
+		}
 		vals[i] = OptionValue{
-			Name:      v.Name,
-			Price:     v.Price,
-			CreatedBy: creatorID,
+			Name:          v.Name,
+			Price:         v.Price,
+			StockQuantity: stockQty,
+			IsUnlimited:   &isUnlimited,
+			CreatedBy:     creatorID,
 		}
 	}
 	g := &OptionGroup{

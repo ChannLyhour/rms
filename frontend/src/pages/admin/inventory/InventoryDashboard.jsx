@@ -12,6 +12,7 @@ import PurchaseOrdersPage from './pages/PurchaseOrdersPage'
 import SuppliersPage from './pages/SuppliersPage'
 import StockLogsPage from './pages/StockLogsPage'
 import WastagePage from './pages/WastagePage'
+import CategoriesIngredients, { Iconly3DTag } from './pages/utils/CategoriesIngredients'
 
 // Modular Views & Modals
 import IngredientCreateView from './views/IngredientCreateView'
@@ -37,6 +38,7 @@ export default function InventoryDashboard() {
     if (location.pathname === '/recipes') return 'recipes'
     if (location.pathname === '/purchases') return 'purchases'
     if (location.pathname === '/stock-logs') return 'logs'
+    if (location.pathname === '/inventory/categories') return 'categories'
     const params = new URLSearchParams(location.search)
     return params.get('tab') || null
   }, [location.pathname, location.search])
@@ -48,6 +50,7 @@ export default function InventoryDashboard() {
 
   // Data States
   const [ingredients, setIngredients] = useState([])
+  const [ingredientCategories, setIngredientCategories] = useState([])
   const [recipes, setRecipes] = useState([])
   const [products, setProducts] = useState([])
   const [purchaseOrders, setPurchaseOrders] = useState([])
@@ -59,7 +62,7 @@ export default function InventoryDashboard() {
   const loadAllData = async () => {
     setLoading(true)
     try {
-      const [ingRes, recRes, prodRes, poRes, supRes, logsRes, wasteRes] = await Promise.all([
+      const [ingRes, recRes, prodRes, poRes, supRes, logsRes, wasteRes, catRes] = await Promise.all([
         adminApi.getIngredients({ limit: 200 }).catch(() => ({ data: { data: [] } })),
         adminApi.getRecipes().catch(() => ({ data: { data: [] } })),
         adminApi.getProducts().catch(() => ({ data: { data: [] } })),
@@ -67,9 +70,11 @@ export default function InventoryDashboard() {
         adminApi.getSuppliers().catch(() => ({ data: { data: [] } })),
         adminApi.getStockLogs().catch(() => ({ data: { data: [] } })),
         adminApi.getStockWastes().catch(() => ({ data: { data: [] } })),
+        adminApi.getIngredientCategories().catch(() => ({ data: { data: [] } })),
       ])
 
       setIngredients(ingRes.data?.data || [])
+      setIngredientCategories(catRes.data?.data || [])
       setRecipes(recRes.data?.data || [])
       setProducts(prodRes.data?.data || [])
       setPurchaseOrders(poRes.data?.data || [])
@@ -104,6 +109,8 @@ export default function InventoryDashboard() {
     if (tabKey === 'recipes') navigate('/recipes')
     else if (tabKey === 'purchases') navigate('/purchases')
     else if (tabKey === 'logs') navigate('/stock-logs')
+    else if (tabKey === 'categories') navigate('/inventory?tab=categories')
+    else if (tabKey === 'ingredients') navigate('/inventory?tab=ingredients')
     else navigate(`/inventory?tab=${tabKey}`)
   }
 
@@ -114,6 +121,19 @@ export default function InventoryDashboard() {
   const renderHeaderAction = () => {
     if (!activeTab) return null
     switch (activeTab) {
+      case 'categories':
+        return (
+          <button
+            type="button"
+            onClick={() => navigate('/inventory?tab=ingredients')}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs transition-all cursor-pointer"
+          >
+            <span>View All Stock</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        )
       case 'ingredients':
         return (
           <CreateButton
@@ -149,7 +169,7 @@ export default function InventoryDashboard() {
   // Cards Configuration following the HTML template
   const cards = [
     {
-      id: 'ingredients',
+      id: 'categories',
       title: 'Raw Materials',
       subtitle: 'Track ingredients, units and current stock levels',
       bgImage: raw3dImg,
@@ -231,6 +251,15 @@ export default function InventoryDashboard() {
   ]
 
   const activeCard = useMemo(() => {
+    if (activeTab === 'ingredients' || activeTab === 'categories') {
+      const rawCard = cards.find((c) => c.id === 'categories' || c.id === 'ingredients')
+      if (rawCard) {
+        return {
+          ...rawCard,
+          title: activeTab === 'categories' ? 'Raw Materials Categories' : 'Raw Materials Stock',
+        }
+      }
+    }
     return cards.find((c) => c.id === activeTab) || null
   }, [cards, activeTab])
 
@@ -351,7 +380,7 @@ export default function InventoryDashboard() {
                   onClick={() => handleTabClick(card.id)}
                   className={`group relative text-left overflow-hidden rounded-2xl bg-gradient-to-b from-white to-slate-50/70 dark:from-slate-900 dark:to-slate-950/90 border border-slate-200/90 dark:border-slate-800 border-b-[3px] ${card.bottomBorder} shadow-[0_6px_16px_-4px_rgba(0,0,0,0.07),0_2px_4px_rgba(0,0,0,0.03)] ${card.shadowColor} hover:-translate-y-1.5 active:translate-y-0 active:shadow-sm transition-all duration-300 cursor-pointer`}
                 >
-                  {/* Card Background: 3D Artwork Image or Subtle SVG Doodles Pattern */}
+                  {/* Card Background: 3D Artwork Image, Custom 3D SVG, or Subtle SVG Doodles Pattern */}
                   {card.bgImage ? (
                     <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
                       <img
@@ -363,6 +392,10 @@ export default function InventoryDashboard() {
                           WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.5) 28%, black 100%)',
                         }}
                       />
+                    </div>
+                  ) : card.customArt ? (
+                    <div className="absolute -right-3 -bottom-2 pointer-events-none overflow-hidden rounded-2xl opacity-50 dark:opacity-60 group-hover:opacity-85 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-500 p-2">
+                      {card.customArt}
                     </div>
                   ) : (
                     <div className="absolute inset-0 opacity-[0.08] dark:opacity-[0.14] group-hover:opacity-[0.14] dark:group-hover:opacity-[0.22] transition-opacity duration-300 pointer-events-none">
@@ -436,9 +469,15 @@ export default function InventoryDashboard() {
               <div className="flex items-center gap-3.5 flex-wrap">
                 <button
                   type="button"
-                  onClick={() => navigate('/inventory')}
+                  onClick={() => {
+                    if (activeTab === 'ingredients') {
+                      navigate('/inventory?tab=categories')
+                    } else {
+                      navigate('/inventory')
+                    }
+                  }}
                   className="group inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs transition-all cursor-pointer font-semibold text-xs shrink-0"
-                  title="Return to Inventory Overview"
+                  title={activeTab === 'ingredients' ? 'Return to Categories' : 'Return to Inventory Overview'}
                 >
                   <svg
                     className="w-4 h-4 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-white transition-transform group-hover:-translate-x-0.5"
@@ -448,21 +487,49 @@ export default function InventoryDashboard() {
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                   </svg>
-                  
+                  <span>{activeTab === 'ingredients' ? 'Categories' : 'Overview'}</span>
                 </button>
 
                 <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
 
                 <div className="flex items-center gap-3">
-                 
                   <div>
-                    <div className="flex items-center gap-2.5">
-                      <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-                        {activeCard?.title || 'Module Details'}
-                      </h1>
-                      
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/inventory')}
+                        className="hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                      >
+                        Inventory
+                      </button>
+                      {activeTab === 'ingredients' && (
+                        <>
+                          <span>/</span>
+                          <button
+                            type="button"
+                            onClick={() => navigate('/inventory?tab=categories')}
+                            className="hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                          >
+                            Raw Materials
+                          </button>
+                        </>
+                      )}
+                      <span>/</span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-200">
+                        {activeTab === 'categories'
+                          ? 'Categories'
+                          : activeTab === 'ingredients'
+                          ? 'Stock List'
+                          : activeCard?.title || 'Details'}
+                      </span>
                     </div>
-                  
+                    <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">
+                      {activeTab === 'categories'
+                        ? 'Raw Materials Categories'
+                        : activeTab === 'ingredients'
+                        ? 'Raw Materials Stock'
+                        : activeCard?.title || 'Module Details'}
+                    </h1>
                   </div>
                 </div>
               </div>
@@ -476,6 +543,7 @@ export default function InventoryDashboard() {
             {activeTab === 'ingredients' && (
               <IngredientsPage
                 ingredients={ingredients}
+                ingredientCategories={ingredientCategories}
                 loading={loading}
                 onRefresh={loadAllData}
                 onOpenCreate={() => setViewMode('create_ingredient')}
@@ -536,6 +604,22 @@ export default function InventoryDashboard() {
                 onRefresh={loadAllData}
               />
             )}
+
+            {activeTab === 'categories' && (
+              <CategoriesIngredients
+                categories={ingredientCategories}
+                ingredients={ingredients}
+                loading={loading}
+                onRefresh={loadAllData}
+                onSelectCategory={(cat) => {
+                  if (!cat || cat.id === 'all') {
+                    navigate('/inventory?tab=ingredients')
+                  } else {
+                    navigate(`/inventory?tab=ingredients&category=${cat.id}`)
+                  }
+                }}
+              />
+            )}
           </div>
         )}
 
@@ -543,6 +627,7 @@ export default function InventoryDashboard() {
         {viewMode === 'create_ingredient' && (
           <IngredientCreateView
             ingredient={null}
+            categories={ingredientCategories}
             onClose={() => setViewMode('list')}
             onSave={loadAllData}
           />
@@ -551,6 +636,7 @@ export default function InventoryDashboard() {
         {viewMode === 'edit_ingredient' && (
           <IngredientCreateView
             ingredient={editingItem}
+            categories={ingredientCategories}
             onClose={() => {
               setViewMode('list')
               setEditingItem(null)

@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pos-system/backend/pkg/pagination"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Repository interface {
@@ -149,7 +150,7 @@ func (r *repository) GetProductByID(id uuid.UUID) (*Product, error) {
 
 func (r *repository) CreateProduct(p *Product, optionGroupIDs []uuid.UUID) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(p).Error; err != nil {
+		if err := tx.Omit(clause.Associations).Create(p).Error; err != nil {
 			return err
 		}
 		for _, ogID := range optionGroupIDs {
@@ -164,7 +165,7 @@ func (r *repository) CreateProduct(p *Product, optionGroupIDs []uuid.UUID) error
 
 func (r *repository) UpdateProduct(p *Product, optionGroupIDs *[]uuid.UUID) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Save(p).Error; err != nil {
+		if err := tx.Omit(clause.Associations).Save(p).Error; err != nil {
 			return err
 		}
 		if optionGroupIDs != nil {
@@ -245,8 +246,15 @@ func (r *repository) UpdateOptionGroup(id uuid.UUID, g *OptionGroup) error {
 				return err
 			}
 			for _, v := range g.Values {
-				v.ID = uuid.Nil
+				v.ID = uuid.New()
 				v.OptionGroupID = id
+				if v.IsUnlimited == nil {
+					defUnl := true
+					v.IsUnlimited = &defUnl
+				}
+				if *v.IsUnlimited {
+					v.StockQuantity = 0
+				}
 				if err := tx.Create(&v).Error; err != nil {
 					return err
 				}

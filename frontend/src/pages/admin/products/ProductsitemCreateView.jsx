@@ -14,7 +14,9 @@ import {
   Sparkles,
   Tag,
   ArrowLeft,
-  Loader2
+  Loader2,
+  Infinity as InfinityIcon,
+  Package
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axiosClient from '../../../api/axiosClient'
@@ -342,9 +344,10 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
     image_url: '',
     is_available: true,
     is_featured: false,
-    stock_quantity: 100,
-    low_stock_threshold: 10,
-    track_stock: true,
+    stock_quantity: 0,
+    low_stock_threshold: 5,
+    track_stock: false,
+    is_unlimited: true,
     kitchen_station: 'Kitchen',
     prep_time_mins: 15,
     description: '',
@@ -369,7 +372,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
     }
     setLoadingCategories(true)
     try {
-      const res = await adminApi.getCategories({ outlet_id: String(outletId) })
+      const res = await adminApi.getCategories({ outlet_id: String(outletId), limit: 200 })
       const data = res.data?.data || []
       setLocalCategories(data)
     } catch (err) {
@@ -399,6 +402,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
       ...prev,
       outlet_id: nextOutlet || null,
       category_id: '',
+      sub_category_id: '',
       sub_category: '',
       station_id: '',
     }))
@@ -431,6 +435,11 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
   useEffect(() => {
     if (item) {
       const selectedOptionGroupIDs = (item.option_groups || []).map((og) => og.id)
+      const allCats = localCategories.length > 0 ? localCategories : (categories || [])
+      const itemCat = item.category || allCats.find((c) => String(c.id) === String(item.category_id))
+      const isSub = Boolean(itemCat?.parent_id)
+      const mainCatId = isSub ? String(itemCat.parent_id) : (item.category_id ? String(item.category_id) : '')
+      const subCatId = isSub ? String(item.category_id) : ''
 
       setFormData({
         id: item.id || '',
@@ -438,8 +447,9 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
         outlet_id: item.outlet_id ? String(item.outlet_id) : null,
         station_id: item.station_id ? String(item.station_id) : '',
         barcode: item.barcode || '',
-        category_id: item.category_id || '',
-        sub_category: item.sub_category || '',
+        category_id: mainCatId,
+        sub_category_id: subCatId,
+        sub_category: subCatId,
         sku: item.sku || '',
         price: item.price ?? '',
         cost_price: item.cost_price ?? '',
@@ -450,9 +460,10 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
         image_url: item.image_url || '',
         is_available: item.is_available !== false,
         is_featured: item.is_featured || false,
-        stock_quantity: item.stock_quantity ?? item.stock ?? 100,
-        low_stock_threshold: item.low_stock_threshold ?? 10,
-        track_stock: item.track_stock ?? true,
+        stock_quantity: item.stock_quantity ?? item.stock ?? 0,
+        low_stock_threshold: item.low_stock_threshold ?? 5,
+        track_stock: item.is_unlimited !== undefined ? !item.is_unlimited : (item.track_stock ?? false),
+        is_unlimited: item.is_unlimited !== undefined ? Boolean(item.is_unlimited) : (item.track_stock !== undefined ? !item.track_stock : true),
         kitchen_station: item.kitchen_station || 'Kitchen',
         prep_time_mins: item.prep_time_mins ?? 15,
         description: item.description || '',
@@ -468,6 +479,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
         station_id: '',
         barcode: '',
         category_id: '',
+        sub_category_id: '',
         sub_category: '',
         sku: randomSku,
         price: '',
@@ -479,9 +491,10 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
         image_url: '',
         is_available: true,
         is_featured: false,
-        stock_quantity: 100,
-        low_stock_threshold: 10,
-        track_stock: true,
+        stock_quantity: 0,
+        low_stock_threshold: 5,
+        track_stock: false,
+        is_unlimited: true,
         kitchen_station: 'Kitchen',
         prep_time_mins: 15,
         description: '',
@@ -489,7 +502,30 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
         sizes: [],
       })
     }
-  }, [item, categories])
+  }, [item?.id])
+
+  // If localCategories loaded after initial item setup, ensure parent/sub are synchronized
+  useEffect(() => {
+    if (item?.category_id && localCategories.length > 0) {
+      const itemCat = item.category || localCategories.find((c) => String(c.id) === String(item.category_id))
+      if (itemCat?.parent_id) {
+        setFormData((prev) => {
+          if (prev.category_id === String(itemCat.parent_id) && prev.sub_category_id === String(item.category_id)) {
+            return prev
+          }
+          if (!prev.sub_category_id && (!prev.category_id || prev.category_id === String(item.category_id))) {
+            return {
+              ...prev,
+              category_id: String(itemCat.parent_id),
+              sub_category_id: String(item.category_id),
+              sub_category: String(item.category_id),
+            }
+          }
+          return prev
+        })
+      }
+    }
+  }, [item?.id, item?.category_id, localCategories])
 
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const setField = (key, val) => setFormData((prev) => ({ ...prev, [key]: val }))
@@ -531,10 +567,19 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
     const targetGroup = optionGroupsList.find((g) => g.id === groupId)
     if (!targetGroup) return
 
-    const existingValues = targetGroup.values || []
     const updatedValues = [
-      ...existingValues.map((v) => ({ name: v.name, price: v.price || 0 })),
-      { name: choiceData.name, price: choiceData.price || 0 },
+      ...existingValues.map((v) => ({
+        name: v.name,
+        price: v.price || 0,
+        stock_quantity: v.stock_quantity || 0,
+        is_unlimited: v.is_unlimited !== undefined ? Boolean(v.is_unlimited) : true,
+      })),
+      {
+        name: choiceData.name,
+        price: choiceData.price || 0,
+        stock_quantity: 0,
+        is_unlimited: true,
+      },
     ]
 
     const payload = {
@@ -582,10 +627,30 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
     }
   }
 
-  const handleCreateSubCat = (newSubCat) => {
-    setField('sub_category', newSubCat)
+  const handleCreateSubCat = async (newSubCat) => {
+    if (!formData.category_id) {
+      toast.error('Please select a main category first')
+      return
+    }
+    try {
+      const res = await adminApi.createCategory({
+        name: newSubCat,
+        parent_id: formData.category_id,
+        outlet_id: formData.outlet_id || null,
+        is_active: true,
+      })
+      const newCat = res.data?.data || res.data
+      if (newCat?.id) {
+        setLocalCategories((prev) => [...prev, newCat])
+        setField('sub_category_id', String(newCat.id))
+        setField('sub_category', String(newCat.id))
+        toast.success(`Sub-category "${newSubCat}" created`)
+      }
+    } catch (err) {
+      console.error('Failed to create sub-category:', err)
+      toast.error('Failed to create sub-category')
+    }
     setSubCatModalOpen(false)
-    toast.success(`Sub-category "${newSubCat}" set`)
   }
 
   const handleSubmit = (e) => {
@@ -602,7 +667,8 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
       return
     }
-    if (!formData.category_id) {
+    const finalCategoryId = formData.sub_category_id || formData.category_id
+    if (!finalCategoryId) {
       toast.error('Please select a category')
       const el = document.getElementById('basic')
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -611,7 +677,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
 
     const payload = {
       name: formData.name.trim(),
-      category_id: formData.category_id,
+      category_id: finalCategoryId,
       outlet_id: formData.outlet_id || null,
       station_id: formData.station_id || null,
       barcode: formData.barcode ? formData.barcode.trim() : null,
@@ -621,9 +687,10 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
       discount_type: formData.discount_type || 'percentage',
       discount_value: parseFloat(formData.discount_value) || 0,
       discount_pct: parseFloat(formData.discount_pct) || 0,
-      stock_quantity: parseInt(formData.stock_quantity) || 0,
+      stock_quantity: formData.is_unlimited ? 0 : (parseInt(formData.stock_quantity) || 0),
       low_stock_threshold: parseInt(formData.low_stock_threshold) || 5,
-      track_stock: Boolean(formData.track_stock),
+      track_stock: !Boolean(formData.is_unlimited),
+      is_unlimited: Boolean(formData.is_unlimited),
       is_available: formData.is_available !== undefined ? Boolean(formData.is_available) : true,
       is_featured: Boolean(formData.is_featured),
       kitchen_station: formData.kitchen_station || 'Kitchen',
@@ -690,7 +757,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
     const subCountMap = {}
     localCategories.forEach((c) => {
       if (c.parent_id) {
-        const pid = Number(c.parent_id)
+        const pid = String(c.parent_id)
         subCountMap[pid] = (subCountMap[pid] || 0) + 1
       }
     })
@@ -699,7 +766,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
     const baseList = list.length > 0 ? list : localCategories
 
     return baseList.map((cat) => {
-      const catId = Number(cat.id)
+      const catId = String(cat.id)
       let count = subCountMap[catId] || 0
       if (Array.isArray(cat.sub_categories)) {
         count += cat.sub_categories.length
@@ -724,10 +791,13 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
     // 1. Direct sub-categories in localCategories where parent_id matches selected Main Category
     localCategories.forEach((cat) => {
       if (cat.parent_id && String(cat.parent_id) === selectedCatId) {
-        if (!seen.has(cat.name)) {
-          seen.add(cat.name)
+        const idStr = String(cat.id)
+        if (!seen.has(idStr)) {
+          seen.add(idStr)
           list.push({
-            value: cat.name,
+            id: idStr,
+            value: idStr,
+            name: cat.name,
             label: cat.name,
             image: cat.image_url,
             badge: 'Sub-Category',
@@ -736,32 +806,8 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
       }
     })
 
-    // 2. Sub-categories embedded in the selected category object (e.g. cat.sub_categories)
-    const selectedCatObj = localCategories.find((c) => String(c.id) === selectedCatId)
-    if (selectedCatObj && Array.isArray(selectedCatObj.sub_categories)) {
-      selectedCatObj.sub_categories.forEach((sc) => {
-        const scName = typeof sc === 'string' ? sc : sc.name
-        const scImg = typeof sc === 'object' ? sc.image_url || sc.image : undefined
-        if (scName && !seen.has(scName)) {
-          seen.add(scName)
-          list.push({
-            value: scName,
-            label: scName,
-            image: scImg,
-            badge: 'Sub-Category',
-          })
-        }
-      })
-    }
-
-    // 3. Keep current selected sub_category if set
-    if (formData.sub_category && !seen.has(formData.sub_category)) {
-      seen.add(formData.sub_category)
-      list.unshift({ value: formData.sub_category, label: formData.sub_category })
-    }
-
     return list
-  }, [localCategories, formData.category_id, formData.sub_category])
+  }, [localCategories, formData.category_id])
 
   // Calculate profit margin
   const sellingPrice = parseFloat(formData.price) || 0
@@ -1010,24 +1056,25 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                             disabled={loadingCategories || !formData.outlet_id}
                             onChange={(val) => {
                               setField('category_id', val)
+                              setField('sub_category_id', '')
                               setField('sub_category', '')
                             }}
                             placeholder={
                               loadingCategories
-                                ? '...'
+                                ? 'Loading...'
                                 : !formData.outlet_id
-                                ? '...'
+                                ? 'Select venue first'
                                 : mainCategories.length === 0
-                                ? '...'
-                                : '...'
+                                ? 'No categories available'
+                                : 'Select category'
                             }
-                            searchPlaceholder="..."
+                            searchPlaceholder="Search categories..."
                             emptyMessage={
                               loadingCategories
-                                ? '...'
+                                ? 'Loading...'
                                 : !formData.outlet_id
-                                ? '...'
-                                : '...'
+                                ? 'Select venue first'
+                                : 'No categories found'
                             }
                           />
                         </div>
@@ -1041,7 +1088,7 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                               <button
                                 type="button"
                                 onClick={() => setSubCatModalOpen(true)}
-                                className="text-[11px] font-bold flex items-center gap-1 hover:underline"
+                                className="text-[11px] font-bold flex items-center gap-1 hover:underline cursor-pointer"
                                 style={{ color: 'var(--color-500, #BF4040)' }}
                               >
                                 <Plus size={11} /> New
@@ -1049,27 +1096,34 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                             )}
                           </div>
                           <SearchSelection
-                            name="sub_category"
+                            name="sub_category_id"
                             options={availableSubCategories}
-                            value={formData.sub_category}
-                            onChange={(val) => setField('sub_category', val)}
+                            valueKey="id"
+                            labelKey="name"
+                            value={formData.sub_category_id || formData.sub_category || ''}
+                            onChange={(val) => {
+                              setField('sub_category_id', val)
+                              setField('sub_category', val)
+                            }}
                             disabled={loadingCategories || !formData.category_id}
                             allowCreate={Boolean(formData.category_id && !loadingCategories)}
                             onCreate={(newVal) => handleCreateSubCat(newVal)}
                             placeholder={
                               loadingCategories
-                                ? '...'
+                                ? 'Loading...'
                                 : !formData.category_id
-                                ? '...'
-                                : '...'
+                                ? 'Select main category first'
+                                : availableSubCategories.length === 0
+                                ? 'No sub-categories (Optional)'
+                                : 'Select sub-category (Optional)'
                             }
-                            searchPlaceholder="..."
+                            searchPlaceholder="Search sub-categories..."
                             emptyMessage={
                               loadingCategories
-                                ? '...'  
+                                ? 'Loading...'  
                                 : !formData.category_id
-                                ? '...'
-                                : '...'
+                                ? 'Select main category first'
+                                : 'No sub-category found'
                             }
                           />
                         </div>
@@ -1275,41 +1329,162 @@ export default function MenuitemCreateView({ onClose, onSave, item, categories =
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                        Current Stock
+                  {/* Stock Policy: Unlimited vs Tracked */}
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>
+                        Stock Tracking Policy
                       </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.stock_quantity}
-                        onChange={(e) => setField('stock_quantity', e.target.value)}
-                        className="w-full px-4 py-2.5 text-xs rounded-[5px] border outline-none font-mono font-bold"
-                        style={{
-                          background: 'var(--color-bg)',
-                          borderColor: 'var(--color-border)',
-                          color: 'var(--color-text)',
-                        }}
-                      />
+                      <span className="text-[11px] font-semibold" style={{ color: formData.is_unlimited ? 'var(--color-500, #126973)' : 'var(--color-text)' }}>
+                        {formData.is_unlimited ? '∞ Unlimited Stock' : '📦 Tracked Stock'}
+                      </span>
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                        Low Stock
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.low_stock_threshold}
-                        onChange={(e) => setField('low_stock_threshold', e.target.value)}
-                        className="w-full px-4 py-2.5 text-xs rounded-[5px] border outline-none font-mono"
-                        style={{
-                          background: 'var(--color-bg)',
-                          borderColor: 'var(--color-border)',
-                          color: 'var(--color-text)',
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            is_unlimited: true,
+                            track_stock: false,
+                          }))
                         }}
-                      />
+                        className={`flex items-start gap-3 p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                          formData.is_unlimited
+                            ? 'ring-2 ring-[var(--color-500,#126973)] bg-[var(--color-500,#126973)]/10 border-[var(--color-500,#126973)]'
+                            : 'hover:bg-black/5 dark:hover:bg-white/5 border-[var(--color-border)]'
+                        }`}
+                        style={{
+                          background: formData.is_unlimited ? 'rgba(18, 105, 115, 0.08)' : 'var(--color-bg)',
+                        }}
+                      >
+                        <div
+                          className="p-2 rounded-lg shrink-0 mt-0.5"
+                          style={{
+                            background: formData.is_unlimited ? 'var(--color-500, #126973)' : 'rgba(255, 255, 255, 0.08)',
+                            color: formData.is_unlimited ? '#ffffff' : 'var(--color-muted)',
+                          }}
+                        >
+                          <InfinityIcon size={18} strokeWidth={2.5} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-bold" style={{ color: 'var(--color-text)' }}>
+                              Unlimited Stock
+                            </p>
+                            {formData.is_unlimited && (
+                              <span className="w-2 h-2 rounded-full bg-[var(--color-500,#126973)]" />
+                            )}
+                          </div>
+                          <p className="text-[11px] mt-0.5 leading-snug" style={{ color: 'var(--color-muted)' }}>
+                            Always available, no stock tracking
+                          </p>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            is_unlimited: false,
+                            track_stock: true,
+                          }))
+                        }}
+                        className={`flex items-start gap-3 p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                          !formData.is_unlimited
+                            ? 'ring-2 ring-[var(--color-500,#126973)] bg-[var(--color-500,#126973)]/10 border-[var(--color-500,#126973)]'
+                            : 'hover:bg-black/5 dark:hover:bg-white/5 border-[var(--color-border)]'
+                        }`}
+                        style={{
+                          background: !formData.is_unlimited ? 'rgba(18, 105, 115, 0.08)' : 'var(--color-bg)',
+                        }}
+                      >
+                        <div
+                          className="p-2 rounded-lg shrink-0 mt-0.5"
+                          style={{
+                            background: !formData.is_unlimited ? 'var(--color-500, #126973)' : 'rgba(255, 255, 255, 0.08)',
+                            color: !formData.is_unlimited ? '#ffffff' : 'var(--color-muted)',
+                          }}
+                        >
+                          <Package size={18} strokeWidth={2.5} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-bold" style={{ color: 'var(--color-text)' }}>
+                              Tracked Stock
+                            </p>
+                            {!formData.is_unlimited && (
+                              <span className="w-2 h-2 rounded-full bg-[var(--color-500,#126973)]" />
+                            )}
+                          </div>
+                          <p className="text-[11px] mt-0.5 leading-snug" style={{ color: 'var(--color-muted)' }}>
+                            Track quantity & alert when low
+                          </p>
+                        </div>
+                      </button>
                     </div>
+
+                    {/* Conditional Info / Inputs */}
+                    {formData.is_unlimited ? (
+                      <div
+                        className="p-3.5 rounded-xl border border-dashed flex items-center gap-3 text-xs"
+                        style={{
+                          borderColor: 'var(--color-border)',
+                          background: 'rgba(255, 255, 255, 0.02)',
+                        }}
+                      >
+                        <span className="text-lg leading-none">ℹ️</span>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-[var(--color-text)]">
+                            This product is set to Unlimited Stock
+                          </p>
+                          <p className="text-[11px] text-[var(--color-muted)] mt-0.5">
+                            Inventory will not be tracked or restricted (ideal for made-to-order dishes, beverages, or services).
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-150">
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
+                            Current Stock
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={formData.stock_quantity}
+                            onChange={(e) => setField('stock_quantity', e.target.value)}
+                            placeholder="0"
+                            className="w-full px-4 py-2.5 text-xs rounded-[5px] border outline-none font-mono font-bold"
+                            style={{
+                              background: 'var(--color-bg)',
+                              borderColor: 'var(--color-border)',
+                              color: 'var(--color-text)',
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
+                            Low Stock Alert
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={formData.low_stock_threshold}
+                            onChange={(e) => setField('low_stock_threshold', e.target.value)}
+                            placeholder="5"
+                            className="w-full px-4 py-2.5 text-xs rounded-[5px] border outline-none font-mono"
+                            style={{
+                              background: 'var(--color-bg)',
+                              borderColor: 'var(--color-border)',
+                              color: 'var(--color-text)',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Profit Margin Indicator */}

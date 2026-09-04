@@ -1,0 +1,2 @@
+ALTER TABLE option_values ADD COLUMN IF NOT EXISTS stock_quantity INT DEFAULT 0;
+ALTER TABLE option_values ADD COLUMN IF NOT EXISTS is_unlimited BOOLEAN DEFAULT true;

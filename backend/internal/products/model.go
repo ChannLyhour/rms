@@ -87,6 +87,7 @@ type Product struct {
 	StockQuantity     int            `gorm:"default:0" json:"stock_quantity"`
 	LowStockThreshold int            `gorm:"default:5" json:"low_stock_threshold"`
 	TrackStock        bool           `gorm:"default:false" json:"track_stock"`
+	IsUnlimited       bool           `gorm:"default:false" json:"is_unlimited"`
 	ImageProductsID   *uuid.UUID     `gorm:"type:uuid" json:"image_products_id"`
 	ImageURL          *string        `gorm:"type:text" json:"image_url"`
 	IsAvailable       bool           `gorm:"default:true" json:"is_available"`
@@ -132,6 +133,8 @@ type OptionValue struct {
 	OptionGroupID uuid.UUID  `gorm:"type:uuid;not null" json:"option_group_id"`
 	Name          string     `gorm:"size:255;not null" json:"name"`
 	Price         float64    `gorm:"type:numeric(10,2);default:0.00" json:"price"`
+	StockQuantity int        `gorm:"default:0" json:"stock_quantity"`
+	IsUnlimited   *bool      `json:"is_unlimited"`
 	CreatedBy     *uuid.UUID `gorm:"type:uuid" json:"created_by"`
 	CreatedAt     time.Time  `json:"created_at"`
 	UpdatedAt     time.Time  `json:"updated_at"`
@@ -165,6 +168,7 @@ type CreateProductRequest struct {
 	StockQuantity     int         `json:"stock_quantity"`
 	LowStockThreshold int         `json:"low_stock_threshold"`
 	TrackStock        bool        `json:"track_stock"`
+	IsUnlimited       *bool       `json:"is_unlimited"`
 	ImageProductsID   *uuid.UUID  `json:"image_products_id"`
 	ImageURL          *string     `json:"image_url"`
 	IsAvailable       *bool       `json:"is_available"`
@@ -190,6 +194,7 @@ type UpdateProductRequest struct {
 	StockQuantity     *int         `json:"stock_quantity"`
 	LowStockThreshold *int         `json:"low_stock_threshold"`
 	TrackStock        *bool        `json:"track_stock"`
+	IsUnlimited       *bool        `json:"is_unlimited"`
 	ImageProductsID   *uuid.UUID   `json:"image_products_id"`
 	ImageURL          *string      `json:"image_url"`
 	IsAvailable       *bool        `json:"is_available"`
@@ -212,8 +217,10 @@ type CreateCategoryRequest struct {
 
 // OptionValueInput represents input for creating an option value
 type OptionValueInput struct {
-	Name  string  `json:"name" binding:"required"`
-	Price float64 `json:"price"`
+	Name          string  `json:"name" binding:"required"`
+	Price         float64 `json:"price"`
+	StockQuantity int     `json:"stock_quantity"`
+	IsUnlimited   *bool   `json:"is_unlimited"`
 }
 
 // CreateOptionGroupRequest payload

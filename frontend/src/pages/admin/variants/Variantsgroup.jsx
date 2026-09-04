@@ -499,9 +499,7 @@ export default function Variantsgroup() {
                                         borderColor: 'var(--color-border)'
                                       }}
                                     >
-                                      <span className="text-[10px] text-slate-400 font-mono">
-                                        ID #{grp.id}
-                                      </span>
+                                    
 
                                       <div className="flex items-center gap-1">
                                         <button

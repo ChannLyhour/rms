@@ -1,6 +1,6 @@
 import { useMemo, useState, isValidElement } from 'react'
 import { Check, ReverseLeft, X, ChevronLeft, ChevronRight, ArrowUp, ArrowDown } from '@untitledui/icons'
-import { TableActionButtons, EditButton, DeleteButton, ViewButton } from './plugin/components/button-Action-Components'
+export { TableActionButtons, EditButton, DeleteButton, ViewButton } from './plugin/components/button-Action-Components'
 import {
   FilterBar,
   FilterSearchInput,
@@ -199,11 +199,7 @@ export {
   DateRangePicker,
   DateRangePopover,
   FilterLinesIcon,
-  DateAndFiltersBar,
-  TableActionButtons,
-  EditButton,
-  DeleteButton,
-  ViewButton
+  DateAndFiltersBar
 }
 
 // ── Base Table & TableCard Components ──────────────────────────────────────
@@ -259,13 +255,13 @@ export const TableCard = {
 
     return (
       <div
-        className={`p-3.5 border-b bg-[var(--color-surface,#f8fafc)]/50 ${className}`}
+        className={`p-3.5 border-b bg-[var(--color-card,#ffffff)] ${className}`}
         style={{ borderColor: 'var(--color-border)' }}
         {...props}
       >
         {showCreate || actions ? (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-2.5 flex-wrap flex-1 min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 flex-1 min-w-0">
               {children}
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -296,6 +292,7 @@ export const TableCard = {
   FilterTabs: FilterTabs,
   SortDropdown: SortDropdown,
   ActiveFilterPills: ActiveFilterPills,
+  FiltersPopover: FiltersPopover,
 }
 
 export const Table = Object.assign(

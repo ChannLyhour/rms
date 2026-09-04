@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import AdminLayout from '../../../components/layout/AdminLayout'
-import CategoriesCreateView from '../../../components/admin/CategoriesCreateView'
+import CategoriesCreateView from './CategoriesCreateView'
 import { adminApi } from '../../../api/adminApi'
 import axiosClient from '../../../api/axiosClient'
 import { Table, TableCard, BadgeWithIcon, Button, PaginationPageMinimalCenter } from '../../../components/TablesComponents'
@@ -188,18 +188,7 @@ export default function Categories() {
   return (
     <AdminLayout>
       <div className="space-y-6 max-w-7xl mx-auto">
-        {/* If creating or editing, show full CategoriesCreateView */}
-        {activeView !== 'list' ? (
-          <CategoriesCreateView
-            item={selectedCategory}
-            categories={categories}
-            onClose={handleCloseView}
-            onSave={handleSaveCategory}
-            onQuickCreateSubCategory={loadData}
-          />
-        ) : (
-          <>
-            {/* Header */}
+        {/* Header */}
             <div
               className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-5"
               style={{ borderColor: 'var(--color-border)' }}
@@ -631,8 +620,16 @@ export default function Categories() {
                 />
               </div>
             </TableCard.Root>
-          </>
-        )}
+
+        {/* Modal for Create / Edit Category */}
+        <CategoriesCreateView
+          isOpen={activeView !== 'list'}
+          item={selectedCategory}
+          categories={categories}
+          onClose={handleCloseView}
+          onSave={handleSaveCategory}
+          onQuickCreateSubCategory={loadData}
+        />
       </div>
     </AdminLayout>
   )

@@ -240,6 +240,11 @@ export default function ViewPopupdetails({
               )}
             </div>
             <div className="flex items-center gap-2.5 mt-1.5 flex-wrap">
+              {ing.category?.name && (
+                <span className="text-[10.5px] font-semibold text-[#126973] dark:text-[#F1D8C2] px-2 py-0.5 rounded-full bg-[#126973]/10 dark:bg-[#126973]/25 border border-[#126973]/25">
+                  {ing.category.name}
+                </span>
+              )}
               {ing.sku && (
                 <span className="text-[10.5px] text-[var(--color-muted)] px-1.5 py-0.5 rounded bg-[var(--color-surface)] border border-[var(--color-border)] font-mono">
                   SKU: {ing.sku}
@@ -310,9 +315,19 @@ export default function ViewPopupdetails({
           <SectionLabel>Specifications & Metadata</SectionLabel>
           <div className="rounded-xl overflow-hidden" style={{ boxShadow: '0 8px 16px -4px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03)' }}>
             <AttrRow
+              icon={<Tag size={13} style={{ color: meta.color }} />}
+              label="Category"
+              isEven={false}
+            >
+              <span className="font-semibold text-[var(--color-text)]">
+                {ing.category?.name || 'Uncategorized'}
+              </span>
+            </AttrRow>
+
+            <AttrRow
               icon={<Warehouse size={13} style={{ color: meta.color }} />}
               label="Storage Location"
-              isEven={false}
+              isEven={true}
             >
               <span className="font-semibold text-[var(--color-text)]">
                 {ing.storage_location || 'Main Dry Storage'}

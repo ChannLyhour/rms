@@ -76,6 +76,13 @@ export const adminApi = {
   getOrderById: (id) => client.get(`/admin/orders/${id}`),
   updateOrderStatus: (id, status) => client.patch(`/admin/orders/${id}/status`, { status }),
 
+  // Raw Material / Ingredient Categories CRUD
+  getIngredientCategories: (params) => client.get('/admin/ingredient-categories', { params }),
+  getIngredientCategory: (id) => client.get(`/admin/ingredient-categories/${id}`),
+  createIngredientCategory: (data) => client.post('/admin/ingredient-categories', data),
+  updateIngredientCategory: (id, data) => client.put(`/admin/ingredient-categories/${id}`, data),
+  deleteIngredientCategory: (id) => client.delete(`/admin/ingredient-categories/${id}`),
+
   // Inventory & Supplies CRUD
   getIngredients: (params) => client.get('/admin/ingredients', { params }),
   getIngredient: (id) => client.get(`/admin/ingredients/${id}`),

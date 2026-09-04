@@ -1,12 +1,14 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   TableCard,
   Table,
   BadgeWithIcon,
   PaginationPageMinimalCenter,
+  FilterSearchInput,
+  FilterSelect,
 } from '../../../../components/TablesComponents'
 import {
-  SearchLg,
   Plus,
   Edit01,
   Trash01,
@@ -20,13 +22,58 @@ import {
   X,
   Camera,
   Eye,
+  Copy,
+  Tag,
+  ArrowLeft,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { adminApi } from '../../../../api/adminApi'
 import StockAdjustModal from '../views/StockAdjustModal'
 import ViewPopupdetails from './utils/ViewPopupdetails'
+import CategoriesIngredients, { getCategoryVisual } from './utils/CategoriesIngredients'
 
 // ── Iconly 3D Icons (from https://web.iconly.pro/3d) ────────────────────────
+// 0. Iconly 3D Tag / Category
+const Iconly3DTag = ({ size = 32, className = '' }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 48 48" className={`shrink-0 ${className}`}>
+    <defs>
+      <radialGradient id="ic3d-tag-body" cx="35%" cy="30%" r="70%">
+        <stop offset="0%" stopColor="#5EEAD4" />
+        <stop offset="55%" stopColor="#14B8A6" />
+        <stop offset="100%" stopColor="#0D9488" />
+      </radialGradient>
+      <linearGradient id="ic3d-tag-depth" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#0F766E" />
+        <stop offset="100%" stopColor="#042F2E" />
+      </linearGradient>
+      <filter id="ic3d-tag-shadow" x="-20%" y="-10%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="3" stdDeviation="2.5" floodColor="#0F766E" floodOpacity="0.35" />
+      </filter>
+    </defs>
+    <g filter="url(#ic3d-tag-shadow)">
+      <path
+        d="M21 7H11C8.8 7 7 8.8 7 11V21C7 22.1 7.4 23.1 8.2 23.9L24.2 39.9C25.8 41.5 28.4 41.5 30 39.9L39.9 30C41.5 28.4 41.5 25.8 39.9 24.2L23.9 8.2C23.1 7.4 22.1 7 21 7Z"
+        fill="url(#ic3d-tag-depth)"
+        transform="translate(0, 2)"
+      />
+      <path
+        d="M21 7H11C8.8 7 7 8.8 7 11V21C7 22.1 7.4 23.1 8.2 23.9L24.2 39.9C25.8 41.5 28.4 41.5 30 39.9L39.9 30C41.5 28.4 41.5 25.8 39.9 24.2L23.9 8.2C23.1 7.4 22.1 7 21 7Z"
+        fill="url(#ic3d-tag-body)"
+      />
+      <path
+        d="M10 13C10 10.5 11.5 9 14 9H20"
+        stroke="#FFFFFF"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeOpacity="0.75"
+        fill="none"
+      />
+      <circle cx="14" cy="14" r="3.2" fill="#042F2E" opacity="0.85" />
+      <circle cx="14" cy="14" r="2" fill="#FEF08A" />
+    </g>
+  </svg>
+)
+
 // 1. Iconly 3D Box / Archive
 const Iconly3DBox = ({ size = 32, className = '' }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 48 48" className={`shrink-0 ${className}`}>
@@ -167,16 +214,32 @@ const Iconly3DWallet = ({ size = 32, className = '' }) => (
 
 export default function IngredientsPage({
   ingredients = [],
+  ingredientCategories = [],
   loading = false,
   onRefresh,
   onOpenCreate,
   onOpenEdit,
 }) {
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const categoryFromUrl = useMemo(() => {
+    const params = new URLSearchParams(location.search)
+    return params.get('category') || 'all'
+  }, [location.search])
+
   const [search, setSearch] = useState('')
   const [unitFilter, setUnitFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState(categoryFromUrl)
   const [showLowStockOnly, setShowLowStockOnly] = useState(false)
   const [page, setPage] = useState(1)
   const pageSize = 10
+
+  // Keep categoryFilter in sync when URL category query param changes
+  useEffect(() => {
+    setCategoryFilter(categoryFromUrl)
+    setPage(1)
+  }, [categoryFromUrl])
 
   const [sortDescriptor, setSortDescriptor] = useState({
     column: 'created_at',
@@ -187,6 +250,49 @@ export default function IngredientsPage({
   const [adjustTarget, setAdjustTarget] = useState(null)
   // Full Detail Modal state
   const [detailItem, setDetailItem] = useState(null)
+  const [copiedId, setCopiedId] = useState(null)
+  // Category Management Modal state
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
+
+  const selectedCategory = useMemo(() => {
+    if (!categoryFilter || categoryFilter === 'all') return null
+    return ingredientCategories.find((c) => String(c.id) === String(categoryFilter)) || null
+  }, [categoryFilter, ingredientCategories])
+
+  const handleCopyName = (text, id, e) => {
+    e?.stopPropagation()
+    if (!text) return
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).catch(() => {
+          const el = document.createElement('textarea')
+          el.value = text
+          el.style.position = 'fixed'
+          el.style.opacity = '0'
+          document.body.appendChild(el)
+          el.focus()
+          el.select()
+          document.execCommand('copy')
+          document.body.removeChild(el)
+        })
+      } else {
+        const el = document.createElement('textarea')
+        el.value = text
+        el.style.position = 'fixed'
+        el.style.opacity = '0'
+        document.body.appendChild(el)
+        el.focus()
+        el.select()
+        document.execCommand('copy')
+        document.body.removeChild(el)
+      }
+      setCopiedId(id)
+      toast.success(`Copied "${text}"`)
+      setTimeout(() => setCopiedId(null), 1500)
+    } catch {
+      toast.error('Failed to copy')
+    }
+  }
 
   // Inline Table Add Row state
   const [isAddingRow, setIsAddingRow] = useState(false)
@@ -195,6 +301,7 @@ export default function IngredientsPage({
   const [uploadingId, setUploadingId] = useState(null)
   const [newRow, setNewRow] = useState({
     name: '',
+    category_id: '',
     unit: 'kg',
     stock_quantity: '',
     low_stock_threshold: '5',
@@ -261,6 +368,7 @@ export default function IngredientsPage({
     try {
       await adminApi.createIngredient({
         name: newRow.name.trim(),
+        category_id: newRow.category_id || null,
         unit: newRow.unit || 'kg',
         stock_quantity: parseFloat(newRow.stock_quantity) || 0,
         low_stock_threshold: parseFloat(newRow.low_stock_threshold) || 5,
@@ -272,6 +380,7 @@ export default function IngredientsPage({
       toast.success(`Added ${newRow.name.trim()} successfully`)
       setNewRow({
         name: '',
+        category_id: '',
         unit: 'kg',
         stock_quantity: '',
         low_stock_threshold: '5',
@@ -293,6 +402,7 @@ export default function IngredientsPage({
     setIsAddingRow(false)
     setNewRow({
       name: '',
+      category_id: '',
       unit: 'kg',
       stock_quantity: '',
       low_stock_threshold: '5',
@@ -319,18 +429,35 @@ export default function IngredientsPage({
     return { totalItems, lowStockCount, totalValue }
   }, [ingredients])
 
+  const unitOptions = useMemo(() => {
+    const uniqueUnits = Array.from(new Set(ingredients.map((i) => i.unit).filter(Boolean)))
+    return [
+      { value: 'all', label: 'All Units' },
+      ...uniqueUnits.map((u) => ({ value: u, label: u })),
+    ]
+  }, [ingredients])
+
+  const categoryOptions = useMemo(() => {
+    return [
+      { value: 'all', label: 'All Categories' },
+      ...ingredientCategories.map((c) => ({ value: c.id, label: c.name })),
+    ]
+  }, [ingredientCategories])
+
   // Filtered & Sorted List
   const filteredList = useMemo(() => {
     return ingredients.filter((item) => {
       const matchSearch = item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.unit.toLowerCase().includes(search.toLowerCase())
+        item.unit.toLowerCase().includes(search.toLowerCase()) ||
+        (item.category?.name && item.category.name.toLowerCase().includes(search.toLowerCase()))
       const matchUnit = unitFilter === 'all' || item.unit === unitFilter
+      const matchCategory = categoryFilter === 'all' || item.category_id === categoryFilter
       const isLow = Number(item.stock_quantity) <= Number(item.low_stock_threshold)
       const matchLowStock = !showLowStockOnly || isLow
 
-      return matchSearch && matchUnit && matchLowStock
+      return matchSearch && matchUnit && matchCategory && matchLowStock
     })
-  }, [ingredients, search, unitFilter, showLowStockOnly])
+  }, [ingredients, search, unitFilter, categoryFilter, showLowStockOnly])
 
   const sortedList = useMemo(() => {
     return [...filteredList].sort((a, b) => {
@@ -390,116 +517,242 @@ export default function IngredientsPage({
 
   return (
     <div className="space-y-5 animate-in fade-in duration-150">
-      {/* ── Metrics Cards ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Card 1: Total Tracked Items */}
-        <div
-          className="p-4 rounded-xl border flex items-center justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group border-b-[3px] border-b-[#126973]"
-          style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
-        >
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Total Tracked Items</p>
-            <p className="text-2xl font-extrabold text-[var(--color-text)] mt-1 tracking-tight">{metrics.totalItems}</p>
-          </div>
-          <div className="w-13 h-13 rounded-2xl bg-[#126973]/10 dark:bg-[#126973]/20 border border-[#126973]/20 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 transition-transform duration-200">
-            <Iconly3DBox size={34} />
-          </div>
-        </div>
-
-        {/* Card 2: Low Stock Warnings */}
-        <div
-          className="p-4 rounded-xl border flex items-center justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group border-b-[3px] border-b-amber-500"
-          style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
-        >
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Low Stock Warnings</p>
-            <p className="text-2xl font-extrabold text-[var(--color-text)] mt-1 tracking-tight">
-              {metrics.lowStockCount} <span className="text-xs font-semibold text-[var(--color-muted)]">Items</span>
-            </p>
-          </div>
-          <div className="w-13 h-13 rounded-2xl bg-amber-500/15 dark:bg-amber-500/25 border border-amber-500/25 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 transition-transform duration-200">
-            <Iconly3DDanger size={34} />
-          </div>
-        </div>
-
-        {/* Card 3: Estimated Stock Valuation */}
-        <div
-          className="p-4 rounded-xl border flex items-center justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group border-b-[3px] border-b-emerald-500"
-          style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
-        >
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Estimated Stock Valuation</p>
-            <p className="text-2xl font-extrabold text-emerald-500 mt-1 tracking-tight">${metrics.totalValue.toFixed(2)}</p>
-          </div>
-          <div className="w-13 h-13 rounded-2xl bg-emerald-500/15 dark:bg-emerald-500/25 border border-emerald-500/25 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 transition-transform duration-200">
-            <Iconly3DWallet size={34} />
-          </div>
-        </div>
-      </div>
-
-      {/* ── Filters & Search Row ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <div
-            className="flex items-center gap-3 px-3.5 py-2 rounded-[5px] border text-xs max-w-md shadow-xs"
-            style={{
-              background: 'var(--color-card)',
-              borderColor: 'var(--color-border)',
-            }}
+      {/* ══════════════════════════════════════════════════════════
+         PAGE THREE: SHOW LIST STOCK
+         ══════════════════════════════════════════════════════════ */}
+      {/* Top Header Row for Page Three (Stock List) with Back to Categories */}
+      <div
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3.5 px-4 rounded-2xl border shadow-xs animate-in fade-in"
+        style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+      >
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/inventory?tab=categories')}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card,#ffffff)] text-xs font-bold text-[var(--color-text)] hover:bg-[#126973]/10 hover:text-[#126973] hover:border-[#126973]/30 transition-all cursor-pointer shadow-2xs group"
+            title="Return to Category Cards (Page Two)"
           >
-            <SearchLg size={16} className="text-[var(--color-muted)] shrink-0 stroke-[2px]" />
-            <input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setPage(1)
-              }}
-              placeholder="Search ingredients by name, unit..."
-              className="bg-transparent border-none outline-none w-full text-xs placeholder:text-[var(--color-muted)] text-[var(--color-text)]"
-            />
-            {search && (
+            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+            <span>Back to Categories</span>
+          </button>
+
+              <div className="h-6 w-px bg-[var(--color-border)] hidden sm:block" />
+
+              <div className="flex items-center gap-2.5">
+                <span className="text-2xl">
+                  {selectedCategory ? getCategoryVisual(selectedCategory.code, selectedCategory.name).emoji : '📦'}
+                </span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-bold text-[var(--color-text)] tracking-tight">
+                      {selectedCategory ? `${selectedCategory.name} Stock` : 'All Raw Materials Stock'}
+                    </h2>
+                    {selectedCategory?.code && (
+                      <span className="font-mono text-[10.5px] font-bold px-2 py-0.5 rounded-md border border-[var(--color-border)] bg-black/5 dark:bg-white/5 text-[var(--color-muted)]">
+                        {selectedCategory.code}
+                      </span>
+                    )}
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#126973]/10 text-[#126973] dark:text-[#F1D8C2]">
+                      {filteredList.length} items
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[var(--color-muted)]">
+                    {selectedCategory
+                      ? `Viewing stock items under ${selectedCategory.name}`
+                      : 'Viewing complete inventory across all categories'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setSearch('')}
-                className="text-[11px] font-medium text-slate-400 hover:text-rose-500 cursor-pointer"
+                onClick={() => navigate('/inventory?tab=categories')}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-xs font-semibold text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer"
               >
-                Clear
+                <Tag size={13} />
+                <span>Switch Category</span>
               </button>
-            )}
+            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setShowLowStockOnly(!showLowStockOnly)}
-            className={`px-3 py-2 rounded-[5px] text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
-              showLowStockOnly
-                ? 'bg-amber-500/15 border-amber-500/40 text-amber-500 shadow-xs'
-                : 'border-[var(--color-border)] text-[var(--color-muted)] hover:bg-[#126973]/5'
-            }`}
+          {/* ── Metrics Cards (Stock Valuation & Warnings) ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Card 1: Total Tracked Raw Materials */}
+            <div
+              className="p-4 rounded-xl border flex items-center justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group border-b-[3px] border-b-[#126973]"
+              style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+            >
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Raw Materials</p>
+                <p className="text-2xl font-extrabold text-[var(--color-text)] mt-1 tracking-tight">
+                  {metrics.totalItems} <span className="text-xs font-semibold text-[var(--color-muted)]">Items</span>
+                </p>
+              </div>
+              <div className="w-13 h-13 rounded-2xl bg-[#126973]/10 dark:bg-[#126973]/20 border border-[#126973]/20 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 transition-transform duration-200">
+                <Iconly3DBox size={34} />
+              </div>
+            </div>
+
+            {/* Card 2: Material Categories */}
+            <button
+              type="button"
+              onClick={() => setActiveSubView('categories')}
+              className="p-4 rounded-xl border flex items-center justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group border-b-[3px] border-b-teal-600 text-left cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/50"
+              style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+              title="Click to view & manage Material Categories"
+            >
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Categories</p>
+                <p className="text-2xl font-extrabold text-[#126973] dark:text-[#F1D8C2] mt-1 tracking-tight">
+                  {ingredientCategories.length} <span className="text-xs font-semibold text-[var(--color-muted)]">Groups</span>
+                </p>
+                <div className="mt-1.5">
+                  <span className="text-[10.5px] font-semibold text-teal-600 dark:text-teal-400 group-hover:underline inline-flex items-center gap-1 transition-colors">
+                    Click to view categories →
+                  </span>
+                </div>
+              </div>
+              <div className="w-13 h-13 rounded-2xl bg-teal-500/15 dark:bg-teal-500/25 border border-teal-500/25 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 transition-transform duration-200">
+                <Iconly3DTag size={34} />
+              </div>
+            </button>
+
+            {/* Card 3: Low Stock Warnings */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowLowStockOnly((prev) => !prev)
+                setPage(1)
+              }}
+              className={`p-4 rounded-xl border flex items-center justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group border-b-[3px] border-b-amber-500 text-left cursor-pointer ${
+                showLowStockOnly
+                  ? 'ring-2 ring-amber-500 bg-amber-500/10'
+                  : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/50'
+              }`}
+              style={{ background: showLowStockOnly ? undefined : 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+              title="Click to filter low stock items"
+            >
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Low Stock Warnings</p>
+                <p className="text-2xl font-extrabold text-[var(--color-text)] mt-1 tracking-tight">
+                  {metrics.lowStockCount} <span className="text-xs font-semibold text-[var(--color-muted)]">Items</span>
+                </p>
+              </div>
+              <div className="w-13 h-13 rounded-2xl bg-amber-500/15 dark:bg-amber-500/25 border border-amber-500/25 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 transition-transform duration-200">
+                <Iconly3DDanger size={34} />
+              </div>
+            </button>
+
+            {/* Card 4: Estimated Stock Valuation */}
+            <div
+              className="p-4 rounded-xl border flex items-center justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group border-b-[3px] border-b-emerald-500"
+              style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+            >
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Stock Valuation</p>
+                <p className="text-2xl font-extrabold text-emerald-500 mt-1 tracking-tight">${metrics.totalValue.toFixed(2)}</p>
+              </div>
+              <div className="w-13 h-13 rounded-2xl bg-emerald-500/15 dark:bg-emerald-500/25 border border-emerald-500/25 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 transition-transform duration-200">
+                <Iconly3DWallet size={34} />
+              </div>
+            </div>
+          </div>
+        /* ── Table Card ── */
+        <TableCard.Root>
+          <TableCard.FilterBar
+            hasCreate
+            onCreate={() => setIsAddingRow(true)}
+            createLabel="Ingredient"
+            createButtonProps={{ variant: 'teal' }}
           >
-            <AlertTriangle size={13} />
-            <span>Low Stock ({metrics.lowStockCount})</span>
-          </button>
-        </div>
+          <div className="flex items-center gap-2.5 flex-1 max-w-xl">
+            <FilterSearchInput
+              value={search}
+              onChange={(val) => {
+                setSearch(val)
+                setPage(1)
+              }}
+              placeholder="Search..."
+              className="w-full"
+            />
 
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => setIsAddingRow(true)}
-            className="px-3.5 py-1.5 rounded-[5px] text-xs font-bold text-white bg-[#126973] hover:bg-[#126973]/90 active:scale-[0.98] transition-all cursor-pointer flex items-center gap-1.5 shadow-xs shrink-0"
-            title="Add new ingredient row directly on table"
-          >
-            <Plus size={14} className="stroke-[2.5px]" />
-            {/* <span>Add</span> */}
-          </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowLowStockOnly(!showLowStockOnly)
+                setPage(1)
+              }}
+              className={`inline-flex items-center justify-center font-semibold rounded-lg border h-10 px-3 text-xs gap-1.5 transition-all cursor-pointer select-none shadow-2xs shrink-0 ${
+                showLowStockOnly
+                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400 font-bold'
+                  : 'bg-[var(--color-card,#ffffff)] border-[var(--color-border,#e2e8f0)] text-[var(--color-muted,#94a3b8)] hover:text-[var(--color-text,#0f172a)] hover:bg-black/5 dark:hover:bg-white/5'
+              }`}
+            >
+              <AlertTriangle size={14} className="shrink-0 stroke-[2px]" />
+              <span>Low Stock</span>
+              {metrics.lowStockCount > 0 && (
+                <span
+                  className={`inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded-full ${
+                    showLowStockOnly
+                      ? 'bg-amber-500 text-white'
+                      : 'bg-black/5 dark:bg-white/10 text-[var(--color-muted)]'
+                  }`}
+                >
+                  {metrics.lowStockCount}
+                </span>
+              )}
+            </button>
 
-         
-        
-      </div>
-    </div>
+            {categoryOptions.length > 1 && (
+              <FilterSelect
+                label="Category"
+                value={categoryFilter}
+                onChange={(val) => {
+                  setCategoryFilter(val)
+                  setPage(1)
+                  if (val === 'all') {
+                    navigate('/inventory?tab=ingredients', { replace: true })
+                  } else {
+                    navigate(`/inventory?tab=ingredients&category=${val}`, { replace: true })
+                  }
+                }}
+                options={categoryOptions}
+                placeholder="All Categories"
+              />
+            )}
 
-      {/* ── Table Card ── */}
-      <TableCard.Root>
+            {unitOptions.length > 2 && (
+              <FilterSelect
+                label="Unit"
+                value={unitFilter}
+                onChange={(val) => {
+                  setUnitFilter(val)
+                  setPage(1)
+                }}
+                options={unitOptions}
+                placeholder="All Units"
+              />
+            )}
+
+            <button
+              type="button"
+              onClick={() => setIsCategoryModalOpen(true)}
+              className="inline-flex items-center justify-center font-semibold rounded-lg border h-10 px-3 text-xs gap-1.5 transition-all cursor-pointer select-none shadow-2xs shrink-0 bg-[var(--color-card,#ffffff)] border-[var(--color-border,#e2e8f0)] text-[var(--color-muted,#94a3b8)] hover:text-[#126973] dark:hover:text-[#F1D8C2] hover:bg-black/5 dark:hover:bg-white/5"
+              title="Manage Raw Material Categories"
+            >
+              <Tag size={14} className="shrink-0 stroke-[2px]" />
+              <span>Categories</span>
+              {ingredientCategories.length > 0 && (
+                <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-[#126973]/10 text-[#126973] dark:text-[#F1D8C2]">
+                  {ingredientCategories.length}
+                </span>
+              )}
+            </button>
+          </div>
+        </TableCard.FilterBar>
+
         <Table aria-label="Ingredients Stock Table" sortDescriptor={sortDescriptor}>
           <Table.Header>
             <Table.Head
@@ -510,6 +763,7 @@ export default function IngredientsPage({
               sortDescriptor={sortDescriptor}
               onSort={handleSort}
             />
+            <Table.Head id="category" label="Category" />
             <Table.Head
               id="stock_quantity"
               label="Current Stock"
@@ -610,7 +864,23 @@ export default function IngredientsPage({
                   </div>
                 </Table.Cell>
 
-                {/* 2. Current Stock */}
+                {/* 2. Category */}
+                <Table.Cell>
+                  <select
+                    value={newRow.category_id}
+                    onChange={(e) => setNewRow({ ...newRow, category_id: e.target.value })}
+                    className="w-full min-w-[120px] px-2 py-1.5 rounded-[5px] text-xs font-semibold border outline-none bg-[var(--color-surface)] text-[var(--color-text)] border-[#126973]/40 cursor-pointer"
+                  >
+                    <option value="">No Category</option>
+                    {ingredientCategories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </Table.Cell>
+
+                {/* 3. Current Stock */}
                 <Table.Cell>
                   <div className="flex items-center gap-1 min-w-[100px]">
                     <input
@@ -736,7 +1006,7 @@ export default function IngredientsPage({
                             onError={(e) => { e.currentTarget.style.display = 'none' }}
                           />
                         ) : (
-                          <div className="w-full h-full bg-[#126973]/15 border border-[#126973]/30 flex items-center justify-center font-bold text-xs text-[#126973] dark:text-[#F1D8C2]">
+                          <div className="w-full h-full bg-[#126973]/15 border  flex items-center justify-center text-[#126973] dark:text-[#F1D8C2]">
                             {item.name.charAt(0).toUpperCase()}
                           </div>
                         )}
@@ -765,15 +1035,45 @@ export default function IngredientsPage({
                         />
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setDetailItem(item)}
-                        className="font-bold text-xs text-[var(--color-text)] hover:text-[#126973] dark:hover:text-[#F1D8C2] hover:underline cursor-pointer text-left truncate"
-                        title="Click to view full details"
-                      >
-                        {item.name}
-                      </button>
+                      <div className="min-w-0 flex flex-col">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setDetailItem(item)}
+                            className="text-xs text-[var(--color-text)] hover:text-[#126973] dark:hover:text-[#F1D8C2] hover:underline cursor-pointer text-left truncate font-medium"
+                            title="Click to view full details"
+                          >
+                            {item.name}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyName(item.name, item.id, e)}
+                            className="p-1 rounded text-slate-400 hover:text-[#126973] dark:hover:text-[#F1D8C2] hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer shrink-0"
+                            title="Copy name"
+                          >
+                            {copiedId === item.id ? (
+                              <Check size={13} className="text-emerald-500 stroke-[2.5px]" />
+                            ) : (
+                              <Copy size={13} className="stroke-[2px]" />
+                            )}
+                          </button>
+                        </div>
+                        <span className="text-[11px] text-[var(--color-muted)] leading-tight">
+                          {item.unit}
+                        </span>
+                      </div>
                     </div>
+                  </Table.Cell>
+
+                  {/* Category */}
+                  <Table.Cell>
+                    {item.category ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-[6px] text-[11px] font-semibold bg-[#126973]/10 text-[#126973] dark:bg-[#126973]/25 dark:text-[#F1D8C2] border border-[#126973]/20">
+                        {item.category.name}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-[var(--color-muted)] italic">-</span>
+                    )}
                   </Table.Cell>
 
                   {/* Current Stock */}
@@ -863,7 +1163,7 @@ export default function IngredientsPage({
             {/* ── Empty State ── */}
             {paginatedList.length === 0 && !isAddingRow && (
               <Table.Row>
-                <Table.Cell colSpan={7} className="py-12 text-center text-[var(--color-muted)]">
+                <Table.Cell colSpan={8} className="py-12 text-center text-[var(--color-muted)]">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <Package size={30} className="text-slate-300 dark:text-slate-600" />
                     <p className="text-xs font-semibold">No ingredients found</p>
@@ -873,7 +1173,7 @@ export default function IngredientsPage({
                       className="mt-1 px-3 py-1.5 rounded-[5px] text-xs font-bold text-white bg-[#126973] hover:bg-[#126973]/90 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
                     >
                       <Plus size={13} strokeWidth={2.5} />
-                      <span>Add First Ingredient Directly</span>
+                      <span>Add Ingredient Directly</span>
                     </button>
                   </div>
                 </Table.Cell>
@@ -886,10 +1186,9 @@ export default function IngredientsPage({
                 onClick={() => setIsAddingRow(true)}
                 className="hover:bg-[#126973]/5 dark:hover:bg-[#126973]/10 cursor-pointer border-t border-dashed border-[var(--color-border)] group transition-colors"
               >
-                <Table.Cell colSpan={7} className="py-2.5 px-4 text-center">
+                <Table.Cell colSpan={8} className="py-2.5 px-4 text-center">
                   <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#126973] dark:text-[#F1D8C2] group-hover:underline">
-                    <Plus size={14} className="stroke-[2.5px]" />
-                    <span>+ Add new ingredient row directly on table...</span>
+                    <Plus size={16} className="stroke-[2.5px]" />
                   </div>
                 </Table.Cell>
               </Table.Row>
@@ -908,8 +1207,6 @@ export default function IngredientsPage({
         )}
       </TableCard.Root>
 
-      
-
       {/* Full Detail View Modal */}
       {detailItem && (
         <ViewPopupdetails
@@ -924,6 +1221,16 @@ export default function IngredientsPage({
             setDetailItem(null)
             setAdjustTarget(it)
           }}
+        />
+      )}
+
+      {/* Raw Material Categories Management Modal */}
+      {isCategoryModalOpen && (
+        <CategoriesIngredients
+          categories={ingredientCategories}
+          isModal={true}
+          onClose={() => setIsCategoryModalOpen(false)}
+          onRefresh={onRefresh}
         />
       )}
     </div>

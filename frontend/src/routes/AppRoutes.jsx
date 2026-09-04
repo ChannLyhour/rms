@@ -21,6 +21,8 @@ import TablesManagement from '../pages/admin/TablesManagement'
 import Products from '../pages/admin/Products'
 import Categories from '../pages/admin/categories/Categories'
 import Categoriesgroup from '../pages/admin/categories/Categoriesgroup'
+import CategoriesDetails from '../pages/admin/categories/CategoriesDetails'
+import SubCategoriesDetails from '../pages/admin/categories/SubCategoriesDetails'
 import OptionGroups from '../pages/admin/OptionGroups'
 import Variantsgroup from '../pages/admin/variants/Variantsgroup'
 import Inventory from '../pages/admin/Inventory'
@@ -180,9 +182,29 @@ export default function AppRoutes() {
           <Categories />
         </RoleBasedRoute>
       } />
+      <Route path="/categories/:id" element={
+        <RoleBasedRoute roles={['admin', 'manager']} permissions={['menu.manage']}>
+          <CategoriesDetails />
+        </RoleBasedRoute>
+      } />
       <Route path="/groups/categories" element={
         <RoleBasedRoute roles={['admin', 'manager']} permissions={['menu.manage']}>
           <Categoriesgroup />
+        </RoleBasedRoute>
+      } />
+      <Route path="/groups/categories/:id" element={
+        <RoleBasedRoute roles={['admin', 'manager']} permissions={['menu.manage']}>
+          <CategoriesDetails />
+        </RoleBasedRoute>
+      } />
+      <Route path="/categories/:categoryId/subcategories/:id" element={
+        <RoleBasedRoute roles={['admin', 'manager']} permissions={['menu.manage']}>
+          <SubCategoriesDetails />
+        </RoleBasedRoute>
+      } />
+      <Route path="/subcategories/:id" element={
+        <RoleBasedRoute roles={['admin', 'manager']} permissions={['menu.manage']}>
+          <SubCategoriesDetails />
         </RoleBasedRoute>
       } />
       <Route path="/categories-groups" element={
@@ -214,6 +236,11 @@ export default function AppRoutes() {
       {/* Inventory & Supply */}
       <Route path="/inventory" element={
         <RoleBasedRoute roles={['admin', 'manager', 'kitchen']} permissions={['stock.manage']}>
+          <Inventory />
+        </RoleBasedRoute>
+      } />
+      <Route path="/inventory/categories" element={
+        <RoleBasedRoute roles={['admin', 'manager', 'kitchen']} permissions={['stock.manage', 'ingredients.manage']}>
           <Inventory />
         </RoleBasedRoute>
       } />

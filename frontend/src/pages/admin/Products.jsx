@@ -16,7 +16,7 @@ import {
   TableActionButtons
 } from '../../components/TablesComponents'
 import { Check, X, SearchLg, Plus } from '@untitledui/icons'
-import { Package, Tag, EyeOff, Building2, Coffee, Wine, ShoppingCart, Utensils } from 'lucide-react'
+import { Package, Tag, EyeOff, Building2, Coffee, Wine, ShoppingCart, Utensils, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function Products() {
@@ -51,8 +51,8 @@ export default function Products() {
   }
 
   const loadData = () => {
-    adminApi.getProducts().then(({ data }) => setProducts(data.data || []))
-    adminApi.getCategories().then(({ data }) => setCategories(data.data || []))
+    adminApi.getProducts({ limit: 200 }).then(({ data }) => setProducts(data.data || []))
+    adminApi.getCategories({ limit: 200 }).then(({ data }) => setCategories(data.data || []))
     axiosClient.get('/outlets').then(({ data }) => setOutlets(data.data || [])).catch(() => {})
   }
 
@@ -60,12 +60,40 @@ export default function Products() {
     loadData()
   }, [])
 
+  // Category hierarchy map & resolver
+  const categoryMap = useMemo(() => {
+    const map = {}
+    categories.forEach((c) => {
+      map[String(c.id)] = c
+    })
+    return map
+  }, [categories])
+
+  const getProductCategoryHierarchy = (p) => {
+    const cat = p.category || categoryMap[String(p.category_id)]
+    const isSub = Boolean(cat?.parent_id)
+    const parentCat = isSub ? categoryMap[String(cat.parent_id)] : null
+
+    const mainName = isSub
+      ? (parentCat?.name || 'Category')
+      : (cat?.name || p.category_name || 'Uncategorized')
+
+    const subName = isSub
+      ? cat?.name
+      : (p.sub_category?.name || p.sub_category || p.sub_category_name || p.subcategory || null)
+
+    return { mainName, subName }
+  }
+
   // Sort & Filter logic
   const sortedAndFiltered = useMemo(() => {
     let list = products.filter((p) => {
-      const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-        (p.category?.name && p.category.name.toLowerCase().includes(search.toLowerCase())) ||
-        (p.barcode && p.barcode.toLowerCase().includes(search.toLowerCase()))
+      const { mainName, subName } = getProductCategoryHierarchy(p)
+      const q = search.toLowerCase()
+      const matchSearch = p.name.toLowerCase().includes(q) ||
+        mainName.toLowerCase().includes(q) ||
+        (subName && subName.toLowerCase().includes(q)) ||
+        (p.barcode && p.barcode.toLowerCase().includes(q))
 
       const matchOutlet = outletFilter === 'all' || String(p.outlet_id) === String(outletFilter)
 
@@ -118,8 +146,10 @@ export default function Products() {
       let second = b[sortDescriptor.column]
 
       if (sortDescriptor.column === 'category') {
-        first = a.category?.name || ''
-        second = b.category?.name || ''
+        const catA = getProductCategoryHierarchy(a)
+        const catB = getProductCategoryHierarchy(b)
+        first = `${catA.mainName} ${catA.subName || ''}`
+        second = `${catB.mainName} ${catB.subName || ''}`
       }
 
       if (typeof first === 'number' && typeof second === 'number') {
@@ -139,7 +169,7 @@ export default function Products() {
 
       return 0
     })
-  }, [products, search, outletFilter, sortDescriptor])
+  }, [products, search, outletFilter, sortDescriptor, categoryMap, advancedFilters])
 
   // Reset page on search or filter change
   useEffect(() => {
@@ -399,14 +429,8 @@ export default function Products() {
                     sortDescriptor={sortDescriptor}
                     onSort={handleSort}
                   />
-                  <Table.Head
-                    id="category"
-                    label="Category"
-                    allowsSorting
-                    sortDescriptor={sortDescriptor}
-                    onSort={handleSort}
-                  />
-                  <Table.Head id="outlet" label="Assigned Venue" />
+                 
+                  <Table.Head id="outlet" label="Venue" />
                   <Table.Head
                     id="price"
                     label="Price"
@@ -461,60 +485,71 @@ export default function Products() {
                                   }}
                                 />
                               ) : (
-                                <span>🍽️</span>
+                                <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded"style={{
+                                  background: 'var(--color-bg)',
+                                  borderColor: 'var(--color-border)',
+                                  color: 'var(--color-text)',
+                                }}>
+                                  {p.name}
+                                </span>
                               )}
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5">
-                                <p className="font-bold text-xs truncate leading-snug" style={{ color: 'var(--color-text)' }}>
+                                <p className=" text-xs " style={{ color: 'var(--color-text)' }}>
                                   {p.name}
                                 </p>
                               </div>
                               {p.barcode && (
-                                <span className="font-mono text-[10px] text-slate-400 block mt-0.5">
+                                <span className="text-[10px] text-slate-400 block mt-0.5">
                                   #{p.barcode}
                                 </span>
                               )}
-                              {p.description && (
+                              {/* {p.description && (
                                 <p className="text-[11px] truncate max-w-xs opacity-75" style={{ color: 'var(--color-muted)' }}>
                                   {p.description}
                                 </p>
-                              )}
+                              )} */}
+                              {(() => {
+                                const { mainName, subName } = getProductCategoryHierarchy(p)
+                                return (
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+                                    <span>{mainName}</span>
+                                    {subName && (
+                                      <>
+                                        <ChevronRight size={12} className="text-slate-400 shrink-0" />
+                                        <span className="font-medium text-slate-600 dark:text-slate-300">
+                                          {subName}
+                                        </span>
+                                      </>
+                                    )}
+                                  </span>
+                                )
+                              })()}
                             </div>
                           </div>
                         </Table.Cell>
 
-                        {/* Category */}
-                        <Table.Cell>
-                          <span
-                            className="px-2.5 py-0.5 rounded-[5px] border font-medium inline-block text-[11px]"
-                            style={{
-                              background: 'var(--color-bg)',
-                              borderColor: 'var(--color-border)',
-                              color: 'var(--color-text)',
-                            }}
-                          >
-                            {p.category?.name || 'Uncategorized'}
-                          </span>
-                        </Table.Cell>
+                        
 
                         {/* Assigned Venue */}
                         <Table.Cell>
                           {outlet ? (
-                            <span
-                              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[5px] border text-xs font-semibold"
-                              style={{
-                                background: 'var(--color-bg)',
-                                borderColor: 'var(--color-border)',
-                                color: 'var(--color-text)',
-                              }}
-                            >
-                              {getOutletIcon(outlet.type, 13)}
+                           <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded"style={{
+                              background: 'var(--color-bg)',
+                              borderColor: 'var(--color-border)',
+                              color: 'var(--color-text)',
+                            }}>
+                              
                               <span>{outlet.name}</span>
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                              🏢 All Venues
+                            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded"style={{
+                              background: 'var(--color-bg)',
+                              borderColor: 'var(--color-border)',
+                              color: 'var(--color-text)',
+                            }}>
+                              All Venues
                             </span>
                           )}
                         </Table.Cell>
@@ -525,8 +560,30 @@ export default function Products() {
                         </Table.Cell>
 
                         {/* Stock */}
-                        <Table.Cell className="font-mono text-xs" style={{ color: 'var(--color-muted)' }}>
-                          {p.track_stock ? p.stock_quantity : '∞ (Unlimited)'}
+                        <Table.Cell className="text-xs">
+                          {p.is_unlimited || !p.track_stock ? (
+                            <span className="inline-flex items-center gap-1 font-medium text-slate-500 dark:text-slate-400">
+                              <span className="text-sm leading-none font-sans">∞</span>
+                              <span>Unlimited</span>
+                            </span>
+                          ) : (
+                            <div className="flex items-center gap-1.5 font-mono">
+                              <span
+                                className={`font-bold ${
+                                  Number(p.stock_quantity) <= Number(p.low_stock_threshold ?? 5)
+                                    ? 'text-amber-600 dark:text-amber-400'
+                                    : 'text-[var(--color-text)]'
+                                }`}
+                              >
+                                {p.stock_quantity}
+                              </span>
+                              {Number(p.stock_quantity) <= Number(p.low_stock_threshold ?? 5) && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-sans">
+                                  Low
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </Table.Cell>
 
                         {/* Availability Badge */}
