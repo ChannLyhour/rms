@@ -15,8 +15,8 @@ import {
   Building2,
   Tag,
   Loader2,
-  Camera,
-  Upload,
+  Image as ImageIcon,
+  Trash2,
   X
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -40,16 +40,46 @@ export default function IngredientCreateView({ ingredient, categories = [], onCl
   const [formData, setFormData] = useState({
     id: '',
     category_id: '',
+    outlet_id: '',
     name: '',
     unit: 'kg',
     stock_quantity: '',
     low_stock_threshold: '5',
     cost_per_unit: '',
     sku: '',
-    storage_location: 'Main Dry Storage',
     image_url: '',
     is_active: true,
   })
+
+  const [outlets, setOutlets] = useState([])
+
+  useEffect(() => {
+    adminApi.getOutlets({ active: true })
+      .then((res) => {
+        const data = res.data?.data || res.data || []
+        setOutlets(Array.isArray(data) ? data : [])
+      })
+      .catch((err) => console.error('Failed to load outlets:', err))
+  }, [])
+
+  const outletOptions = useMemo(() => [
+    { id: '', value: '', name: 'All Outlets / Central Warehouse (Shared)', label: 'All Outlets / Central Warehouse (Shared)', badge: 'CENTRAL' },
+    ...outlets.map((o) => ({
+      id: String(o.id),
+      value: String(o.id),
+      label: o.name,
+      name: o.name,
+      badge: o.code || o.type?.toUpperCase() || 'BRANCH',
+      description:
+        o.type === 'cafe'
+          ? 'Cafe & Bakery'
+          : o.type === 'bar'
+          ? 'SkyBar & Lounge'
+          : o.type === 'retail'
+          ? 'Supermarket / Mart'
+          : 'Grand Restaurant',
+    })),
+  ], [outlets])
 
   const categoryOptions = useMemo(() => [
     { id: '', value: '', label: 'None (Uncategorized)', name: 'None (Uncategorized)' },
@@ -71,13 +101,13 @@ export default function IngredientCreateView({ ingredient, categories = [], onCl
       setFormData({
         id: ingredient.id || '',
         category_id: ingredient.category_id || '',
+        outlet_id: ingredient.outlet_id || '',
         name: ingredient.name || '',
         unit: ingredient.unit || 'kg',
         stock_quantity: String(ingredient.stock_quantity ?? '0'),
         low_stock_threshold: String(ingredient.low_stock_threshold ?? '5'),
         cost_per_unit: String(ingredient.cost_per_unit ?? '0'),
         sku: ingredient.sku || '',
-        storage_location: ingredient.storage_location || 'Main Dry Storage',
         image_url: ingredient.image_url || '',
         is_active: ingredient.is_active !== undefined ? Boolean(ingredient.is_active) : true,
       })
@@ -85,13 +115,13 @@ export default function IngredientCreateView({ ingredient, categories = [], onCl
       setFormData({
         id: '',
         category_id: '',
+        outlet_id: '',
         name: '',
         unit: 'kg',
         stock_quantity: '',
         low_stock_threshold: '5',
         cost_per_unit: '',
         sku: '',
-        storage_location: 'Main Dry Storage',
         image_url: '',
         is_active: true,
       })
@@ -134,6 +164,7 @@ export default function IngredientCreateView({ ingredient, categories = [], onCl
 
     const payload = {
       category_id: formData.category_id || null,
+      outlet_id: formData.outlet_id || null,
       name: formData.name.trim(),
       unit: formData.unit,
       stock_quantity: parseFloat(formData.stock_quantity) || 0,
@@ -163,15 +194,13 @@ export default function IngredientCreateView({ ingredient, categories = [], onCl
 
   const stockQty = parseFloat(formData.stock_quantity) || 0
   const costUnit = parseFloat(formData.cost_per_unit) || 0
-  const lowThreshold = parseFloat(formData.low_stock_threshold) || 5
   const totalValuation = stockQty * costUnit
-  const isLowStock = stockQty <= lowThreshold
 
   const tabs = [
+    { id: 'venue', label: 'Venue & Outlet' },
     { id: 'basic', label: 'Basic Info' },
-    { id: 'stock', label: 'Stock & Reorder Levels' },
     { id: 'cost', label: 'Cost & Valuation' },
-    { id: 'storage', label: 'Storage & Location' },
+    { id: 'stock', label: 'Stock & Inventory' },
   ]
 
   return (
@@ -209,52 +238,19 @@ export default function IngredientCreateView({ ingredient, categories = [], onCl
       >
         {/* Header */}
         <div
-          className="px-8 py-6 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0"
+          className="px-8 py-6 border-b flex items-center justify-between shrink-0"
           style={{
             background: 'var(--color-surface)',
             borderColor: 'var(--color-border)',
           }}
         >
           <div>
-            <div className="flex items-center gap-3">
-              <h3 className="font-extrabold text-xl sm:text-2xl" style={{ color: 'var(--color-text)' }}>
-                {ingredient ? `Edit ${ingredient.name}` : 'Add New Raw Ingredient'}
-              </h3>
-              <span
-                className="px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                style={{
-                  background: isLowStock ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                  color: isLowStock ? '#ef4444' : '#10b981',
-                  border: `1px solid ${isLowStock ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
-                }}
-              >
-                {stockQty === 0 ? 'Out of Stock' : isLowStock ? 'Low Stock Warning' : 'Healthy Stock'}
-              </span>
-            </div>
+            <h3 className="font-extrabold text-xl sm:text-2xl" style={{ color: 'var(--color-text)' }}>
+              {ingredient ? `Edit ${formData.name || 'Raw Material'}` : 'Add New Raw Material'}
+            </h3>
             <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>
-              Configure unit metrics, current on-hand warehouse inventory, reorder triggers and unit purchasing costs.
+              Fill out the details below to define your raw ingredient.
             </p>
-          </div>
-
-          {/* Live Asset Valuation Chip */}
-          <div
-            className="p-3.5 rounded-[5px] border flex items-center gap-3 shrink-0"
-            style={{
-              background: 'var(--color-bg)',
-              borderColor: 'var(--color-border)',
-            }}
-          >
-            <div className="w-9 h-9 rounded-lg bg-[#126973]/15 flex items-center justify-center text-[#126973] dark:text-[#F1D8C2]">
-              <DollarSign size={18} />
-            </div>
-            <div>
-              <span className="block text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
-                On-Hand Valuation
-              </span>
-              <span className="text-base font-extrabold font-mono text-[#126973] dark:text-[#F1D8C2]">
-                ${totalValuation.toFixed(2)}
-              </span>
-            </div>
           </div>
         </div>
 
@@ -288,145 +284,42 @@ export default function IngredientCreateView({ ingredient, categories = [], onCl
           {/* Form Body */}
           <div ref={parentRef} className="flex-1 overflow-y-auto max-h-[75vh] scroll-smooth p-6 relative scrollbar-none">
             <form onSubmit={handleSubmit} className="space-y-8 max-w-3xl">
-              {/* ── TAB 1: Basic Info ──────────────────────────── */}
-              <div id="basic" className="space-y-2.5 scroll-mt-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                    Ingredient Specification
-                  </h3>
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#126973]/10 text-[#126973] dark:text-[#F1D8C2]">
-                    Required Fields
-                  </span>
-                </div>
-
+              {/* ── TAB 1: Venue & Outlet ──────────────────────────── */}
+              <div id="venue" className="space-y-2.5 scroll-mt-6">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  Venue and Outlet
+                </h3>
                 <div
-                  className="rounded-[5px] p-6 sm:p-7 space-y-5 border"
+                  className="rounded-[5px] p-6 sm:p-7 space-y-4"
                   style={{
                     background: 'var(--color-surface)',
-                    borderColor: 'var(--color-border)',
                   }}
                 >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {/* Ingredient Image Upload */}
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--color-muted)' }}>
-                        Ingredient Photo (Optional)
-                      </label>
-                      <div className="flex items-center gap-4">
-                        <div className="relative group/editimg w-20 h-20 rounded-[8px] border-2 border-dashed border-[#126973]/40 bg-[var(--color-bg)] flex items-center justify-center overflow-hidden shrink-0">
-                          {isUploadingImage ? (
-                            <span className="w-5 h-5 border-2 border-[#126973] border-t-transparent rounded-full animate-spin" />
-                          ) : formData.image_url ? (
-                            <>
-                              <img
-                                src={formData.image_url}
-                                alt="Ingredient preview"
-                                className="w-full h-full object-cover"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setField('image_url', '')}
-                                className="absolute inset-0 bg-black/60 opacity-0 group-hover/editimg:opacity-100 flex items-center justify-center text-white transition-opacity cursor-pointer"
-                                title="Remove image"
-                              >
-                                <X size={18} />
-                              </button>
-                            </>
-                          ) : (
-                            <label
-                              htmlFor="ingredient-modal-img"
-                              className="w-full h-full flex flex-col items-center justify-center text-[#126973] dark:text-[#F1D8C2] cursor-pointer gap-1 p-2 text-center"
-                              title="Upload photo"
-                            >
-                              <Camera size={20} />
-                              <span className="text-[10px] font-semibold">Upload</span>
-                            </label>
-                          )}
-                          <input
-                            id="ingredient-modal-img"
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            disabled={isUploadingImage}
-                            onChange={handleImageChange}
-                          />
-                        </div>
-
-                        <div className="text-xs text-[var(--color-muted)]">
-                          <p className="font-semibold text-[var(--color-text)]">Upload a photo of this ingredient</p>
-                          <p className="text-[11px] mt-0.5">Supports PNG, JPG, WEBP, SVG up to 5MB.</p>
-                          {formData.image_url && (
-                            <label
-                              htmlFor="ingredient-modal-img"
-                              className="inline-block mt-1.5 text-xs font-bold text-[#126973] dark:text-[#F1D8C2] hover:underline cursor-pointer"
-                            >
-                              Change Photo
-                            </label>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="sm:col-span-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
                       <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                        Ingredient / Raw Material Name *
+                        Venue / Outlet
                       </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. Wagyu Ribeye Beef, Extra Virgin Olive Oil, Fresh Milk"
-                        value={formData.name}
-                        onChange={(e) => setField('name', e.target.value)}
-                        className="w-full px-3.5 py-2.5 text-xs rounded-[5px] border outline-none font-semibold transition-all"
-                        style={{
-                          background: 'var(--color-bg)',
-                          borderColor: 'var(--color-border)',
-                          color: 'var(--color-text)',
-                        }}
+                      <SearchSelection
+                        name="outlet_id"
+                        options={outletOptions}
+                        valueKey="id"
+                        labelKey="name"
+                        value={String(formData.outlet_id || '')}
+                        autoSelect={false}
+                        onChange={(val) => setField('outlet_id', val || null)}
+                        placeholder="Select Venue / Outlet"
+                        searchPlaceholder="Search outlets..."
                       />
                     </div>
 
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                        Category (Raw Material)
-                      </label>
-                      <SearchSelection
-                        name="category_id"
-                        options={categoryOptions}
-                        valueKey="value"
-                        labelKey="name"
-                        value={formData.category_id}
-                        autoSelect={false}
-                        onChange={(val) => setField('category_id', val)}
-                        placeholder="Select Category..."
-                        searchPlaceholder="Search categories..."
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                        Measurement Unit *
-                      </label>
-                      <SearchSelection
-                        name="unit"
-                        options={UNIT_OPTIONS}
-                        valueKey="value"
-                        labelKey="name"
-                        value={formData.unit}
-                        autoSelect={false}
-                        onChange={(val) => setField('unit', val)}
-                        placeholder="Select Unit..."
-                        searchPlaceholder="Search kg, g, L, pcs..."
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                        SKU / Item Code (Optional)
+                        Barcode / SKU (Optional)
                       </label>
                       <input
                         type="text"
-                        placeholder="e.g. RAW-BEEF-001"
+                        placeholder="Scan or type barcode / SKU"
                         value={formData.sku}
                         onChange={(e) => setField('sku', e.target.value)}
                         className="w-full px-3.5 py-2.5 text-xs rounded-[5px] border outline-none font-mono font-bold transition-all"
@@ -441,22 +334,209 @@ export default function IngredientCreateView({ ingredient, categories = [], onCl
                 </div>
               </div>
 
-              {/* ── TAB 2: Stock & Reorder Levels ──────────────────────────── */}
-              <div id="stock" className="space-y-2.5 scroll-mt-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                    Stock &amp; Reorder Triggers
-                  </h3>
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                    BOM Consumption
-                  </span>
-                </div>
-
+              {/* ── TAB 2: Basic Info ──────────────────────────── */}
+              <div id="basic" className="space-y-2.5 scroll-mt-6">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  Basic Info
+                </h3>
                 <div
-                  className="rounded-[5px] p-6 sm:p-7 space-y-5 border"
+                  className="rounded-[5px] p-6 sm:p-7 space-y-6"
                   style={{
                     background: 'var(--color-surface)',
-                    borderColor: 'var(--color-border)',
+                  }}
+                >
+                  {/* Image Upload & Title */}
+                  <div className="flex flex-col sm:flex-row items-start gap-6">
+                    {/* Image Box */}
+                    <div
+                      className="w-32 h-32 rounded-[5px] border-2 border-dashed flex flex-col items-center justify-center shrink-0 overflow-hidden relative group transition-colors"
+                      style={{
+                        background: 'var(--color-bg)',
+                        borderColor: 'var(--color-border)',
+                      }}
+                    >
+                      {isUploadingImage && (
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white z-10">
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mb-1" />
+                          <span className="text-[10px] font-bold">Uploading...</span>
+                        </div>
+                      )}
+                      {formData.image_url ? (
+                        <>
+                          <img
+                            src={formData.image_url}
+                            alt="preview"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = 'none'
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setField('image_url', '')}
+                              className="w-9 h-9 rounded-[5px] bg-white text-rose-600 flex items-center justify-center hover:bg-rose-50 shadow-sm transition-transform active:scale-90 cursor-pointer"
+                              title="Remove Photo"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <ImageIcon size={32} style={{ color: 'var(--color-muted)' }} />
+                          <span className="text-[11px] font-bold mt-2" style={{ color: 'var(--color-muted)' }}>
+                            Upload Photo
+                          </span>
+                        </>
+                      )}
+                      {!formData.image_url && (
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          title="Upload Image File"
+                        />
+                      )}
+                    </div>
+
+                    {/* Title & Category / Unit */}
+                    <div className="flex-1 w-full space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
+                          Ingredient Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Fresh Red Dragon Fruit, Wagyu Beef, Monin Mojito Mint Syrup"
+                          value={formData.name}
+                          onChange={(e) => setField('name', e.target.value)}
+                          className="w-full px-4 py-2.5 text-xs rounded-[5px] border outline-none font-bold transition-all"
+                          style={{
+                            background: 'var(--color-bg)',
+                            borderColor: 'var(--color-border)',
+                            color: 'var(--color-text)',
+                          }}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
+                            Category *
+                          </label>
+                          <SearchSelection
+                            name="category_id"
+                            options={categoryOptions}
+                            valueKey="value"
+                            labelKey="name"
+                            value={formData.category_id}
+                            autoSelect={false}
+                            onChange={(val) => setField('category_id', val)}
+                            placeholder="Select category..."
+                            searchPlaceholder="Search categories..."
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
+                            Measurement Unit *
+                          </label>
+                          <SearchSelection
+                            name="unit"
+                            options={UNIT_OPTIONS}
+                            valueKey="value"
+                            labelKey="name"
+                            value={formData.unit}
+                            autoSelect={false}
+                            onChange={(val) => setField('unit', val)}
+                            placeholder="Select unit..."
+                            searchPlaceholder="Search kg, g, L, pcs..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── TAB 3: Cost & Valuation ──────────────────────────── */}
+              <div id="cost" className="space-y-2.5 scroll-mt-6">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  Cost &amp; Valuation
+                </h3>
+                <div
+                  className="rounded-[5px] p-6 sm:p-7 space-y-6"
+                  style={{
+                    background: 'var(--color-surface)',
+                  }}
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
+                        Cost Per Unit ($)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs font-mono">
+                          $
+                        </span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          value={formData.cost_per_unit}
+                          onChange={(e) => setField('cost_per_unit', e.target.value)}
+                          className="w-full pl-8 pr-16 py-2.5 text-xs rounded-[5px] border outline-none font-mono font-bold transition-all"
+                          style={{
+                            background: 'var(--color-bg)',
+                            borderColor: 'var(--color-border)',
+                            color: 'var(--color-text)',
+                          }}
+                        />
+                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+                          / {formData.unit}
+                        </span>
+                      </div>
+                      <p className="text-[11px] mt-1" style={{ color: 'var(--color-muted)' }}>
+                        Used in recipe cost calculations and food cost percentage analysis.
+                      </p>
+                    </div>
+
+                    <div
+                      className="rounded-[5px] p-4 border flex flex-col justify-center"
+                      style={{
+                        background: 'var(--color-bg)',
+                        borderColor: 'var(--color-border)',
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                          Total Value on Hand
+                        </span>
+                        <span className="text-xs font-mono font-bold text-[#126973] dark:text-[#F1D8C2]">
+                          {stockQty} {formData.unit} × ${costUnit.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="text-xl font-extrabold font-mono mt-1 text-slate-900 dark:text-slate-100">
+                        ${totalValuation.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── TAB 4: Stock & Inventory ──────────────────────────── */}
+              <div id="stock" className="space-y-2.5 scroll-mt-6">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  Stock &amp; Inventory
+                </h3>
+                <div
+                  className="rounded-[5px] p-6 sm:p-7 space-y-6"
+                  style={{
+                    background: 'var(--color-surface)',
                   }}
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -516,133 +596,29 @@ export default function IngredientCreateView({ ingredient, categories = [], onCl
                       </p>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* ── TAB 3: Unit Cost & Valuation ──────────────────────────── */}
-              <div id="cost" className="space-y-2.5 scroll-mt-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                    Unit Cost &amp; Valuation
-                  </h3>
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                    Financial COGS
-                  </span>
-                </div>
-
-                <div
-                  className="rounded-[5px] p-6 sm:p-7 space-y-5 border"
-                  style={{
-                    background: 'var(--color-surface)',
-                    borderColor: 'var(--color-border)',
-                  }}
-                >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  {/* Active Status Row */}
+                  <div
+                    className="flex items-center justify-between p-4 rounded-[5px] border"
+                    style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)' }}
+                  >
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                        Estimated Unit Cost ($)
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">
-                          $
-                        </span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          value={formData.cost_per_unit}
-                          onChange={(e) => setField('cost_per_unit', e.target.value)}
-                          className="w-full pl-8 pr-16 py-2.5 text-xs rounded-[5px] border outline-none font-mono font-bold transition-all"
-                          style={{
-                            background: 'var(--color-bg)',
-                            borderColor: 'var(--color-border)',
-                            color: 'var(--color-text)',
-                          }}
-                        />
-                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
-                          / {formData.unit}
-                        </span>
-                      </div>
-                      <p className="text-[11px] mt-1" style={{ color: 'var(--color-muted)' }}>
-                        Used in recipe cost calculations and food cost percentage analysis.
-                      </p>
+                      <span className="block text-xs font-bold" style={{ color: 'var(--color-text)' }}>
+                        Active Status
+                      </span>
+                      <span className="text-[11px]" style={{ color: 'var(--color-muted)' }}>
+                        Available for recipes, consumption tracking, and purchase ordering
+                      </span>
                     </div>
-
-                    <div
-                      className="rounded-[5px] p-4 border flex flex-col justify-center"
-                      style={{
-                        background: 'var(--color-bg)',
-                        borderColor: 'var(--color-border)',
-                      }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-                          Total Value on Hand
-                        </span>
-                        <span className="text-xs font-mono font-bold text-[#126973] dark:text-[#F1D8C2]">
-                          {stockQty} {formData.unit} × ${costUnit.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="text-xl font-extrabold font-mono mt-1 text-slate-900 dark:text-slate-100">
-                        ${totalValuation.toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* ── TAB 4: Storage & Location ──────────────────────────── */}
-              <div id="storage" className="space-y-2.5 scroll-mt-6">
-                <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                  Storage &amp; Active Status
-                </h3>
-
-                <div
-                  className="rounded-[5px] p-6 sm:p-7 space-y-5 border"
-                  style={{
-                    background: 'var(--color-surface)',
-                    borderColor: 'var(--color-border)',
-                  }}
-                >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--color-muted)' }}>
-                        Warehouse / Storage Location
-                      </label>
+                    <label className="relative inline-flex items-center cursor-pointer">
                       <input
-                        type="text"
-                        placeholder="e.g. Walk-in Freezer #2, Dry Pantry Shelf B"
-                        value={formData.storage_location}
-                        onChange={(e) => setField('storage_location', e.target.value)}
-                        className="w-full px-3.5 py-2.5 text-xs rounded-[5px] border outline-none font-semibold transition-all"
-                        style={{
-                          background: 'var(--color-bg)',
-                          borderColor: 'var(--color-border)',
-                          color: 'var(--color-text)',
-                        }}
+                        type="checkbox"
+                        checked={formData.is_active}
+                        onChange={(e) => setField('is_active', e.target.checked)}
+                        className="sr-only peer"
                       />
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 rounded-[5px] border" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
-                      <div>
-                        <span className="block text-xs font-bold" style={{ color: 'var(--color-text)' }}>
-                          Active Status
-                        </span>
-                        <span className="text-[11px]" style={{ color: 'var(--color-muted)' }}>
-                          Available for recipes and purchase ordering
-                        </span>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData.is_active}
-                          onChange={(e) => setField('is_active', e.target.checked)}
-                          className="sr-only peer"
-                        />
-                        <div className="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#126973]"></div>
-                      </label>
-                    </div>
+                      <div className="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#126973]"></div>
+                    </label>
                   </div>
                 </div>
               </div>

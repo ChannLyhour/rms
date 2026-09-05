@@ -6,7 +6,7 @@ import {
   PaginationPageMinimalCenter,
   FilterSearchInput,
   FilterSelect,
-} from '../../../../../components/TablesComponents'
+} from '../../../../../../components/TablesComponents'
 import {
   Plus,
   Edit01,
@@ -28,9 +28,19 @@ import {
   Table as TableIcon,
   ChevronRight,
   Eye,
+  Beef,
+  Fish,
+  Salad,
+  Milk,
+  Wheat,
+  Utensils,
+  Coffee,
+  Boxes,
+  Package,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { adminApi } from '../../../../../api/adminApi'
+import { adminApi } from '../../../../../../api/adminApi'
+import CategoriesIngredientsModal from './CategoriesIngredientsModal'
 
 // ── Iconly 3D Icons (Styled matching IngredientsPage.jsx) ──────────────────
 
@@ -159,13 +169,13 @@ const Iconly3DLayers = ({ size = 32, className = '' }) => (
   </svg>
 )
 
-// Visual styling and emoji helper for ingredient categories
+// Visual styling and icon helper for ingredient categories
 export const getCategoryVisual = (code, name) => {
   const c = String(code || '').toUpperCase()
   const n = String(name || '').toLowerCase()
   if (c === 'MEAT' || n.includes('meat') || n.includes('poultry') || n.includes('beef') || n.includes('chicken') || n.includes('pork')) {
     return {
-      emoji: '🥩',
+      icon: Beef,
       gradient: 'from-rose-500/10 to-transparent',
       accent: 'border-b-rose-500',
       tagBadge: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
@@ -174,7 +184,7 @@ export const getCategoryVisual = (code, name) => {
   }
   if (c === 'SEAFOOD' || n.includes('seafood') || n.includes('fish') || n.includes('shrimp') || n.includes('salmon')) {
     return {
-      emoji: '🐟',
+      icon: Fish,
       gradient: 'from-cyan-500/10 to-transparent',
       accent: 'border-b-cyan-500',
       tagBadge: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20',
@@ -183,7 +193,7 @@ export const getCategoryVisual = (code, name) => {
   }
   if (c === 'PRODUCE' || n.includes('produce') || n.includes('vegetable') || n.includes('fruit') || n.includes('salad')) {
     return {
-      emoji: '🥬',
+      icon: Salad,
       gradient: 'from-emerald-500/10 to-transparent',
       accent: 'border-b-emerald-500',
       tagBadge: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
@@ -192,7 +202,7 @@ export const getCategoryVisual = (code, name) => {
   }
   if (c === 'DAIRY' || n.includes('dairy') || n.includes('milk') || n.includes('egg') || n.includes('cheese') || n.includes('butter')) {
     return {
-      emoji: '🧀',
+      icon: Milk,
       gradient: 'from-amber-500/10 to-transparent',
       accent: 'border-b-amber-500',
       tagBadge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
@@ -201,7 +211,7 @@ export const getCategoryVisual = (code, name) => {
   }
   if (c === 'DRY_GOODS' || n.includes('dry') || n.includes('grain') || n.includes('flour') || n.includes('rice') || n.includes('noodle')) {
     return {
-      emoji: '🌾',
+      icon: Wheat,
       gradient: 'from-yellow-500/10 to-transparent',
       accent: 'border-b-yellow-500',
       tagBadge: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20',
@@ -210,7 +220,7 @@ export const getCategoryVisual = (code, name) => {
   }
   if (c === 'SAUCES' || n.includes('sauce') || n.includes('seasoning') || n.includes('spice') || n.includes('oil') || n.includes('vinegar')) {
     return {
-      emoji: '🧂',
+      icon: Utensils,
       gradient: 'from-orange-500/10 to-transparent',
       accent: 'border-b-orange-500',
       tagBadge: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
@@ -219,7 +229,7 @@ export const getCategoryVisual = (code, name) => {
   }
   if (c === 'BAR_BASE' || n.includes('bar') || n.includes('beverage') || n.includes('drink') || n.includes('syrup') || n.includes('tea') || n.includes('coffee')) {
     return {
-      emoji: '🍹',
+      icon: Coffee,
       gradient: 'from-purple-500/10 to-transparent',
       accent: 'border-b-purple-500',
       tagBadge: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
@@ -228,7 +238,7 @@ export const getCategoryVisual = (code, name) => {
   }
   if (c === 'PACKAGING' || n.includes('packaging') || n.includes('disposable') || n.includes('box') || n.includes('cup') || n.includes('container')) {
     return {
-      emoji: '📦',
+      icon: Boxes,
       gradient: 'from-slate-500/10 to-transparent',
       accent: 'border-b-slate-500',
       tagBadge: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20',
@@ -236,7 +246,7 @@ export const getCategoryVisual = (code, name) => {
     }
   }
   return {
-    emoji: '🏷️',
+    icon: Tag,
     gradient: 'from-teal-500/10 to-transparent',
     accent: 'border-b-[#126973]',
     tagBadge: 'bg-[#126973]/10 text-[#126973] dark:text-[#F1D8C2] border-[#126973]/20',
@@ -360,6 +370,8 @@ export default function CategoriesIngredients({
 
   // Inline Add Category Row State
   const [isAddingRow, setIsAddingRow] = useState(false)
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
+  const [selectedModalCategory, setSelectedModalCategory] = useState(null)
   const [savingNew, setSavingNew] = useState(false)
   const [newRow, setNewRow] = useState({
     name: '',
@@ -617,21 +629,21 @@ export default function CategoriesIngredients({
         <TableCard.FilterBar
           hasCreate
           onCreate={() => {
-            setIsAddingRow(true)
-            setEditingId(null)
+            setSelectedModalCategory(null)
+            setIsCategoryModalOpen(true)
           }}
           createLabel="Category"
           createButtonProps={{ variant: 'teal' }}
         >
-          <div className="flex items-center gap-2.5 flex-1 max-w-md">
+          <div className="flex items-center gap-2.5 flex-1 max-w-2xl">
             <FilterSearchInput
               value={search}
               onChange={(val) => {
                 setSearch(val)
                 setPage(1)
               }}
-              placeholder="Search category name or code..."
-              className="w-full"
+              placeholder="Search ..."
+              className="w-full min-w-[300px]"
             />
 
             <FilterSelect
@@ -705,8 +717,8 @@ export default function CategoriesIngredients({
                   <div>
                     {/* Top row: Visual & Badge */}
                     <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="w-12 h-12 rounded-2xl bg-[#126973]/10 dark:bg-[#126973]/20 border border-[#126973]/20 flex items-center justify-center text-2xl shadow-2xs group-hover:scale-110 transition-transform duration-200">
-                        <span>📦</span>
+                      <div className="w-12 h-12 rounded-2xl bg-[#126973]/10 dark:bg-[#126973]/20 border border-[#126973]/20 flex items-center justify-center text-[#126973] dark:text-[#F1D8C2] shadow-2xs group-hover:scale-110 transition-transform duration-200">
+                        <Layers size={24} />
                       </div>
                       <span className="font-mono text-[10.5px] font-bold px-2 py-0.5 rounded-md border border-[#126973]/20 bg-[#126973]/10 text-[#126973] dark:text-[#F1D8C2]">
                         ALL ITEMS
@@ -728,7 +740,7 @@ export default function CategoriesIngredients({
                       {ingredients.length} <span className="font-normal text-[var(--color-muted)] text-[11px]">total items</span>
                     </span>
                     <div className="flex items-center gap-1 text-[11px] font-bold text-[#126973] dark:text-[#F1D8C2] group-hover:translate-x-0.5 transition-transform">
-                      <span>View All</span>
+                      
                       <ChevronRight size={13} strokeWidth={2.5} />
                     </div>
                   </div>
@@ -741,87 +753,127 @@ export default function CategoriesIngredients({
                     <div
                       key={cat.id}
                       onClick={() => onSelectCategory && onSelectCategory(cat)}
-                      className={`group relative rounded-2xl border p-5 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col justify-between hover:-translate-y-1 bg-gradient-to-b ${visual.gradient} ${visual.accent} border-b-[3px] border-[var(--color-border)] shadow-xs hover:shadow-lg ${visual.glow}`}
+                      className={`group relative rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden flex flex-col justify-between hover:-translate-y-1 bg-gradient-to-b ${visual.gradient} ${visual.accent} border-b-[3px] border-[var(--color-border)] shadow-xs hover:shadow-lg ${visual.glow}`}
                       style={{ background: 'var(--color-surface)' }}
                     >
-                      <div>
-                        {/* Top row: Emoji / Visual & Code Badge */}
-                        <div className="flex items-start justify-between gap-2 mb-3">
-                          <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/10 border border-[var(--color-border)] flex items-center justify-center text-2xl shadow-2xs group-hover:scale-110 transition-transform duration-200">
-                            <span>{visual.emoji}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            {cat.code && (
-                              <span className="font-mono text-[10.5px] font-bold px-2 py-0.5 rounded-md border border-[var(--color-border)] bg-black/5 dark:bg-white/5 text-[var(--color-muted)]">
-                                {cat.code}
-                              </span>
-                            )}
-                            <span
-                              className={`w-2 h-2 rounded-full ${
-                                cat.is_active !== false ? 'bg-emerald-500 ring-2 ring-emerald-500/20' : 'bg-slate-400'
-                              }`}
-                              title={cat.is_active !== false ? 'Active' : 'Inactive'}
-                            />
-                          </div>
-                        </div>
+                      {cat.image ? (
+                        /* Top Cover Banner Image */
+                        <div className="relative w-full h-36 overflow-hidden bg-black/5 dark:bg-white/5 shrink-0 border-b border-[var(--color-border)]">
+                          <img
+                            src={cat.image}
+                            alt={cat.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              e.target.style.display = 'none'
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
 
-                        {/* Category Name & Actions */}
-                        <div className="flex items-center justify-between gap-1">
-                          <h3 className="text-base font-bold text-[var(--color-text)] group-hover:text-[#126973] dark:group-hover:text-[#F1D8C2] transition-colors line-clamp-1">
-                            {cat.name}
-                          </h3>
-                          <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          
+
+                          {/* Hover Actions */}
+                          <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-xs rounded-lg p-1 border border-white/20">
                             <button
                               type="button"
                               onClick={(e) => handleCopyName(cat.name, cat.id, e)}
-                              className="p-1 rounded-md text-[var(--color-muted)] hover:text-[#126973] transition-all cursor-pointer"
+                              className="p-1 rounded text-white/80 hover:text-white hover:bg-white/20 transition-all cursor-pointer"
                               title="Copy category name"
                             >
-                              {copiedId === cat.id ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                              {copiedId === cat.id ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
                             </button>
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setViewLayout('table')
-                                handleStartEdit(cat)
+                                setSelectedModalCategory(cat)
+                                setIsCategoryModalOpen(true)
                               }}
-                              className="p-1 rounded-md text-[var(--color-muted)] hover:text-[#126973] transition-all cursor-pointer"
+                              className="p-1 rounded text-white/80 hover:text-white hover:bg-white/20 transition-all cursor-pointer"
                               title="Edit Category"
                             >
                               <Edit01 size={13} />
                             </button>
                           </div>
+
+                         
                         </div>
+                      ) : null}
 
-                        {cat.description ? (
-                          <p className="text-xs text-[var(--color-muted)] mt-1.5 line-clamp-2 leading-relaxed">
-                            {cat.description}
-                          </p>
-                        ) : (
-                          <p className="text-xs text-[var(--color-muted)]/60 italic mt-1.5">
-                            Standard raw material classification
-                          </p>
-                        )}
-                      </div>
+                      <div className={`flex-1 flex flex-col justify-between ${cat.image ? 'p-4' : 'p-5'}`}>
+                        <div>
+                          {!cat.image && (
+                            /* Top row when no image */
+                            <div className="flex items-start justify-between gap-2 mb-3">
+                              <div className="w-12 h-12 rounded-2xl bg-black/5 dark:bg-white/10 border border-[var(--color-border)] flex items-center justify-center shadow-2xs group-hover:scale-110 transition-transform duration-200 text-[#126973] dark:text-[#F1D8C2]">
+                                {visual.icon ? <visual.icon size={22} /> : <Tag size={22} />}
+                              </div>
+                              {cat.code && (
+                                <span className="font-mono text-[10.5px] font-bold px-2 py-0.5 rounded-md border border-[var(--color-border)] bg-black/5 dark:bg-white/5 text-[var(--color-muted)]">
+                                  {cat.code}
+                                </span>
+                              )}
+                            </div>
+                          )}
 
-                      {/* Bottom: Item Count & Open action */}
-                      <div className="mt-5 pt-3.5 border-t border-[var(--color-border)] flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-[var(--color-text)] text-xs">
-                            {counts.total} <span className="font-normal text-[var(--color-muted)] text-[11px]">{counts.total === 1 ? 'item' : 'items'}</span>
-                          </span>
-                          {counts.lowStock > 0 && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30">
-                              <AlertTriangle size={10} />
-                              {counts.lowStock} low
-                            </span>
+                          {/* Category Name & Actions */}
+                          <div className="flex items-center justify-between gap-1">
+                            <h3 className="text-base font-bold text-[var(--color-text)] group-hover:text-[#126973] dark:group-hover:text-[#F1D8C2] transition-colors line-clamp-1">
+                              {cat.name}
+                            </h3>
+                            {!cat.image && (
+                              <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleCopyName(cat.name, cat.id, e)}
+                                  className="p-1 rounded-md text-[var(--color-muted)] hover:text-[#126973] transition-all cursor-pointer"
+                                  title="Copy category name"
+                                >
+                                  {copiedId === cat.id ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSelectedModalCategory(cat)
+                                    setIsCategoryModalOpen(true)
+                                  }}
+                                  className="p-1 rounded-md text-[var(--color-muted)] hover:text-[#126973] transition-all cursor-pointer"
+                                  title="Edit Category"
+                                >
+                                  <Edit01 size={13} />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {cat.description ? (
+                            <p className="text-xs text-[var(--color-muted)] mt-1.5 line-clamp-2 leading-relaxed">
+                              {cat.description}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-[var(--color-muted)]/60 italic mt-1.5">
+                              Standard raw material classification
+                            </p>
                           )}
                         </div>
 
-                        <div className="flex items-center gap-1 text-[11px] font-bold text-[#126973] dark:text-[#F1D8C2] group-hover:translate-x-0.5 transition-transform">
-                          <span>View Items</span>
-                          <ChevronRight size={13} strokeWidth={2.5} />
+                        {/* Bottom: Item Count & Open action */}
+                        <div className={`pt-3.5 border-t border-[var(--color-border)] flex items-center justify-between text-xs ${cat.image ? 'mt-3.5' : 'mt-5'}`}>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-[var(--color-text)] text-xs">
+                              {counts.total} <span className="font-normal text-[var(--color-muted)] text-[11px]">{counts.total === 1 ? 'item' : 'items'}</span>
+                            </span>
+                            {counts.lowStock > 0 && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                                <AlertTriangle size={10} />
+                                {counts.lowStock} low
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1 text-[11px] font-bold text-[#126973] dark:text-[#F1D8C2] group-hover:translate-x-0.5 transition-transform">
+                            <ChevronRight size={13} strokeWidth={2.5} />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1100,8 +1152,19 @@ export default function CategoriesIngredients({
                       {/* Name */}
                       <Table.Cell>
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-[5px] border border-[var(--color-border)] bg-[#126973]/10 dark:bg-[#126973]/20 flex items-center justify-center text-[#126973] dark:text-[#F1D8C2] shrink-0 font-bold text-xs">
-                            <Tag size={15} />
+                          <div className="w-8 h-8 rounded-[5px] border border-[var(--color-border)] bg-[#126973]/10 dark:bg-[#126973]/20 flex items-center justify-center text-[#126973] dark:text-[#F1D8C2] shrink-0 font-bold text-xs overflow-hidden">
+                            {cat.image ? (
+                              <img
+                                src={cat.image}
+                                alt={cat.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.style.display = 'none'
+                                }}
+                              />
+                            ) : (
+                              <Tag size={15} />
+                            )}
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
@@ -1172,7 +1235,10 @@ export default function CategoriesIngredients({
                           )}
                           <button
                             type="button"
-                            onClick={() => handleStartEdit(cat)}
+                            onClick={() => {
+                              setSelectedModalCategory(cat)
+                              setIsCategoryModalOpen(true)
+                            }}
                             className="p-1.5 rounded-[5px] text-slate-400 hover:text-[#126973] hover:bg-[#126973]/10 dark:hover:text-[#F1D8C2] transition-all cursor-pointer"
                             title="Edit Category"
                           >
@@ -1241,6 +1307,20 @@ export default function CategoriesIngredients({
           </>
         )}
       </TableCard.Root>
+
+      {/* Category Create / Edit Modal */}
+      <CategoriesIngredientsModal
+        isOpen={isCategoryModalOpen}
+        item={selectedModalCategory}
+        onClose={() => {
+          setIsCategoryModalOpen(false)
+          setSelectedModalCategory(null)
+        }}
+        onSuccess={() => {
+          if (onRefresh) onRefresh()
+          else loadCategories()
+        }}
+      />
     </div>
   )
 

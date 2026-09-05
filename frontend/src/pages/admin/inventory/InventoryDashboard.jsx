@@ -6,13 +6,13 @@ import { CreateButton } from '../../../components/common/ButtonComponent'
 import toast from 'react-hot-toast'
 
 // Modular Module Pages
-import IngredientsPage from './pages/IngredientsPage'
+import IngredientsPage from './pages/RawMaterailsPage'
 import RecipesPage from './pages/RecipesPage'
 import PurchaseOrdersPage from './pages/PurchaseOrdersPage'
 import SuppliersPage from './pages/SuppliersPage'
 import StockLogsPage from './pages/StockLogsPage'
 import WastagePage from './pages/WastagePage'
-import CategoriesIngredients, { Iconly3DTag } from './pages/utils/CategoriesIngredients'
+import CategoriesIngredients, { Iconly3DTag } from './pages/utils/cate/CategoriesIngredients'
 
 // Modular Views & Modals
 import IngredientCreateView from './views/IngredientCreateView'

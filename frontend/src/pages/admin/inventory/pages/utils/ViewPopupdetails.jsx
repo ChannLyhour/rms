@@ -183,7 +183,7 @@ export default function ViewPopupdetails({
     </div>
   )
 
-  // ── Render Ingredient Details ───────────────────────────────────────
+  // ── Render Ingredient Details (Col 1: Image, Col 2: Details) ────────
   const renderIngredient = (ing) => {
     const stockQty = Number(ing.stock_quantity) || 0
     const threshold = Number(ing.low_stock_threshold) || 5
@@ -191,178 +191,165 @@ export default function ViewPopupdetails({
     const totalVal = stockQty * costUnit
     const isOutOfStock = stockQty <= 0
     const isLowStock = !isOutOfStock && stockQty <= threshold
-
     return (
-      <div className="space-y-5">
-        {/* Hero Card */}
-        <div
-          className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-xl transition-colors"
-          style={{
-            background: meta.accentBg,
-            boxShadow: '0 8px 16px -4px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03)',
-          }}
-        >
-          {/* Image / Avatar */}
-          <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center" style={{ boxShadow: '0 4px 7px -1px rgba(0, 0, 0, 0.06)' }}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+        {/* ── COL 1: Image Showcase ── */}
+        <div className="md:col-span-5 flex flex-col">
+          {/* Main Product Image Card */}
+          <div
+            className="relative w-full aspect-square rounded-2xl overflow-hidden border border-[var(--color-border)] flex items-center justify-center group/preview p-3 transition-all"
+            style={{
+              background: 'radial-gradient(circle at center, var(--color-surface) 0%, var(--color-card) 100%)',
+              boxShadow: '0 8px 24px -6px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03)',
+            }}
+          >
             {ing.image_url ? (
               <img
                 src={ing.image_url}
                 alt={ing.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain group-hover/preview:scale-105 transition-transform duration-300 drop-shadow-sm select-none"
                 onError={(e) => { e.currentTarget.style.display = 'none' }}
               />
             ) : (
-              <span className="font-extrabold text-xl text-[#126973] dark:text-[#F1D8C2]">
-                {ing.name?.charAt(0).toUpperCase() || 'I'}
-              </span>
+              <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#126973]/5 via-teal-500/5 to-transparent">
+                <div className="w-20 h-20 rounded-2xl bg-[#126973]/10 dark:bg-[#126973]/20 flex items-center justify-center text-3xl font-extrabold text-[#126973] dark:text-[#F1D8C2] mb-2 shadow-xs">
+                  {ing.name?.charAt(0).toUpperCase() || 'I'}
+                </div>
+                <span className="text-xs font-semibold text-[var(--color-muted)]">
+                  No image provided
+                </span>
+              </div>
             )}
           </div>
+        </div>
 
-          {/* Name & Basic Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-[15px] font-bold text-[var(--color-text)] truncate leading-tight">
-                {ing.name}
-              </h2>
-              {isOutOfStock ? (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-500 border border-rose-500/25">
-                  Out of Stock
-                </span>
-              ) : isLowStock ? (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/25">
-                  Low Stock
-                </span>
-              ) : (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 border border-emerald-500/25 flex items-center gap-0.5">
-                  <CheckCircle2 size={10} />
-                  Healthy
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2.5 mt-1.5 flex-wrap">
-              {ing.category?.name && (
-                <span className="text-[10.5px] font-semibold text-[#126973] dark:text-[#F1D8C2] px-2 py-0.5 rounded-full bg-[#126973]/10 dark:bg-[#126973]/25 border border-[#126973]/25">
-                  {ing.category.name}
-                </span>
-              )}
-              {ing.sku && (
-                <span className="text-[10.5px] text-[var(--color-muted)] px-1.5 py-0.5 rounded bg-[var(--color-surface)] border border-[var(--color-border)] font-mono">
-                  SKU: {ing.sku}
-                </span>
-              )}
-              <span className="text-[10.5px] text-[var(--color-muted)] px-1.5 py-0.5 rounded bg-[var(--color-surface)] border border-[var(--color-border)] font-mono uppercase">
-                {ing.unit}
-              </span>
-              <span className={`text-[10.5px] font-semibold ${ing.is_active !== false ? 'text-emerald-500' : 'text-slate-400'}`}>
-                {ing.is_active !== false ? '● Active' : '○ Inactive'}
-              </span>
-            </div>
+        {/* ── COL 2: Details ── */}
+        <div className="md:col-span-7 space-y-4">
+          {/* Header Title */}
+          <div>
+            <h2 className="text-xl font-extrabold text-[var(--color-text)] leading-snug tracking-tight">
+              {ing.name}
+            </h2>
           </div>
-        </div>
 
-        {/* 4-Stat Metric Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          {[
-            {
-              label: 'Current Stock',
-              value: `${stockQty.toFixed(2)}`,
-              suffix: ing.unit,
-              color: isOutOfStock ? 'text-rose-500' : isLowStock ? 'text-amber-500' : 'text-emerald-500',
-            },
-            {
-              label: 'Unit Cost',
-              value: `$${costUnit.toFixed(2)}`,
-              color: 'text-[var(--color-text)]',
-            },
-            {
-              label: 'Total Value',
-              value: `$${totalVal.toFixed(2)}`,
-              color: 'text-emerald-600 dark:text-emerald-400',
-            },
-            {
-              label: 'Low Threshold',
-              value: `${threshold.toFixed(2)}`,
-              suffix: ing.unit,
-              color: 'text-slate-600 dark:text-slate-300',
-            },
-          ].map((stat, idx) => (
-            <div
-              key={idx}
-              className="p-2.5 rounded-xl bg-[var(--color-card)] relative overflow-hidden"
-              style={{ boxShadow: '0 8px 16px -4px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03)' }}
-            >
+          {/* 4-Stat Metric Cards (2 Columns) */}
+          <div className="grid grid-cols-2 gap-2.5">
+            {[
+              {
+                label: 'Current Stock',
+                value: `${stockQty.toFixed(2)}`,
+                suffix: ing.unit,
+                color: isOutOfStock ? 'text-rose-500' : isLowStock ? 'text-amber-500' : 'text-emerald-500',
+              },
+              {
+                label: 'Unit Cost',
+                value: `$${costUnit.toFixed(2)}`,
+                color: 'text-[var(--color-text)]',
+              },
+              {
+                label: 'Total Value',
+                value: `$${totalVal.toFixed(2)}`,
+                color: 'text-emerald-600 dark:text-emerald-400',
+              },
+              {
+                label: 'Low Threshold',
+                value: `${threshold.toFixed(2)}`,
+                suffix: ing.unit,
+                color: 'text-slate-600 dark:text-slate-300',
+              },
+            ].map((stat, idx) => (
               <div
-                className="absolute top-0 left-0 right-0 h-[2px] rounded-t-xl"
-                style={{ background: meta.color, opacity: idx === 0 ? 0.6 : 0.15 }}
-              />
-              <p className="text-[9.5px] font-bold uppercase tracking-wider text-[var(--color-muted)] mt-0.5">
-                {stat.label}
-              </p>
-              <p className={`text-sm font-extrabold font-mono mt-1 ${stat.color}`}>
-                {stat.value}
-                {stat.suffix && (
-                  <span className="text-[10px] font-sans font-medium text-[var(--color-muted)] ml-0.5">
-                    {stat.suffix}
-                  </span>
-                )}
-              </p>
+                key={idx}
+                className="p-3 rounded-xl bg-[var(--color-card)] relative overflow-hidden border border-[var(--color-border)]/60"
+                style={{ boxShadow: '0 8px 16px -4px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02)' }}
+              >
+                <div
+                  className="absolute top-0 left-0 right-0 h-[2.5px] rounded-t-xl"
+                  style={{ background: meta.color, opacity: idx === 0 ? 0.8 : 0.2 }}
+                />
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] mt-0.5">
+                  {stat.label}
+                </p>
+                <p className={`text-base font-extrabold font-mono mt-1 ${stat.color}`}>
+                  {stat.value}
+                  {stat.suffix && (
+                    <span className="text-[11px] font-sans font-medium text-[var(--color-muted)] ml-1">
+                      {stat.suffix}
+                    </span>
+                  )}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Specifications & Metadata */}
+          <div className="space-y-2">
+            <SectionLabel>Specifications & Metadata</SectionLabel>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div
+                className="px-3.5 py-2.5 rounded-xl flex items-center justify-between gap-1.5 border border-[var(--color-border)]/50"
+                style={{
+                  background: 'var(--color-surface)',
+                  boxShadow: '0 4px 10px -2px rgba(0, 0, 0, 0.03)',
+                }}
+              >
+                <span className="text-[var(--color-muted)] flex items-center gap-2 text-xs shrink-0">
+                  <Tag size={14} style={{ color: meta.color }} />
+                  <span>Category</span>
+                </span>
+                <span className="font-semibold text-xs text-[var(--color-text)] truncate text-right">
+                  {ing.category?.name || 'Uncategorized'}
+                </span>
+              </div>
+
+              <div
+                className="px-3.5 py-2.5 rounded-xl flex items-center justify-between gap-1.5 border border-[var(--color-border)]/50"
+                style={{
+                  background: 'var(--color-surface)',
+                  boxShadow: '0 4px 10px -2px rgba(0, 0, 0, 0.03)',
+                }}
+              >
+                <span className="text-[var(--color-muted)] flex items-center gap-2 text-xs shrink-0">
+                  <Building2 size={14} style={{ color: meta.color }} />
+                  <span>Outlet</span>
+                </span>
+                <span className="font-semibold text-xs text-[var(--color-text)] truncate text-right">
+                  {ing.outlet?.name || 'All Outlets (Central)'}
+                </span>
+              </div>
+
+              <div
+                className="px-3.5 py-2.5 rounded-xl flex items-center justify-between gap-1.5 border border-[var(--color-border)]/50"
+                style={{
+                  background: 'var(--color-surface)',
+                  boxShadow: '0 4px 10px -2px rgba(0, 0, 0, 0.03)',
+                }}
+              >
+                <span className="text-[var(--color-muted)] flex items-center gap-2 text-xs shrink-0">
+                  <Clock size={14} style={{ color: meta.color }} />
+                  <span>Created</span>
+                </span>
+                <span className="font-mono text-xs text-[var(--color-text)] truncate text-right">
+                  {formatDate(ing.created_at)}
+                </span>
+              </div>
+
+              <div
+                className="px-3.5 py-2.5 rounded-xl flex items-center justify-between gap-1.5 border border-[var(--color-border)]/50"
+                style={{
+                  background: 'var(--color-surface)',
+                  boxShadow: '0 4px 10px -2px rgba(0, 0, 0, 0.03)',
+                }}
+              >
+                <span className="text-[var(--color-muted)] flex items-center gap-2 text-xs shrink-0">
+                  <Calendar size={14} style={{ color: meta.color }} />
+                  <span>Updated</span>
+                </span>
+                <span className="font-mono text-xs text-[var(--color-text)] truncate text-right">
+                  {formatDate(ing.updated_at || ing.created_at)}
+                </span>
+              </div>
             </div>
-          ))}
-        </div>
-
-        {/* Detailed Attribute Rows */}
-        <div>
-          <SectionLabel>Specifications & Metadata</SectionLabel>
-          <div className="rounded-xl overflow-hidden" style={{ boxShadow: '0 8px 16px -4px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03)' }}>
-            <AttrRow
-              icon={<Tag size={13} style={{ color: meta.color }} />}
-              label="Category"
-              isEven={false}
-            >
-              <span className="font-semibold text-[var(--color-text)]">
-                {ing.category?.name || 'Uncategorized'}
-              </span>
-            </AttrRow>
-
-            <AttrRow
-              icon={<Warehouse size={13} style={{ color: meta.color }} />}
-              label="Storage Location"
-              isEven={true}
-            >
-              <span className="font-semibold text-[var(--color-text)]">
-                {ing.storage_location || 'Main Dry Storage'}
-              </span>
-            </AttrRow>
-
-            <AttrRow
-              icon={<Scale size={13} style={{ color: meta.color }} />}
-              label="Measurement"
-              isEven={true}
-            >
-              <span className="font-semibold text-[var(--color-text)]">
-                {ing.unit} (Standardized)
-              </span>
-            </AttrRow>
-
-            <AttrRow
-              icon={<Clock size={13} style={{ color: meta.color }} />}
-              label="Created"
-              isEven={false}
-            >
-              <span className="font-mono text-[var(--color-text)]">
-                {formatDate(ing.created_at)}
-              </span>
-            </AttrRow>
-
-            <AttrRow
-              icon={<Calendar size={13} style={{ color: meta.color }} />}
-              label="Last Updated"
-              isEven={true}
-            >
-              <span className="font-mono text-[var(--color-text)]">
-                {formatDate(ing.updated_at || ing.created_at)}
-              </span>
-            </AttrRow>
           </div>
         </div>
       </div>
@@ -525,43 +512,73 @@ export default function ViewPopupdetails({
         </span>
       </div>
 
-      {/* Contact Details */}
+      {/* Contact Details (2 Columns) */}
       <div>
         <SectionLabel>Contact Information</SectionLabel>
-        <div className="rounded-xl overflow-hidden" style={{ boxShadow: '0 8px 16px -4px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03)' }}>
-          <AttrRow
-            icon={<Phone size={13} className="text-teal-500" />}
-            label="Phone"
-            isEven={false}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div
+            className="px-3.5 py-2.5 rounded-xl flex items-center justify-between gap-2"
+            style={{
+              background: 'var(--color-surface)',
+              boxShadow: '0 8px 16px -4px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03)',
+            }}
           >
-            <span className="font-mono font-semibold text-[var(--color-text)]">{sup.phone || '—'}</span>
-          </AttrRow>
+            <span className="text-[var(--color-muted)] flex items-center gap-1.5 text-xs shrink-0">
+              <Phone size={13} className="text-teal-500" />
+              <span>Phone</span>
+            </span>
+            <span className="font-mono font-semibold text-xs text-[var(--color-text)] truncate text-right">
+              {sup.phone || '—'}
+            </span>
+          </div>
 
-          <AttrRow
-            icon={<Mail size={13} className="text-teal-500" />}
-            label="Email"
-            isEven={true}
+          <div
+            className="px-3.5 py-2.5 rounded-xl flex items-center justify-between gap-2"
+            style={{
+              background: 'var(--color-surface)',
+              boxShadow: '0 8px 16px -4px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03)',
+            }}
           >
-            <span className="font-semibold text-[var(--color-text)]">{sup.email || '—'}</span>
-          </AttrRow>
+            <span className="text-[var(--color-muted)] flex items-center gap-1.5 text-xs shrink-0">
+              <Mail size={13} className="text-teal-500" />
+              <span>Email</span>
+            </span>
+            <span className="font-semibold text-xs text-[var(--color-text)] truncate text-right">
+              {sup.email || '—'}
+            </span>
+          </div>
 
-          <AttrRow
-            icon={<MapPin size={13} className="text-teal-500" />}
-            label="Address"
-            isEven={false}
+          <div
+            className="px-3.5 py-2.5 rounded-xl flex items-center justify-between gap-2"
+            style={{
+              background: 'var(--color-surface)',
+              boxShadow: '0 8px 16px -4px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03)',
+            }}
           >
-            <span className="font-semibold text-[var(--color-text)] text-right max-w-[200px] truncate block">
+            <span className="text-[var(--color-muted)] flex items-center gap-1.5 text-xs shrink-0">
+              <MapPin size={13} className="text-teal-500" />
+              <span>Address</span>
+            </span>
+            <span className="font-semibold text-xs text-[var(--color-text)] truncate text-right">
               {sup.address || '—'}
             </span>
-          </AttrRow>
+          </div>
 
-          <AttrRow
-            icon={<Calendar size={13} className="text-teal-500" />}
-            label="Registered"
-            isEven={true}
+          <div
+            className="px-3.5 py-2.5 rounded-xl flex items-center justify-between gap-2"
+            style={{
+              background: 'var(--color-surface)',
+              boxShadow: '0 8px 16px -4px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03)',
+            }}
           >
-            <span className="font-mono text-[var(--color-text)]">{formatDate(sup.created_at)}</span>
-          </AttrRow>
+            <span className="text-[var(--color-muted)] flex items-center gap-1.5 text-xs shrink-0">
+              <Calendar size={13} className="text-teal-500" />
+              <span>Registered</span>
+            </span>
+            <span className="font-mono text-xs text-[var(--color-text)] truncate text-right">
+              {formatDate(sup.created_at)}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -734,7 +751,9 @@ export default function ViewPopupdetails({
       `}</style>
 
       <div
-        className="rounded-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[88vh]"
+        className={`rounded-2xl w-full ${
+          resolvedType === 'ingredient' ? 'max-w-3xl lg:max-w-4xl' : 'max-w-xl'
+        } overflow-hidden flex flex-col max-h-[90vh]`}
         style={{
           background: 'var(--color-card)',
           boxShadow: '0 20px 27px 0 rgba(0, 0, 0, 0.05), 0 1px 9px 0 rgba(0, 0, 0, 0.10)',
@@ -744,7 +763,7 @@ export default function ViewPopupdetails({
       >
         {/* ── Modal Header (Soft UI card-header with 3px accent underline) ── */}
         <div
-          className="px-5 py-4 flex items-center justify-between shrink-0"
+          className="px-6 py-4 flex items-center justify-between shrink-0"
           style={{ borderBottom: `3px solid ${meta.color}` }}
         >
           <div className="flex items-center gap-3 min-w-0">
@@ -759,7 +778,7 @@ export default function ViewPopupdetails({
             </div>
             <div className="min-w-0">
               <h2
-                className="text-sm font-bold truncate max-w-[280px] leading-tight"
+                className="text-sm font-bold truncate max-w-sm sm:max-w-md leading-tight"
                 style={{ color: meta.color }}
               >
                 {item.name || item.po_number || 'Item Details'}
@@ -781,7 +800,7 @@ export default function ViewPopupdetails({
         </div>
 
         {/* ── Modal Body ── */}
-        <div className="px-5 py-4 overflow-y-auto flex-1 scrollbar-none">
+        <div className="px-6 py-5 overflow-y-auto flex-1 scrollbar-none">
           {resolvedType === 'ingredient' && renderIngredient(item)}
           {resolvedType === 'purchase_order' && renderPurchaseOrder(item)}
           {resolvedType === 'supplier' && renderSupplier(item)}
@@ -791,7 +810,7 @@ export default function ViewPopupdetails({
 
         {/* ── Modal Footer ── */}
         <div
-          className="px-5 py-3 flex items-center justify-between gap-2 shrink-0"
+          className="px-6 py-3.5 flex items-center justify-between gap-2 shrink-0"
           style={{
             borderTop: '1px solid rgba(0, 0, 0, 0.06)',
             background: 'var(--color-surface)',

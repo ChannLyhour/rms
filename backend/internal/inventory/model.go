@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pos-system/backend/internal/domain"
 )
 
 // Supplier represents an ingredient/goods vendor
@@ -30,6 +31,7 @@ type IngredientCategory struct {
 	Name        string         `gorm:"size:100;not null" json:"name"`
 	Code        string         `gorm:"size:50;not null;unique" json:"code"`
 	Description *string        `gorm:"type:text" json:"description"`
+	Image       *string        `gorm:"size:500;column:image" json:"image"`
 	SortOrder   int            `gorm:"default:0" json:"sort_order"`
 	IsActive    bool           `gorm:"default:true" json:"is_active"`
 	CreatedAt   time.Time      `json:"created_at"`
@@ -56,6 +58,8 @@ type Ingredient struct {
 	CreatedAt         time.Time           `json:"created_at"`
 	UpdatedAt         time.Time           `json:"updated_at"`
 	Category          *IngredientCategory `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
+	OutletID          *uuid.UUID          `gorm:"type:uuid" json:"outlet_id"`
+	Outlet            *domain.Outlet      `gorm:"foreignKey:OutletID" json:"outlet,omitempty"`
 }
 
 func (Ingredient) TableName() string {

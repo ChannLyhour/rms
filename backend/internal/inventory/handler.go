@@ -115,17 +115,26 @@ func (h *Handler) GetIngredientCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": item})
 }
 
+type ingredientCategoryReq struct {
+	IngredientCategory
+	ImageURL *string `json:"image_url"`
+}
+
 func (h *Handler) CreateIngredientCategory(c *gin.Context) {
-	var req IngredientCategory
+	var req ingredientCategoryReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := h.svc.CreateIngredientCategory(&req); err != nil {
+	if req.Image == nil && req.ImageURL != nil {
+		req.Image = req.ImageURL
+	}
+	cat := req.IngredientCategory
+	if err := h.svc.CreateIngredientCategory(&cat); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"data": req, "message": "ingredient category created"})
+	c.JSON(http.StatusCreated, gin.H{"data": cat, "message": "ingredient category created"})
 }
 
 func (h *Handler) UpdateIngredientCategory(c *gin.Context) {
@@ -134,12 +143,16 @@ func (h *Handler) UpdateIngredientCategory(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ingredient category id"})
 		return
 	}
-	var req IngredientCategory
+	var req ingredientCategoryReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := h.svc.UpdateIngredientCategory(id, &req); err != nil {
+	if req.Image == nil && req.ImageURL != nil {
+		req.Image = req.ImageURL
+	}
+	cat := req.IngredientCategory
+	if err := h.svc.UpdateIngredientCategory(id, &cat); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -173,7 +186,14 @@ func (h *Handler) ListIngredients(c *gin.Context) {
 		}
 	}
 
-	list, total, err := h.svc.ListIngredients(search, lowStock, categoryID, p)
+	var outletID *uuid.UUID
+	if outStr := c.Query("outlet_id"); outStr != "" {
+		if outUUID, err := uuid.Parse(outStr); err == nil {
+			outletID = &outUUID
+		}
+	}
+
+	list, total, err := h.svc.ListIngredients(search, lowStock, categoryID, outletID, p)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

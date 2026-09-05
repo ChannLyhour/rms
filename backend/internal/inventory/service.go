@@ -59,8 +59,8 @@ func (s *Service) DeleteIngredientCategory(id uuid.UUID) error {
 
 // ── Ingredients ──────────────────────────────────────────────────
 
-func (s *Service) ListIngredients(search string, lowStock bool, categoryID *uuid.UUID, p pagination.Params) ([]Ingredient, int64, error) {
-	return s.repo.ListIngredients(search, lowStock, categoryID, p)
+func (s *Service) ListIngredients(search string, lowStock bool, categoryID *uuid.UUID, outletID *uuid.UUID, p pagination.Params) ([]Ingredient, int64, error) {
+	return s.repo.ListIngredients(search, lowStock, categoryID, outletID, p)
 }
 
 func (s *Service) GetIngredient(id uuid.UUID) (*Ingredient, error) {

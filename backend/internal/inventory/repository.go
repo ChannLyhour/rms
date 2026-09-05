@@ -14,6 +14,7 @@ type Repository struct {
 }
 
 func NewRepository(db *gorm.DB) *Repository {
+	_ = db.Exec("ALTER TABLE ingredient_categories ADD COLUMN IF NOT EXISTS image VARCHAR(500)").Error
 	return &Repository{db: db}
 }
 
@@ -58,11 +59,11 @@ func (r *Repository) DeleteSupplier(id uuid.UUID) error {
 
 // ── Ingredients CRUD ─────────────────────────────────────────────
 
-func (r *Repository) ListIngredients(search string, lowStock bool, categoryID *uuid.UUID, p pagination.Params) ([]Ingredient, int64, error) {
+func (r *Repository) ListIngredients(search string, lowStock bool, categoryID *uuid.UUID, outletID *uuid.UUID, p pagination.Params) ([]Ingredient, int64, error) {
 	var list []Ingredient
 	var total int64
 
-	q := r.db.Model(&Ingredient{}).Preload("Category")
+	q := r.db.Model(&Ingredient{}).Preload("Category").Preload("Outlet")
 	if search != "" {
 		q = q.Where("name ILIKE ?", "%"+search+"%")
 	}
@@ -71,6 +72,9 @@ func (r *Repository) ListIngredients(search string, lowStock bool, categoryID *u
 	}
 	if categoryID != nil && *categoryID != uuid.Nil {
 		q = q.Where("category_id = ?", *categoryID)
+	}
+	if outletID != nil && *outletID != uuid.Nil {
+		q = q.Where("outlet_id = ?", *outletID)
 	}
 
 	if err := q.Count(&total).Error; err != nil {
@@ -83,7 +87,7 @@ func (r *Repository) ListIngredients(search string, lowStock bool, categoryID *u
 
 func (r *Repository) GetIngredientByID(id uuid.UUID) (*Ingredient, error) {
 	var ing Ingredient
-	if err := r.db.Preload("Category").First(&ing, id).Error; err != nil {
+	if err := r.db.Preload("Category").Preload("Outlet").First(&ing, id).Error; err != nil {
 		return nil, err
 	}
 	return &ing, nil
@@ -119,6 +123,7 @@ func (r *Repository) UpdateIngredient(id uuid.UUID, ing *Ingredient) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		updates := map[string]interface{}{
 			"category_id":         ing.CategoryID,
+			"outlet_id":           ing.OutletID,
 			"name":                ing.Name,
 			"unit":                ing.Unit,
 			"stock_quantity":      ing.StockQuantity,
@@ -182,6 +187,7 @@ func (r *Repository) UpdateIngredientCategory(id uuid.UUID, cat *IngredientCateg
 		"name":        cat.Name,
 		"code":        cat.Code,
 		"description": cat.Description,
+		"image":       cat.Image,
 		"sort_order":  cat.SortOrder,
 		"is_active":   cat.IsActive,
 		"updated_at":  time.Now(),

@@ -30,7 +30,7 @@ import toast from 'react-hot-toast'
 import { adminApi } from '../../../../api/adminApi'
 import StockAdjustModal from '../views/StockAdjustModal'
 import ViewPopupdetails from './utils/ViewPopupdetails'
-import CategoriesIngredients, { getCategoryVisual } from './utils/CategoriesIngredients'
+import CategoriesIngredients, { getCategoryVisual } from './utils/cate/CategoriesIngredients'
 
 // ── Iconly 3D Icons (from https://web.iconly.pro/3d) ────────────────────────
 // 0. Iconly 3D Tag / Category
@@ -517,149 +517,12 @@ export default function IngredientsPage({
 
   return (
     <div className="space-y-5 animate-in fade-in duration-150">
-      {/* ══════════════════════════════════════════════════════════
-         PAGE THREE: SHOW LIST STOCK
-         ══════════════════════════════════════════════════════════ */}
-      {/* Top Header Row for Page Three (Stock List) with Back to Categories */}
-      <div
-        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3.5 px-4 rounded-2xl border shadow-xs animate-in fade-in"
-        style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
-      >
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/inventory/categories')}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card,#ffffff)] text-xs font-bold text-[var(--color-text)] hover:bg-[#126973]/10 hover:text-[#126973] hover:border-[#126973]/30 transition-all cursor-pointer shadow-2xs group"
-            title="Return to Category Cards (Page Two)"
-          >
-            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-            <span>Back to Categories</span>
-          </button>
+    
+     
 
-              <div className="h-6 w-px bg-[var(--color-border)] hidden sm:block" />
-
-              <div className="flex items-center gap-2.5">
-                <span className="text-2xl">
-                  {selectedCategory ? getCategoryVisual(selectedCategory.code, selectedCategory.name).emoji : '📦'}
-                </span>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-[var(--color-text)] tracking-tight">
-                      {selectedCategory ? `${selectedCategory.name} Stock` : 'All Raw Materials Stock'}
-                    </h2>
-                    {selectedCategory?.code && (
-                      <span className="font-mono text-[10.5px] font-bold px-2 py-0.5 rounded-md border border-[var(--color-border)] bg-black/5 dark:bg-white/5 text-[var(--color-muted)]">
-                        {selectedCategory.code}
-                      </span>
-                    )}
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#126973]/10 text-[#126973] dark:text-[#F1D8C2]">
-                      {filteredList.length} items
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-[var(--color-muted)]">
-                    {selectedCategory
-                      ? `Viewing stock items under ${selectedCategory.name}`
-                      : 'Viewing complete inventory across all categories'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => navigate('/inventory/categories')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-xs font-semibold text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer"
-              >
-                <Tag size={13} />
-                <span>Switch Category</span>
-              </button>
-            </div>
-          </div>
-
-          {/* ── Metrics Cards (Stock Valuation & Warnings) ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Card 1: Total Tracked Raw Materials */}
-            <div
-              className="p-4 rounded-xl border flex items-center justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group border-b-[3px] border-b-[#126973]"
-              style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
-            >
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Raw Materials</p>
-                <p className="text-2xl font-extrabold text-[var(--color-text)] mt-1 tracking-tight">
-                  {metrics.totalItems} <span className="text-xs font-semibold text-[var(--color-muted)]">Items</span>
-                </p>
-              </div>
-              <div className="w-13 h-13 rounded-2xl bg-[#126973]/10 dark:bg-[#126973]/20 border border-[#126973]/20 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 transition-transform duration-200">
-                <Iconly3DBox size={34} />
-              </div>
-            </div>
-
-            {/* Card 2: Material Categories */}
-            <button
-              type="button"
-              onClick={() => setActiveSubView('categories')}
-              className="p-4 rounded-xl border flex items-center justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group border-b-[3px] border-b-teal-600 text-left cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/50"
-              style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
-              title="Click to view & manage Material Categories"
-            >
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Categories</p>
-                <p className="text-2xl font-extrabold text-[#126973] dark:text-[#F1D8C2] mt-1 tracking-tight">
-                  {ingredientCategories.length} <span className="text-xs font-semibold text-[var(--color-muted)]">Groups</span>
-                </p>
-                <div className="mt-1.5">
-                  <span className="text-[10.5px] font-semibold text-teal-600 dark:text-teal-400 group-hover:underline inline-flex items-center gap-1 transition-colors">
-                    Click to view categories →
-                  </span>
-                </div>
-              </div>
-              <div className="w-13 h-13 rounded-2xl bg-teal-500/15 dark:bg-teal-500/25 border border-teal-500/25 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 transition-transform duration-200">
-                <Iconly3DTag size={34} />
-              </div>
-            </button>
-
-            {/* Card 3: Low Stock Warnings */}
-            <button
-              type="button"
-              onClick={() => {
-                setShowLowStockOnly((prev) => !prev)
-                setPage(1)
-              }}
-              className={`p-4 rounded-xl border flex items-center justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group border-b-[3px] border-b-amber-500 text-left cursor-pointer ${
-                showLowStockOnly
-                  ? 'ring-2 ring-amber-500 bg-amber-500/10'
-                  : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/50'
-              }`}
-              style={{ background: showLowStockOnly ? undefined : 'var(--color-surface)', borderColor: 'var(--color-border)' }}
-              title="Click to filter low stock items"
-            >
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Low Stock Warnings</p>
-                <p className="text-2xl font-extrabold text-[var(--color-text)] mt-1 tracking-tight">
-                  {metrics.lowStockCount} <span className="text-xs font-semibold text-[var(--color-muted)]">Items</span>
-                </p>
-              </div>
-              <div className="w-13 h-13 rounded-2xl bg-amber-500/15 dark:bg-amber-500/25 border border-amber-500/25 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 transition-transform duration-200">
-                <Iconly3DDanger size={34} />
-              </div>
-            </button>
-
-            {/* Card 4: Estimated Stock Valuation */}
-            <div
-              className="p-4 rounded-xl border flex items-center justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group border-b-[3px] border-b-emerald-500"
-              style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
-            >
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Stock Valuation</p>
-                <p className="text-2xl font-extrabold text-emerald-500 mt-1 tracking-tight">${metrics.totalValue.toFixed(2)}</p>
-              </div>
-              <div className="w-13 h-13 rounded-2xl bg-emerald-500/15 dark:bg-emerald-500/25 border border-emerald-500/25 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-110 transition-transform duration-200">
-                <Iconly3DWallet size={34} />
-              </div>
-            </div>
-          </div>
-        /* ── Table Card ── */
+         
+         
+        
         <TableCard.Root>
           <TableCard.FilterBar
             hasCreate
@@ -675,81 +538,13 @@ export default function IngredientsPage({
                 setPage(1)
               }}
               placeholder="Search..."
-              className="w-full"
+              className="w-full min-w-[180px]"
             />
 
-            <button
-              type="button"
-              onClick={() => {
-                setShowLowStockOnly(!showLowStockOnly)
-                setPage(1)
-              }}
-              className={`inline-flex items-center justify-center font-semibold rounded-lg border h-10 px-3 text-xs gap-1.5 transition-all cursor-pointer select-none shadow-2xs shrink-0 ${
-                showLowStockOnly
-                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400 font-bold'
-                  : 'bg-[var(--color-card,#ffffff)] border-[var(--color-border,#e2e8f0)] text-[var(--color-muted,#94a3b8)] hover:text-[var(--color-text,#0f172a)] hover:bg-black/5 dark:hover:bg-white/5'
-              }`}
-            >
-              <AlertTriangle size={14} className="shrink-0 stroke-[2px]" />
-              <span>Low Stock</span>
-              {metrics.lowStockCount > 0 && (
-                <span
-                  className={`inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded-full ${
-                    showLowStockOnly
-                      ? 'bg-amber-500 text-white'
-                      : 'bg-black/5 dark:bg-white/10 text-[var(--color-muted)]'
-                  }`}
-                >
-                  {metrics.lowStockCount}
-                </span>
-              )}
-            </button>
+           
 
-            {categoryOptions.length > 1 && (
-              <FilterSelect
-                label="Category"
-                value={categoryFilter}
-                onChange={(val) => {
-                  setCategoryFilter(val)
-                  setPage(1)
-                  if (val === 'all') {
-                    navigate('/inventory/ingredients', { replace: true })
-                  } else {
-                    navigate(`/inventory/ingredients?category=${val}`, { replace: true })
-                  }
-                }}
-                options={categoryOptions}
-                placeholder="All Categories"
-              />
-            )}
 
-            {unitOptions.length > 2 && (
-              <FilterSelect
-                label="Unit"
-                value={unitFilter}
-                onChange={(val) => {
-                  setUnitFilter(val)
-                  setPage(1)
-                }}
-                options={unitOptions}
-                placeholder="All Units"
-              />
-            )}
-
-            <button
-              type="button"
-              onClick={() => setIsCategoryModalOpen(true)}
-              className="inline-flex items-center justify-center font-semibold rounded-lg border h-10 px-3 text-xs gap-1.5 transition-all cursor-pointer select-none shadow-2xs shrink-0 bg-[var(--color-card,#ffffff)] border-[var(--color-border,#e2e8f0)] text-[var(--color-muted,#94a3b8)] hover:text-[#126973] dark:hover:text-[#F1D8C2] hover:bg-black/5 dark:hover:bg-white/5"
-              title="Manage Raw Material Categories"
-            >
-              <Tag size={14} className="shrink-0 stroke-[2px]" />
-              <span>Categories</span>
-              {ingredientCategories.length > 0 && (
-                <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-[#126973]/10 text-[#126973] dark:text-[#F1D8C2]">
-                  {ingredientCategories.length}
-                </span>
-              )}
-            </button>
+          
           </div>
         </TableCard.FilterBar>
 
@@ -1065,15 +860,22 @@ export default function IngredientsPage({
                     </div>
                   </Table.Cell>
 
-                  {/* Category */}
+                  {/* Category & Outlet */}
                   <Table.Cell>
-                    {item.category ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-[6px] text-[11px] font-semibold bg-[#126973]/10 text-[#126973] dark:bg-[#126973]/25 dark:text-[#F1D8C2] border border-[#126973]/20">
-                        {item.category.name}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-[var(--color-muted)] italic">-</span>
-                    )}
+                    <div className="flex flex-col gap-1 items-start">
+                      {item.category ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-[6px] text-[11px] font-semibold bg-[#126973]/10 text-[#126973] dark:bg-[#126973]/25 dark:text-[#F1D8C2] border border-[#126973]/20">
+                          {item.category.name}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-[var(--color-muted)] italic">-</span>
+                      )}
+                      {item.outlet && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                          {item.outlet.name}
+                        </span>
+                      )}
+                    </div>
                   </Table.Cell>
 
                   {/* Current Stock */}
