@@ -528,7 +528,7 @@ export default function IngredientsPage({
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/inventory?tab=categories')}
+            onClick={() => navigate('/inventory/categories')}
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card,#ffffff)] text-xs font-bold text-[var(--color-text)] hover:bg-[#126973]/10 hover:text-[#126973] hover:border-[#126973]/30 transition-all cursor-pointer shadow-2xs group"
             title="Return to Category Cards (Page Two)"
           >
@@ -568,7 +568,7 @@ export default function IngredientsPage({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => navigate('/inventory?tab=categories')}
+                onClick={() => navigate('/inventory/categories')}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-xs font-semibold text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-black/5 dark:hover:bg-white/5 transition-all cursor-pointer"
               >
                 <Tag size={13} />
@@ -713,9 +713,9 @@ export default function IngredientsPage({
                   setCategoryFilter(val)
                   setPage(1)
                   if (val === 'all') {
-                    navigate('/inventory?tab=ingredients', { replace: true })
+                    navigate('/inventory/ingredients', { replace: true })
                   } else {
-                    navigate(`/inventory?tab=ingredients&category=${val}`, { replace: true })
+                    navigate(`/inventory/ingredients?category=${val}`, { replace: true })
                   }
                 }}
                 options={categoryOptions}

@@ -39,6 +39,9 @@ export default function InventoryDashboard() {
     if (location.pathname === '/purchases') return 'purchases'
     if (location.pathname === '/stock-logs') return 'logs'
     if (location.pathname === '/inventory/categories') return 'categories'
+    if (location.pathname === '/inventory/ingredients') return 'ingredients'
+    if (location.pathname === '/inventory/waste' || location.pathname === '/waste') return 'waste'
+    if (location.pathname === '/inventory/suppliers' || location.pathname === '/suppliers') return 'suppliers'
     const params = new URLSearchParams(location.search)
     return params.get('tab') || null
   }, [location.pathname, location.search])
@@ -99,6 +102,30 @@ export default function InventoryDashboard() {
     setEditingItem(null)
   }, [activeTab])
 
+  // Redirect legacy /inventory?tab=... query parameters to clean dedicated page routes
+  useEffect(() => {
+    if (location.pathname === '/inventory') {
+      const params = new URLSearchParams(location.search)
+      const tab = params.get('tab')
+      if (tab === 'categories') {
+        navigate('/inventory/categories', { replace: true })
+      } else if (tab === 'ingredients') {
+        const cat = params.get('category')
+        navigate(cat ? `/inventory/ingredients?category=${cat}` : '/inventory/ingredients', { replace: true })
+      } else if (tab === 'waste') {
+        navigate('/inventory/waste', { replace: true })
+      } else if (tab === 'suppliers') {
+        navigate('/inventory/suppliers', { replace: true })
+      } else if (tab === 'recipes') {
+        navigate('/recipes', { replace: true })
+      } else if (tab === 'purchases') {
+        navigate('/purchases', { replace: true })
+      } else if (tab === 'logs') {
+        navigate('/stock-logs', { replace: true })
+      }
+    }
+  }, [location.pathname, location.search, navigate])
+
   const handleTabClick = (tabKey) => {
     setViewMode('list')
     // If clicking the already selected card, toggle back to overview
@@ -109,9 +136,11 @@ export default function InventoryDashboard() {
     if (tabKey === 'recipes') navigate('/recipes')
     else if (tabKey === 'purchases') navigate('/purchases')
     else if (tabKey === 'logs') navigate('/stock-logs')
-    else if (tabKey === 'categories') navigate('/inventory?tab=categories')
-    else if (tabKey === 'ingredients') navigate('/inventory?tab=ingredients')
-    else navigate(`/inventory?tab=${tabKey}`)
+    else if (tabKey === 'categories') navigate('/inventory/categories')
+    else if (tabKey === 'ingredients') navigate('/inventory/ingredients')
+    else if (tabKey === 'waste') navigate('/inventory/waste')
+    else if (tabKey === 'suppliers') navigate('/inventory/suppliers')
+    else navigate(`/inventory/${tabKey}`)
   }
 
   const lowStockCount = useMemo(() => {
@@ -125,7 +154,7 @@ export default function InventoryDashboard() {
         return (
           <button
             type="button"
-            onClick={() => navigate('/inventory?tab=ingredients')}
+            onClick={() => navigate('/inventory/ingredients')}
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs transition-all cursor-pointer"
           >
             <span>View All Stock</span>
@@ -471,7 +500,7 @@ export default function InventoryDashboard() {
                   type="button"
                   onClick={() => {
                     if (activeTab === 'ingredients') {
-                      navigate('/inventory?tab=categories')
+                      navigate('/inventory/categories')
                     } else {
                       navigate('/inventory')
                     }
@@ -507,7 +536,7 @@ export default function InventoryDashboard() {
                           <span>/</span>
                           <button
                             type="button"
-                            onClick={() => navigate('/inventory?tab=categories')}
+                            onClick={() => navigate('/inventory/categories')}
                             className="hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                           >
                             Raw Materials
@@ -613,9 +642,9 @@ export default function InventoryDashboard() {
                 onRefresh={loadAllData}
                 onSelectCategory={(cat) => {
                   if (!cat || cat.id === 'all') {
-                    navigate('/inventory?tab=ingredients')
+                    navigate('/inventory/ingredients')
                   } else {
-                    navigate(`/inventory?tab=ingredients&category=${cat.id}`)
+                    navigate(`/inventory/ingredients?category=${cat.id}`)
                   }
                 }}
               />

@@ -239,8 +239,33 @@ export default function AppRoutes() {
           <Inventory />
         </RoleBasedRoute>
       } />
+      <Route path="/inventory/ingredients" element={
+        <RoleBasedRoute roles={['admin', 'manager', 'kitchen']} permissions={['stock.manage', 'ingredients.manage']}>
+          <Inventory />
+        </RoleBasedRoute>
+      } />
       <Route path="/inventory/categories" element={
         <RoleBasedRoute roles={['admin', 'manager', 'kitchen']} permissions={['stock.manage', 'ingredients.manage']}>
+          <Inventory />
+        </RoleBasedRoute>
+      } />
+      <Route path="/inventory/waste" element={
+        <RoleBasedRoute roles={['admin', 'manager', 'kitchen']} permissions={['stock.manage', 'stock.waste']}>
+          <Inventory />
+        </RoleBasedRoute>
+      } />
+      <Route path="/waste" element={
+        <RoleBasedRoute roles={['admin', 'manager', 'kitchen']} permissions={['stock.manage', 'stock.waste']}>
+          <Inventory />
+        </RoleBasedRoute>
+      } />
+      <Route path="/inventory/suppliers" element={
+        <RoleBasedRoute roles={['admin', 'manager']} permissions={['po.manage']}>
+          <Inventory />
+        </RoleBasedRoute>
+      } />
+      <Route path="/suppliers" element={
+        <RoleBasedRoute roles={['admin', 'manager']} permissions={['po.manage']}>
           <Inventory />
         </RoleBasedRoute>
       } />
@@ -314,6 +339,10 @@ export default function AppRoutes() {
       <Route path="/admin/categories" element={<Navigate to="/categories" replace />} />
       <Route path="/admin/options" element={<Navigate to="/options" replace />} />
       <Route path="/admin/inventory" element={<Navigate to="/inventory" replace />} />
+      <Route path="/admin/ingredients" element={<Navigate to="/inventory/ingredients" replace />} />
+      <Route path="/admin/categories" element={<Navigate to="/inventory/categories" replace />} />
+      <Route path="/admin/waste" element={<Navigate to="/inventory/waste" replace />} />
+      <Route path="/admin/suppliers" element={<Navigate to="/inventory/suppliers" replace />} />
       <Route path="/admin/recipes" element={<Navigate to="/recipes" replace />} />
       <Route path="/admin/purchases" element={<Navigate to="/purchases" replace />} />
       <Route path="/admin/stock-logs" element={<Navigate to="/stock-logs" replace />} />
